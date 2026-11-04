@@ -1040,7 +1040,10 @@ em { font-style: italic; }
 }
 .gr-aba[aria-selected="true"] { border-bottom-color: var(--bordo); color: var(--preto); }
 
-.gr-aviso { display: flex; flex-wrap: wrap; align-items: baseline; gap: .75rem; min-height: 2.5rem; padding-block: .6rem; color: var(--bordo); }
+/* Fica visível abaixo do menu, mesmo com a pessoa no meio da lista de looks */
+.gr-aviso { position: sticky; top: calc(var(--topo) + .5rem); z-index: 5; display: flex; flex-wrap: wrap; align-items: baseline; gap: .75rem; min-height: 2.5rem; padding: .6rem .9rem; color: var(--bordo); }
+.gr-aviso:empty { pointer-events: none; }
+.gr-aviso:not(:empty) { background: var(--off-2); border-left: 2px solid var(--bordo); }
 #painel-pecas:focus, #painel-looks:focus { outline: 0; }
 
 .gr-barra { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem 2rem; margin-bottom: 2rem; }
@@ -1070,6 +1073,9 @@ em { font-style: italic; }
 .gr-looks { display: grid; gap: 2.5rem; }
 .gr-look { padding-top: 1.5rem; border-top: 1px solid var(--preto); animation: gr-entra .9s var(--curva) both; }
 .gr-look-cab { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem 1.5rem; margin-bottom: 1.25rem; }
+.gr-look-cab h3 { min-width: 0; overflow-wrap: anywhere; }
+.gr-look-obs { max-width: 42rem; margin: -.5rem 0 1.25rem; color: var(--cinza); white-space: pre-line; overflow-wrap: anywhere; }
+.gr-look-nota { display: grid; gap: 1.5rem; max-width: 42rem; margin-top: 1.5rem; padding: clamp(1.25rem, 3vw, 2rem); background: var(--off-2); }
 .gr-look-pecas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 15rem)); gap: 1.25rem; }
 @media (max-width: 640px) { .gr-look-pecas { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; } }
 .gr-look-motivos { margin-top: 1.25rem; max-width: 42rem; color: var(--cinza); }

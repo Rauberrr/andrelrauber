@@ -7,6 +7,7 @@
  * POST ?acao=editar        altera a descrição
  * POST ?acao=excluir       apaga a peça e a foto
  * POST ?acao=look          salva ou descarta um look
+ * POST ?acao=look-nota     guarda o nome e a observação de um look
  */
 declare(strict_types=1);
 
@@ -36,6 +37,7 @@ const GR_MAXIMO_PECAS = 60;
 const GR_MAXIMO_BYTES = 5242880;
 const GR_MAIOR_LADO = 2400;
 const GR_MENOR_LADO = 100;
+const GR_MAXIMO_NOTAS = 300;
 
 $metodo = $_SERVER['REQUEST_METHOD'] ?? '';
 if ($metodo === 'GET') {
@@ -54,6 +56,9 @@ switch ($_GET['acao'] ?? '') {
         break;
     case 'look':
         decidir_look();
+        break;
+    case 'look-nota':
+        guardar_nota_do_look();
         break;
     default:
         falhar(404, 'Ação desconhecida.');
@@ -84,9 +89,11 @@ function listar(): void
     $id = (int) $usuario['id'];
     $pecas = consultar('SELECT * FROM pecas WHERE usuario_id = ? ORDER BY id DESC', [$id])->fetchAll();
     $looks = consultar('SELECT chave, situacao FROM looks WHERE usuario_id = ? ORDER BY id DESC', [$id])->fetchAll();
+    $notas = consultar('SELECT chave, nome, observacao FROM looks_notas WHERE usuario_id = ?', [$id])->fetchAll();
     responder(200, [
         'pecas' => array_map('peca_publica', $pecas),
         'looks' => $looks,
+        'notas' => $notas,
         'maximoPecas' => GR_MAXIMO_PECAS,
         'consentiu' => $usuario['consentiu_em'] !== null,
     ]);
@@ -282,11 +289,13 @@ function excluir(): void
     $pecaId = (int) ($dados['id'] ?? 0);
     $peca = peca_da_pessoa($pecaId, $id);
 
-    // Look que usava esta peça deixa de existir
-    $looks = consultar('SELECT id, chave FROM looks WHERE usuario_id = ?', [$id])->fetchAll();
-    foreach ($looks as $look) {
-        if (in_array((string) $pecaId, explode('-', (string) $look['chave']), true)) {
-            consultar('DELETE FROM looks WHERE id = ?', [$look['id']]);
+    // Look que usava esta peça deixa de existir, com o nome e a observação dele
+    foreach (['looks', 'looks_notas'] as $tabela) {
+        $linhas = consultar("SELECT id, chave FROM $tabela WHERE usuario_id = ?", [$id])->fetchAll();
+        foreach ($linhas as $linha) {
+            if (in_array((string) $pecaId, explode('-', (string) $linha['chave']), true)) {
+                consultar("DELETE FROM $tabela WHERE id = ?", [$linha['id']]);
+            }
         }
     }
     consultar('DELETE FROM pecas WHERE id = ?', [$pecaId]);
@@ -295,16 +304,9 @@ function excluir(): void
     responder(200);
 }
 
-function decidir_look(): void
+// Confere se as peças do look são da pessoa e devolve a chave, com os números em ordem
+function chave_do_look(array $dados, int $id): string
 {
-    $dados = exigir_post();
-    $usuario = exigir_login();
-    $id = (int) $usuario['id'];
-
-    $situacao = texto($dados, 'situacao', 12);
-    if (!in_array($situacao, ['salvo', 'descartado', 'nenhum'], true)) {
-        falhar(422, 'Situação inválida.');
-    }
     $pecas = is_array($dados['pecas'] ?? null) ? $dados['pecas'] : [];
     $ids = array_values(array_unique(array_map('intval', array_filter($pecas, 'is_int'))));
     sort($ids);
@@ -320,7 +322,20 @@ function decidir_look(): void
         falhar(404, 'Peça não encontrada.');
     }
 
-    $chave = implode('-', $ids);
+    return implode('-', $ids);
+}
+
+function decidir_look(): void
+{
+    $dados = exigir_post();
+    $usuario = exigir_login();
+    $id = (int) $usuario['id'];
+
+    $situacao = texto($dados, 'situacao', 12);
+    if (!in_array($situacao, ['salvo', 'descartado', 'nenhum'], true)) {
+        falhar(422, 'Situação inválida.');
+    }
+    $chave = chave_do_look($dados, $id);
     consultar('DELETE FROM looks WHERE usuario_id = ? AND chave = ?', [$id, $chave]);
     if ($situacao !== 'nenhum') {
         consultar(
@@ -329,4 +344,49 @@ function decidir_look(): void
         );
     }
     responder(200, ['chave' => $chave, 'situacao' => $situacao]);
+}
+
+function guardar_nota_do_look(): void
+{
+    $dados = exigir_post();
+    $usuario = exigir_login();
+    $id = (int) $usuario['id'];
+    $chave = chave_do_look($dados, $id);
+    $nome = str_replace("\n", ' ', texto($dados, 'nome', 60));
+    $observacao = texto($dados, 'observacao', 300);
+
+    $jaTinha = consultar('SELECT id FROM looks_notas WHERE usuario_id = ? AND chave = ?', [$id, $chave])->fetchColumn() !== false;
+    if ($nome === '' && $observacao === '') {
+        consultar('DELETE FROM looks_notas WHERE usuario_id = ? AND chave = ?', [$id, $chave]);
+    } elseif ($jaTinha) {
+        consultar(
+            'UPDATE looks_notas SET nome = ?, observacao = ?, atualizado_em = ? WHERE usuario_id = ? AND chave = ?',
+            [$nome, $observacao, agora(), $id, $chave]
+        );
+    } else {
+        $total = (int) consultar('SELECT COUNT(*) FROM looks_notas WHERE usuario_id = ?', [$id])->fetchColumn();
+        if ($total >= GR_MAXIMO_NOTAS) {
+            falhar(422, 'Você chegou ao limite de ' . GR_MAXIMO_NOTAS . ' looks com nome ou observação. Apague algum para continuar.');
+        }
+        consultar(
+            'INSERT INTO looks_notas (usuario_id, chave, nome, observacao, atualizado_em) VALUES (?, ?, ?, ?, ?)',
+            [$id, $chave, $nome, $observacao, agora()]
+        );
+    }
+
+    // Quem dá nome a uma sugestão quer guardá-la, então ela também vai para os salvos
+    $situacao = consultar('SELECT situacao FROM looks WHERE usuario_id = ? AND chave = ?', [$id, $chave])->fetchColumn();
+    if ($situacao === false && ($nome !== '' || $observacao !== '')) {
+        consultar(
+            'INSERT INTO looks (usuario_id, chave, situacao, criado_em) VALUES (?, ?, ?, ?)',
+            [$id, $chave, 'salvo', agora()]
+        );
+        $situacao = 'salvo';
+    }
+    responder(200, [
+        'chave' => $chave,
+        'nome' => $nome,
+        'observacao' => $observacao,
+        'situacao' => $situacao === false ? 'nenhum' : $situacao,
+    ]);
 }

@@ -294,6 +294,7 @@ function apagar_guarda_roupa(int $usuarioId): void
     foreach ($arquivos as $arquivo) {
         apagar_foto((string) $arquivo);
     }
+    consultar('DELETE FROM looks_notas WHERE usuario_id = ?', [$usuarioId]);
     consultar('DELETE FROM looks WHERE usuario_id = ?', [$usuarioId]);
     consultar('DELETE FROM pecas WHERE usuario_id = ?', [$usuarioId]);
 }
