@@ -1,0 +1,12 @@
+---
+# Publica o site a partir de repositories/andrelrauber, no cPanel.
+# So copia e substitui: nao apaga api/config.php nem api/fotos-pecas.
+# O .htaccess da raiz fica de fora porque o cPanel pode acrescentar regras nele.
+# Pagina nova precisa entrar na lista abaixo.
+deployment:
+  tasks:
+    - export DEPLOYPATH=../../public_html/
+    - /bin/cp 404.html a-marca.html contato.html criar-conta.html entrar.html esqueci-senha.html guarda-roupa.html guia-de-medidas.html index.html medidas.html minha-conta.html painel.html privacidade.html redefinir-senha.html $DEPLOYPATH
+    - /bin/cp robots.txt sitemap.xml $DEPLOYPATH
+    - /bin/cp -R assets $DEPLOYPATH
+    - /bin/cp -R api $DEPLOYPATH

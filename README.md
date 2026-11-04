@@ -4,6 +4,16 @@ Site em HTML, CSS e JavaScript, com contas de clientes em PHP e MySQL.
 
 > **Importante:** o sistema de contas precisa de PHP e MySQL, então só funciona na HostGator. No GitHub Pages, as páginas abrem, mas criar conta, entrar e preencher a tabela não funcionam.
 
+## Atualizar o site pelo GitHub
+
+O site é publicado pelo **Git Version Control** do cPanel, a partir da branch `guarda-roupa`. Salvar no GitHub não muda o site sozinho.
+
+1. Se o `api/banco.sql` mudou, importe-o no phpMyAdmin primeiro.
+2. No cPanel, abra **Git Version Control**, clique em **Manage** e na aba **Pull or Deploy**.
+3. Clique em **Update from Remote** e depois em **Deploy HEAD Commit**.
+
+O `.cpanel.yml` lista o que é copiado. Ele não apaga `api/config.php` nem `api/fotos-pecas`. Nunca edite os arquivos dentro de `repositories/andrelrauber`, porque isso trava a publicação. Mudanças no `.htaccess` da raiz são feitas à mão no Gerenciador de Arquivos, e página nova precisa entrar na lista do `.cpanel.yml`.
+
 ## Colocar no ar na HostGator
 
 ### 1. Enviar os arquivos
