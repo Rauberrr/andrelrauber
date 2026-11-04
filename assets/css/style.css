@@ -908,3 +908,108 @@ em { font-style: italic; }
 @media print {
   .topo, .rodape, .painel, .etapas-nav { display: none; }
 }
+
+/* --- Acesso: criar conta e entrar ----------------------------------------------- */
+
+.acesso {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: clamp(2.5rem, 7vw, 7rem);
+  align-items: start;
+  padding-block: calc(var(--topo) + clamp(2rem, 5vw, 4.5rem)) var(--secao);
+}
+.acesso-motivo .etiqueta { margin-bottom: 1.25rem; }
+.acesso-motivo .lead { margin-top: 1.5rem; max-width: 34rem; }
+.acesso-chamada { margin-top: 1.5rem; color: var(--cinza); }
+.acesso-chamada a, .acesso-rodape a, .acesso-esqueci a, .campo-marcar a { color: var(--bordo); text-underline-offset: 3px; }
+
+.motivos { margin-top: clamp(2rem, 4vw, 3rem); border-top: 1px solid var(--linha); }
+.motivos li { padding-block: 1.4rem; border-bottom: 1px solid var(--linha); }
+.motivos h2 { margin-bottom: .35rem; color: var(--bordo); }
+.motivos p { max-width: 34rem; color: var(--cinza); }
+
+.acesso-caixa { padding: clamp(1.5rem, 3vw, 2.75rem); background: var(--off-2); }
+.acesso-caixa > h2 { margin-bottom: 1.75rem; }
+.acesso-caixa form { display: grid; gap: 1.5rem; }
+
+.acesso-simples { max-width: 34rem; padding-block: calc(var(--topo) + clamp(2.5rem, 7vw, 6rem)) var(--secao); margin-inline: auto; }
+.acesso-simples .etiqueta { margin-bottom: 1rem; }
+.acesso-simples form { display: grid; gap: 1.5rem; margin-top: 2rem; }
+.acesso-simples form[hidden] { display: none; }
+.acesso-texto { margin-top: 1rem; color: var(--cinza); }
+.acesso-aviso { margin-top: 2rem; padding: 1.25rem; background: var(--off-2); }
+.acesso-aviso[hidden] { display: none; }
+
+.acesso-google[hidden] { display: none; }
+.google-botao { min-height: 44px; display: flex; justify-content: center; }
+.acesso-ou { display: flex; align-items: center; gap: 1rem; margin-block: 1.5rem; font-size: .9rem; color: var(--cinza); }
+.acesso-ou::before, .acesso-ou::after { content: ""; flex: 1; height: 1px; background: var(--linha); }
+
+.acesso-erro:empty { display: none; }
+.acesso-erro { margin: 0; }
+.acesso-enviar { width: 100%; }
+.acesso-enviar:disabled { opacity: .6; cursor: wait; }
+.acesso-esqueci { margin-top: -.5rem; font-size: .95rem; }
+.acesso-rodape { margin-top: 1.5rem; }
+
+.ver-senha { flex: none; padding-left: .75rem; font-size: .9rem; }
+
+.campo-marcar { display: flex; align-items: flex-start; gap: .75rem; line-height: 1.45; cursor: pointer; }
+.campo-marcar input { flex: none; width: 20px; height: 20px; margin: .15rem 0 0; accent-color: var(--bordo); }
+
+.acesso-pular { display: none; margin-top: 1.25rem; }
+.acesso-caixa > h2 { scroll-margin-top: calc(var(--topo) + 2.5rem); }
+
+@media (max-width: 900px) {
+  .acesso { grid-template-columns: minmax(0, 1fr); }
+  .acesso-pular { display: inline-flex; }
+}
+
+/* Tabela ligada à conta */
+.carregando { color: var(--cinza); }
+.carregando[hidden], #form-medidas[hidden], .painel[hidden] { display: none; }
+.status-salvo { min-height: 1.5em; margin-top: 1rem; font-size: .9rem; color: var(--cinza); }
+.status-salvo.status-falhou { color: var(--erro); }
+
+/* --- Minha conta --------------------------------------------------------------- */
+
+.conta { max-width: 60rem; padding-block: calc(var(--topo) + clamp(2rem, 5vw, 4.5rem)) var(--secao); }
+.conta .etiqueta { margin-bottom: .75rem; }
+.conta-status { margin-block: 2rem; padding: clamp(1.25rem, 3vw, 2.25rem); background: var(--off-2); }
+.conta-status p { margin-top: .5rem; color: var(--cinza); }
+.conta-status .progresso { margin-block: 1.5rem; }
+.conta-rodape { margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--linha); }
+.conta-botoes { display: flex; flex-wrap: wrap; gap: 1rem; }
+.conta-botoes [hidden] { display: none; }
+.conta-excluir { margin-top: 2rem; }
+.conta-excluir summary { cursor: pointer; color: var(--cinza); }
+.conta-excluir p { margin-block: .75rem; color: var(--cinza); }
+.conta-excluir .campo { max-width: 22rem; margin-bottom: 1rem; }
+.revisao-valor { overflow-wrap: anywhere; }
+
+/* --- Painel de clientes -------------------------------------------------------- */
+
+.painel-admin { padding-block: calc(var(--topo) + 2.5rem) var(--secao); }
+.painel-admin > .etiqueta { margin-bottom: .5rem; }
+.painel-numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin: 2rem 0; }
+.painel-numero { display: flex; flex-direction: column-reverse; gap: .25rem; padding: 1.25rem; background: var(--off-2); }
+.painel-numero dd { margin: 0; }
+.painel-filtros { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+.painel-tabela-caixa { overflow-x: auto; }
+.painel-tabela { width: 100%; min-width: 760px; border-collapse: collapse; font-size: .98rem; }
+.painel-tabela th { padding: .75rem .75rem .75rem 0; border-bottom: 1px solid var(--preto); font-size: .72rem; font-weight: 500; letter-spacing: .15em; text-align: left; text-transform: uppercase; }
+.painel-tabela td { padding: .9rem .75rem .9rem 0; border-bottom: 1px solid var(--linha); vertical-align: top; }
+.painel-tabela .texto-botao { text-align: left; font-weight: 500; }
+.painel-tabela a { color: var(--bordo); text-underline-offset: 3px; }
+.painel-suave { display: block; font-size: .88rem; color: var(--cinza); overflow-wrap: anywhere; }
+.painel-selo { display: inline-block; padding: .15rem .55rem; border: 1px solid var(--linha); font-size: .85rem; white-space: nowrap; }
+.painel-selo-concluido { background: var(--preto); border-color: var(--preto); color: var(--off); }
+.painel-selo-andamento { border-color: var(--bordo); color: var(--bordo); }
+.painel-historico li { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: .75rem; padding-block: .4rem; border-bottom: 1px solid var(--linha); font-size: .92rem; overflow-wrap: anywhere; }
+.modal-pessoa .modal-texto { margin-top: -56px; padding-right: 4.5rem; }
+.modal-pessoa .revisao-lista { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 640px) {
+  .painel-numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .painel-filtros { grid-template-columns: minmax(0, 1fr); }
+  .painel-historico li { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}

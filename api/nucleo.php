@@ -1,0 +1,280 @@
+<?php
+/**
+ * Base de todos os endereços da API: banco, sessão, respostas e proteções.
+ * Compatível com PHP 7.4 ou superior.
+ */
+declare(strict_types=1);
+
+if (!defined('AR_API')) {
+    http_response_code(403);
+    exit;
+}
+
+date_default_timezone_set('America/Sao_Paulo');
+ini_set('display_errors', '0');
+
+header('Content-Type: application/json; charset=utf-8');
+header('X-Content-Type-Options: nosniff');
+header('Cache-Control: no-store');
+
+set_exception_handler(function (Throwable $erro): void {
+    error_log('Andre Rauber: ' . $erro->getMessage() . ' em ' . $erro->getFile() . ':' . $erro->getLine());
+    if (!headers_sent()) {
+        http_response_code(500);
+    }
+    echo json_encode(['ok' => false, 'erro' => 'Algo deu errado. Tente novamente em instantes.'], JSON_UNESCAPED_UNICODE);
+});
+
+/* --- Respostas ------------------------------------------------------------ */
+
+function responder(int $status, array $dados = []): void
+{
+    http_response_code($status);
+    echo json_encode(array_merge(['ok' => $status < 400], $dados), JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+function falhar(int $status, string $mensagem, array $extra = []): void
+{
+    responder($status, array_merge(['erro' => $mensagem], $extra));
+}
+
+/* --- Configuração e banco -------------------------------------------------- */
+
+function config(): array
+{
+    static $config = null;
+    if ($config === null) {
+        $caminho = __DIR__ . '/config.php';
+        if (!is_file($caminho)) {
+            error_log('Andre Rauber: api/config.php não encontrado.');
+            falhar(503, 'O sistema de contas ainda não está disponível.');
+        }
+        $config = require $caminho;
+    }
+    return $config;
+}
+
+function banco(): PDO
+{
+    static $pdo = null;
+    if ($pdo === null) {
+        $c = config();
+        $dsn = $c['dsn'] ?? ('mysql:host=' . $c['host'] . ';dbname=' . $c['banco'] . ';charset=utf8mb4');
+        $pdo = new PDO($dsn, $c['usuario'] ?? null, $c['senha'] ?? null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ]);
+    }
+    return $pdo;
+}
+
+function consultar(string $sql, array $valores = []): PDOStatement
+{
+    $comando = banco()->prepare($sql);
+    $comando->execute($valores);
+    return $comando;
+}
+
+function agora(): string
+{
+    return date('Y-m-d H:i:s');
+}
+
+/* --- Entrada --------------------------------------------------------------- */
+
+// Só aceita POST em JSON vindo do próprio site. Outro site não consegue enviar
+// esse formato sem permissão do navegador, o que bloqueia ações forjadas.
+function exigir_post(): array
+{
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+        header('Allow: POST');
+        falhar(405, 'Método não permitido.');
+    }
+    $origem = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $host = parse_url('//' . ($_SERVER['HTTP_HOST'] ?? ''), PHP_URL_HOST);
+    if ($origem !== '' && parse_url($origem, PHP_URL_HOST) !== $host) {
+        falhar(403, 'Origem não permitida.');
+    }
+    if (stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== 0) {
+        falhar(415, 'Formato não aceito.');
+    }
+    $bruto = file_get_contents('php://input', false, null, 0, 64000);
+    $dados = json_decode($bruto === false ? '' : $bruto, true);
+    if (!is_array($dados)) {
+        falhar(400, 'Dados inválidos.');
+    }
+    return $dados;
+}
+
+function texto(array $origem, string $chave, int $limite): string
+{
+    $valor = $origem[$chave] ?? '';
+    if (is_int($valor) || is_float($valor)) {
+        $valor = (string) $valor;
+    }
+    if (!is_string($valor)) {
+        return '';
+    }
+    // Remove caracteres de controle, mantendo quebras de linha
+    $valor = preg_replace('/[^\P{C}\n]/u', '', $valor) ?? '';
+    return mb_substr(trim($valor), 0, $limite, 'UTF-8');
+}
+
+function so_digitos(string $valor, int $limite): string
+{
+    return substr((string) preg_replace('/\D/', '', $valor), 0, $limite);
+}
+
+function telefone_valido(string $telefone): bool
+{
+    $tamanho = strlen($telefone);
+    return $tamanho === 10 || $tamanho === 11;
+}
+
+/* --- Sessão ---------------------------------------------------------------- */
+
+function iniciar_sessao(): void
+{
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        return;
+    }
+    $seguro = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_only_cookies', '1');
+    session_name('ar_sessao');
+    session_set_cookie_params([
+        'lifetime' => 60 * 60 * 24 * 30,
+        'path' => '/',
+        'secure' => $seguro,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    ini_set('session.gc_maxlifetime', (string) (60 * 60 * 24 * 30));
+    session_start();
+}
+
+function usuario_logado(): ?array
+{
+    iniciar_sessao();
+    $id = (int) ($_SESSION['usuario_id'] ?? 0);
+    if ($id === 0) {
+        return null;
+    }
+    $usuario = consultar('SELECT * FROM usuarios WHERE id = ?', [$id])->fetch();
+    // A versão muda quando a senha é trocada: derruba as sessões antigas
+    if (!$usuario || (int) $usuario['sessao_versao'] !== (int) ($_SESSION['sessao_versao'] ?? 0)) {
+        encerrar_sessao();
+        return null;
+    }
+    return $usuario;
+}
+
+function exigir_login(): array
+{
+    $usuario = usuario_logado();
+    if ($usuario === null) {
+        falhar(401, 'Entre na sua conta para continuar.');
+    }
+    return $usuario;
+}
+
+function abrir_sessao(array $usuario): void
+{
+    iniciar_sessao();
+    session_regenerate_id(true);
+    $_SESSION['usuario_id'] = (int) $usuario['id'];
+    $_SESSION['sessao_versao'] = (int) $usuario['sessao_versao'];
+    consultar('UPDATE usuarios SET ultimo_acesso_em = ? WHERE id = ?', [agora(), $usuario['id']]);
+}
+
+function encerrar_sessao(): void
+{
+    iniciar_sessao();
+    $_SESSION = [];
+    $parametros = session_get_cookie_params();
+    setcookie(session_name(), '', [
+        'expires' => time() - 3600,
+        'path' => $parametros['path'],
+        'secure' => $parametros['secure'],
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    session_destroy();
+}
+
+function dados_publicos(array $usuario): array
+{
+    return [
+        'nome' => $usuario['nome'],
+        'email' => $usuario['email'],
+        'telefone' => $usuario['telefone'],
+        'admin' => (int) $usuario['admin'] === 1,
+        'temSenha' => $usuario['senha_hash'] !== null,
+        'consentiu' => $usuario['consentiu_em'] !== null,
+    ];
+}
+
+/* --- Limite de tentativas ----------------------------------------------------- */
+
+function chave_limite(string $acao, string $extra = ''): string
+{
+    return hash('sha256', $acao . '|' . ($_SERVER['REMOTE_ADDR'] ?? '') . '|' . $extra . '|' . config()['segredo']);
+}
+
+function limite_atingido(string $chave, int $maximo, int $segundos): bool
+{
+    $desde = date('Y-m-d H:i:s', time() - $segundos);
+    $total = consultar('SELECT COUNT(*) FROM tentativas WHERE chave = ? AND criado_em > ?', [$chave, $desde])->fetchColumn();
+    return (int) $total >= $maximo;
+}
+
+function contar_tentativa(string $chave): void
+{
+    consultar('INSERT INTO tentativas (chave, criado_em) VALUES (?, ?)', [$chave, agora()]);
+    if (random_int(1, 50) === 1) {
+        consultar('DELETE FROM tentativas WHERE criado_em < ?', [date('Y-m-d H:i:s', time() - 86400)]);
+    }
+}
+
+function exigir_limite(string $chave, int $maximo, int $segundos): void
+{
+    if (limite_atingido($chave, $maximo, $segundos)) {
+        falhar(429, 'Muitas tentativas. Aguarde alguns minutos e tente de novo.');
+    }
+}
+
+/* --- Registro de atividade ------------------------------------------------------ */
+
+function registrar_evento(int $usuarioId, string $tipo, ?string $etapa = null, ?string $detalhes = null): void
+{
+    consultar(
+        'INSERT INTO eventos (usuario_id, tipo, etapa, detalhes, criado_em) VALUES (?, ?, ?, ?, ?)',
+        [$usuarioId, $tipo, $etapa, $detalhes === null ? null : mb_substr($detalhes, 0, 500, 'UTF-8'), agora()]
+    );
+}
+
+/* --- E-mail --------------------------------------------------------------------- */
+
+function enviar_email(string $para, string $assunto, string $corpo): bool
+{
+    $c = config();
+    if (!filter_var($para, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+    // Só para testes: grava em arquivo em vez de enviar
+    if (!empty($c['email_arquivo'])) {
+        return file_put_contents($c['email_arquivo'], json_encode([$para, $assunto, $corpo]) . "\n", FILE_APPEND) !== false;
+    }
+    $cabecalhos = [
+        'MIME-Version: 1.0',
+        'Content-Type: text/plain; charset=UTF-8',
+        'From: Andre Rauber <' . ($c['email_remetente'] ?? '') . '>',
+    ];
+    $enviado = mail($para, mb_encode_mimeheader($assunto, 'UTF-8'), $corpo, implode("\r\n", $cabecalhos));
+    if (!$enviado) {
+        error_log('Andre Rauber: falha ao enviar e-mail.');
+    }
+    return $enviado;
+}

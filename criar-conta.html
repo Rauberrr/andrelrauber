@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Criar conta | Andre Rauber</title>
+  <meta name="description" content="Crie sua conta na Andre Rauber para preencher e guardar suas medidas. Sem precisar enviar mensagem.">
+  <link rel="canonical" href="https://andrerauber.com/criar-conta.html">
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <a class="pular" href="#principal">Pular para o conteúdo</a>
+
+  <header class="topo">
+    <div class="conteudo topo-interno">
+      <a class="topo-logo" href="index.html" aria-label="Andre Rauber, página inicial">
+        <img class="logo-branca" src="assets/img/logo-branca.png" alt="" width="888" height="91">
+        <img class="logo-preta" src="assets/img/logo-preta.png" alt="" width="888" height="91">
+      </a>
+      <nav class="nav" aria-label="Principal">
+        <ul class="nav-lista">
+          <li><a href="index.html">Início</a></li>
+          <li><a href="a-marca.html">A Marca</a></li>
+          <li><a href="medidas.html">Tabela de Medidas</a></li>
+          <li><a href="contato.html">Contato</a></li>
+          <li><a href="minha-conta.html" aria-current="page">Minha conta</a></li>
+        </ul>
+      </nav>
+      <button class="menu-botao" type="button" aria-expanded="false" aria-label="Abrir menu"><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main id="principal" class="conteudo acesso">
+    <section class="acesso-motivo">
+      <span class="etiqueta">Por que criar uma conta?</span>
+      <h1 class="titulo-l">Para a sua peça começar sem precisar mandar mensagem.</h1>
+      <a class="link-seta acesso-pular" href="#titulo-form">Criar minha conta <span aria-hidden="true">↓</span></a>
+      <ul class="motivos">
+        <li>
+          <h2 class="titulo-s">Nada de WhatsApp</h2>
+          <p>Você só conclui o cadastro e preenche suas informações. Tudo chega direto para nós, e não é preciso enviar nenhuma mensagem.</p>
+        </li>
+        <li>
+          <h2 class="titulo-s">No seu tempo</h2>
+          <p>Cada resposta fica salva. Se parar no meio, é só voltar depois e continuar de onde parou, em qualquer aparelho.</p>
+        </li>
+        <li>
+          <h2 class="titulo-s">Medidas guardadas</h2>
+          <p>Nas próximas peças, você só confere o que mudou, sem tirar todas as medidas de novo.</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="acesso-caixa" aria-labelledby="titulo-form">
+      <h2 class="titulo-m" id="titulo-form">Criar conta</h2>
+
+      <div class="acesso-google" id="acesso-google" hidden>
+        <div class="google-botao" id="google-botao"></div>
+        <p class="acesso-ou"><span>ou</span></p>
+      </div>
+
+      <form id="form-registro" novalidate>
+        <p class="erro acesso-erro" role="alert"></p>
+        <div class="isca" aria-hidden="true">
+          <label for="website">Não preencha este campo</label>
+          <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+        <div class="campo">
+          <label for="nome">Nome completo</label>
+          <div class="campo-entrada"><input id="nome" name="nome" type="text" autocomplete="name" maxlength="120" aria-describedby="erro-nome"></div>
+          <p class="erro" id="erro-nome" role="alert"></p>
+        </div>
+        <div class="campo">
+          <label for="email">E-mail</label>
+          <div class="campo-entrada"><input id="email" name="email" type="email" autocomplete="email" maxlength="190" aria-describedby="erro-email"></div>
+          <p class="erro" id="erro-email" role="alert"></p>
+        </div>
+        <div class="campo">
+          <label for="telefone">Telefone com DDD</label>
+          <div class="campo-entrada"><input id="telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="(54) 99999-9999" aria-describedby="ajuda-telefone erro-telefone"></div>
+          <p class="ajuda" id="ajuda-telefone">É por ele que confirmamos os detalhes da peça e combinamos a entrega.</p>
+          <p class="erro" id="erro-telefone" role="alert"></p>
+        </div>
+        <div class="campo">
+          <label for="senha">Senha</label>
+          <div class="campo-entrada">
+            <input id="senha" name="senha" type="password" autocomplete="new-password" aria-describedby="ajuda-senha erro-senha">
+            <button class="texto-botao ver-senha" type="button" data-ver-senha="senha" aria-pressed="false">Mostrar</button>
+          </div>
+          <p class="ajuda" id="ajuda-senha">Pelo menos 8 caracteres.</p>
+          <p class="erro" id="erro-senha" role="alert"></p>
+        </div>
+        <label class="campo-marcar">
+          <input id="consentimento" name="consentimento" type="checkbox" aria-describedby="erro-consentimento">
+          <span>Li e concordo com a <a href="privacidade.html">política de privacidade</a>. Sei que minhas respostas ficam salvas enquanto preencho, mesmo que eu não conclua.</span>
+        </label>
+        <p class="erro" id="erro-consentimento" role="alert"></p>
+        <button class="botao botao-cheio acesso-enviar" type="submit">Criar conta</button>
+      </form>
+
+      <p class="acesso-rodape">Já tem conta? <a href="entrar.html">Entrar</a></p>
+    </section>
+  </main>
+
+  <footer class="rodape sobre-preto">
+    <div class="conteudo">
+      <div class="rodape-base" style="margin-top:0;border-top:0;padding-top:0">
+        <span>© <span data-ano>2026</span> Andre Rauber</span>
+        <a href="privacidade.html">Política de privacidade</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/conta-api.js"></script>
+  <script src="assets/js/conta-acesso.js"></script>
+</body>
+</html>

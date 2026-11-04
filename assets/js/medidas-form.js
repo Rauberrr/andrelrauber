@@ -1,53 +1,61 @@
-/* Tabela de medidas em passo a passo: uma informação por vez, tudo salvo no aparelho */
+/* Tabela de medidas em passo a passo: cada resposta é salva na conta da pessoa */
 (function () {
   'use strict';
 
-  var config = window.AR_CONFIG;
+  var api = window.AR_API;
   var dados = window.AR_MEDIDAS;
   var figura = window.AR_FIGURA;
   var form = document.getElementById('form-medidas');
   if (!form) return;
 
-  var CHAVE = 'ar-medidas-v1';
-  var VALIDADE_DIAS = 30;
+  var PERFIL = 'api/perfil.php';
+  var ESTADOS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
+  var ENDERECO = ['logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'uf'];
 
   var porMedida = {};
   dados.geral.concat(dados.cima, dados.baixo).forEach(function (m) { porMedida[m.id] = m; });
 
   var estado = { cima: null, baixo: null };
+  var precisaConsentir = false;
+  var mostrarNome = false;
+  var mostrarTelefone = false;
+  var jaConcluido = false;
   var atual = null;
   var voltarParaRevisao = false;
   var avisoConfirmado = {};
 
   /* --- As etapas ------------------------------------------------------------- */
 
-  var CAMPOS_PREFERENCIAS = ['cor', 'tecido', 'caimento', 'data_desejada', 'observacoes'];
-
   var ETAPAS = {
+    consentimento: { grupo: 'Antes de começar', titulo: 'Sua privacidade.', tipo: 'consentimento' },
     nome: { grupo: 'Seus dados', titulo: 'Qual é o seu nome?', tipo: 'texto', auto: 'name', max: 120, erro: 'Informe seu nome.' },
     telefone: {
-      grupo: 'Seus dados', titulo: 'Qual é o seu WhatsApp?', desc: 'Com DDD, para continuarmos a conversa.',
-      tipo: 'tel', auto: 'tel-national', dica: '(54) 99999-9999', erro: 'Informe um WhatsApp com DDD.'
+      grupo: 'Seus dados', titulo: 'Qual é o seu telefone?', desc: 'Com DDD. É por ele que confirmamos os detalhes da peça e combinamos a entrega.',
+      tipo: 'tel', auto: 'tel-national', dica: '(54) 99999-9999', erro: 'Informe seu telefone com DDD.'
     },
-    cidade: {
-      grupo: 'Seus dados', titulo: 'Para qual cidade enviamos?', desc: 'O envio é feito pelos Correios.',
-      tipo: 'texto', auto: 'address-level2', max: 120, dica: 'Curitiba, PR', erro: 'Informe sua cidade e estado.'
+    cep: {
+      grupo: 'Endereço', titulo: 'Qual é o seu CEP?', desc: 'O envio é feito pelos Correios. Com o CEP, preenchemos o restante do endereço para você.',
+      tipo: 'tel', auto: 'postal-code', dica: '00000-000', erro: 'Informe os 8 dígitos do CEP.'
     },
+    endereco: { grupo: 'Endereço', titulo: 'Confira seu endereço.', tipo: 'endereco' },
     tamanho: {
       grupo: 'Sobre você', titulo: 'Qual tamanho você costuma usar?', desc: 'Opcional. Ajuda a entender o seu ponto de partida.',
       tipo: 'texto', max: 60, dica: 'Camisa M, calça 42', opcional: true
     },
-    preferencias: { grupo: 'Preferências', titulo: 'Tem alguma preferência?', desc: 'Tudo opcional. Se ainda não souber, decidimos juntos na conversa.', tipo: 'preferencias' },
+    preferencias: { grupo: 'Preferências', titulo: 'Tem alguma preferência?', desc: 'Tudo opcional. Se ainda não souber, decidimos juntos depois.', tipo: 'preferencias' },
     cima: { grupo: 'Parte de cima', titulo: 'Quer fazer uma peça de cima?', desc: 'Camisa, camiseta ou blazer.', tipo: 'decisao' },
     baixo: { grupo: 'Parte de baixo', titulo: 'Quer fazer uma peça de baixo?', desc: 'Calça.', tipo: 'decisao' },
-    revisao: { grupo: 'Quase lá', titulo: 'Confira e envie.', desc: 'O WhatsApp vai abrir com a mensagem pronta, e você decide quando enviar.', tipo: 'revisao' }
+    revisao: { grupo: 'Quase lá', titulo: 'Confira e conclua.', desc: 'Não precisa mandar mensagem: ao concluir, tudo chega direto para nós.', tipo: 'revisao' }
   };
 
   function ids(lista) { return lista.map(function (m) { return m.id; }); }
 
-  // A sequência muda conforme as respostas de Sim e Não
   function sequencia(prever) {
-    var s = ['nome', 'telefone', 'cidade'].concat(ids(dados.geral), ['tamanho', 'preferencias', 'cima']);
+    var s = [];
+    if (precisaConsentir) s.push('consentimento');
+    if (mostrarNome) s.push('nome');
+    if (mostrarTelefone) s.push('telefone');
+    s = s.concat(['cep', 'endereco'], ids(dados.geral), ['tamanho', 'preferencias', 'cima']);
     if (estado.cima === true || (prever && estado.cima === null)) s = s.concat(ids(dados.cima));
     s.push('baixo');
     if (estado.baixo === true || (prever && estado.baixo === null)) s = s.concat(ids(dados.baixo));
@@ -64,6 +72,8 @@
   var botaoVoltar = document.getElementById('botao-voltar');
   var botaoContinuar = document.getElementById('botao-continuar');
   var aviso = document.getElementById('aviso-retomada');
+  var statusSalvo = document.getElementById('status-salvo');
+  var carregando = document.getElementById('carregando');
 
   function cabecalho(id, grupo, titulo, desc, comoLabel) {
     var tag = comoLabel ? 'label for="' + id + '"' : 'h2 tabindex="-1"';
@@ -102,6 +112,35 @@
       '</div>';
   }
 
+  function campoSimples(id, rotulo, classe, extra) {
+    return '<div class="campo ' + (classe || '') + '"><label for="' + id + '">' + rotulo + '</label>' +
+      '<div class="campo-entrada"><input id="' + id + '" name="' + id + '" type="text" ' + (extra || '') + ' aria-describedby="' + id + '-erro"></div>' +
+      '<p class="erro" id="' + id + '-erro" role="alert"></p></div>';
+  }
+
+  function etapaConsentimento(e) {
+    return cabecalho('', e.grupo, e.titulo, '', false) +
+      '<div class="etapa-corpo">' +
+        '<p class="etapa-desc">Para fazer a sua peça, guardamos seu telefone, endereço e medidas na sua conta. Cada resposta é salva assim que você a preenche, mesmo que não conclua, e registramos até onde você chegou.</p>' +
+        '<label class="campo-marcar"><input id="consentimento" type="checkbox"> <span>Li e concordo com a <a href="privacidade.html">política de privacidade</a>.</span></label>' +
+        '<p class="erro" id="consentimento-erro" role="alert"></p>' +
+      '</div>';
+  }
+
+  function etapaEndereco(e) {
+    var opcoes = '<option value="">UF</option>' + ESTADOS.map(function (uf) { return '<option>' + uf + '</option>'; }).join('');
+    return cabecalho('', e.grupo, e.titulo, '', false) +
+      '<div class="etapa-corpo campos">' +
+        campoSimples('logradouro', 'Rua ou avenida', 'campo-inteiro', 'maxlength="160" autocomplete="address-line1"') +
+        campoSimples('numero', 'Número', '', 'maxlength="20" inputmode="text"') +
+        campoSimples('complemento', 'Complemento <span class="opcional">(opcional)</span>', '', 'maxlength="80" autocomplete="address-line2"') +
+        campoSimples('bairro', 'Bairro', 'campo-inteiro', 'maxlength="80"') +
+        campoSimples('cidade', 'Cidade', '', 'maxlength="80" autocomplete="address-level2"') +
+        '<div class="campo"><label for="uf">Estado</label><div class="campo-entrada"><select id="uf" name="uf" autocomplete="address-level1" aria-describedby="uf-erro">' + opcoes + '</select></div>' +
+        '<p class="erro" id="uf-erro" role="alert"></p></div>' +
+      '</div>';
+  }
+
   function etapaPreferencias(e) {
     return cabecalho('', e.grupo, e.titulo, e.desc, false) +
       '<div class="etapa-corpo campos">' +
@@ -132,15 +171,12 @@
         '<div id="revisao-conteudo"></div>' +
         '<div class="envio">' +
           '<p class="erro envio-erro" id="erro-geral" role="alert"></p>' +
-          '<button class="botao botao-cheio" type="submit">Enviar pelo WhatsApp</button>' +
-          '<p class="envio-nota" id="nota-privacidade">Suas respostas ficam salvas apenas neste aparelho, para você não perder nada, e só saem dele quando você envia pelo WhatsApp. Veja a <a href="privacidade.html">política de privacidade</a>.</p>' +
-          '<div class="confirmacao" id="confirmacao" role="status" hidden>' +
-            '<h3 class="titulo-s">Sua mensagem está pronta.</h3>' +
-            '<p>Agora é só tocar em enviar no WhatsApp. Se ele não abriu sozinho, use o link abaixo.</p>' +
-            '<div class="confirmacao-acoes">' +
-              '<a class="link-seta" id="reabrir-whatsapp" href="#" target="_blank" rel="noopener">Abrir o WhatsApp <span aria-hidden="true">→</span></a>' +
-              '<button class="texto-botao" type="button" data-recomecar>Começar novo pedido</button>' +
-            '</div>' +
+          '<button class="botao botao-cheio" id="botao-concluir" type="submit">Concluir cadastro</button>' +
+          '<p class="envio-nota">Você pode voltar à sua conta para alterar as informações quando quiser.</p>' +
+          '<div class="confirmacao" id="confirmacao" role="status" tabindex="-1" hidden>' +
+            '<h3 class="titulo-s">Cadastro concluído.</h3>' +
+            '<p>Recebemos suas informações, e você não precisa enviar nenhuma mensagem. Entraremos em contato pelo seu telefone para falar sobre a peça.</p>' +
+            '<div class="confirmacao-acoes"><a class="link-seta" href="minha-conta.html">Ir para minha conta <span aria-hidden="true">→</span></a></div>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -151,7 +187,9 @@
     function adicionar(id, conteudo) {
       html += '<section class="etapa" data-etapa="' + id + '" hidden>' + conteudo + '</section>';
     }
-    ['nome', 'telefone', 'cidade'].forEach(function (id) { adicionar(id, etapaTexto(id, ETAPAS[id])); });
+    adicionar('consentimento', etapaConsentimento(ETAPAS.consentimento));
+    ['nome', 'telefone', 'cep'].forEach(function (id) { adicionar(id, etapaTexto(id, ETAPAS[id])); });
+    adicionar('endereco', etapaEndereco(ETAPAS.endereco));
     dados.geral.forEach(function (m) { adicionar(m.id, etapaMedida(m, 'Sobre você')); });
     adicionar('tamanho', etapaTexto('tamanho', ETAPAS.tamanho));
     adicionar('preferencias', etapaPreferencias(ETAPAS.preferencias));
@@ -165,72 +203,53 @@
   montar();
 
   var telefone = document.getElementById('telefone');
+  var cep = document.getElementById('cep');
   var confirmacao = document.getElementById('confirmacao');
-  var linkReabrir = document.getElementById('reabrir-whatsapp');
   var erroGeral = document.getElementById('erro-geral');
-  var nota = document.getElementById('nota-privacidade');
-
-  if (config.salvarNoBanco) {
-    nota.innerHTML = 'Suas respostas ficam salvas neste aparelho e, ao enviar, seguem pelo WhatsApp e são guardadas com segurança para a confecção das suas peças. Veja a <a href="privacidade.html">política de privacidade</a>.';
-  }
+  var botaoConcluir = document.getElementById('botao-concluir');
 
   document.getElementById('data_desejada').min = (function () {
     var h = new Date();
     return h.getFullYear() + '-' + String(h.getMonth() + 1).padStart(2, '0') + '-' + String(h.getDate()).padStart(2, '0');
   })();
 
-  telefone.addEventListener('input', function () {
-    var d = telefone.value.replace(/\D/g, '').slice(0, 11);
-    var saida = d;
-    if (d.length > 2) saida = '(' + d.slice(0, 2) + ') ' + d.slice(2);
-    if (d.length > 10) saida = '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7);
-    else if (d.length > 6) saida = '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
-    telefone.value = saida;
+  telefone.addEventListener('input', function () { telefone.value = api.mascaraTelefone(telefone.value); });
+
+  /* --- CEP: busca o endereço e preenche o que estiver vazio ------------------------ */
+
+  var cepBuscado = '';
+  cep.addEventListener('input', function () {
+    cep.value = api.mascaraCep(cep.value);
+    buscarCep();
   });
 
-  /* --- Salvar no aparelho --------------------------------------------------------- */
-
-  function valor(id) {
-    var el = document.getElementById(id);
-    return el ? el.value.trim() : '';
+  function buscarCep() {
+    var numeros = cep.value.replace(/\D/g, '');
+    if (numeros.length !== 8 || numeros === cepBuscado) return;
+    cepBuscado = numeros;
+    fetch('https://viacep.com.br/ws/' + numeros + '/json/', { credentials: 'omit' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || d.erro) return;
+        [['logradouro', d.logradouro], ['bairro', d.bairro], ['cidade', d.localidade], ['uf', d.uf]].forEach(function (par) {
+          var el = document.getElementById(par[0]);
+          if (el && par[1]) {
+            el.value = par[1];
+            marcar(par[0]);
+          }
+        });
+        agendarSalvamento();
+      })
+      .catch(function () { /* Sem a busca, a pessoa preenche o endereço à mão */ });
   }
 
-  function salvar() {
-    var valores = {};
-    form.querySelectorAll('.etapa input, .etapa select, .etapa textarea').forEach(function (el) {
-      if (el.value) valores[el.id] = el.value;
-    });
-    try {
-      localStorage.setItem(CHAVE, JSON.stringify({
-        salvoEm: Date.now(), etapa: atual, cima: estado.cima, baixo: estado.baixo, valores: valores
-      }));
-    } catch (erro) { /* Modo privado ou sem espaço: o formulário segue funcionando */ }
-  }
+  /* --- Salvar no servidor -------------------------------------------------------------- */
 
-  function apagarSalvo() {
-    try { localStorage.removeItem(CHAVE); } catch (erro) { /* nada a fazer */ }
-  }
-
-  function restaurar() {
-    var salvo = null;
-    try { salvo = JSON.parse(localStorage.getItem(CHAVE)); } catch (erro) { salvo = null; }
-    if (!salvo || !salvo.valores) return null;
-    if (Date.now() - (salvo.salvoEm || 0) > VALIDADE_DIAS * 864e5) { apagarSalvo(); return null; }
-    Object.keys(salvo.valores).forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el && form.contains(el)) el.value = salvo.valores[id];
-    });
-    estado.cima = typeof salvo.cima === 'boolean' ? salvo.cima : null;
-    estado.baixo = typeof salvo.baixo === 'boolean' ? salvo.baixo : null;
-    atualizarDecisoes();
-    return salvo;
-  }
-
-  form.addEventListener('input', salvar);
-  form.addEventListener('change', salvar);
-  window.addEventListener('pagehide', salvar);
-
-  /* --- Validação ------------------------------------------------------------------- */
+  var pendentes = {};
+  var etapaSalva = null;
+  var temporizador = null;
+  var enviando = false;
+  var reenviar = false;
 
   function lerNumero(texto) {
     var limpo = String(texto).trim().replace(',', '.');
@@ -238,6 +257,84 @@
     return Math.round(parseFloat(limpo) * 10) / 10;
   }
   function formatar(n) { return String(n).replace('.', ','); }
+
+  function valor(id) {
+    var el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+
+  function marcar(id) {
+    var el = document.getElementById(id);
+    if (!el || id === 'consentimento' || !form.contains(el)) return;
+    if (porMedida[id]) {
+      var texto = el.value.trim();
+      if (!texto) { pendentes[id] = null; return; }
+      var n = lerNumero(texto);
+      // Enquanto o número está incompleto ("38,"), espera a pessoa terminar
+      if (n !== null && n > 0) pendentes[id] = n;
+      return;
+    }
+    pendentes[id] = el.value.trim();
+  }
+
+  function definirStatus(texto, falhou) {
+    statusSalvo.textContent = texto;
+    statusSalvo.classList.toggle('status-falhou', Boolean(falhou));
+  }
+
+  function agendarSalvamento() {
+    clearTimeout(temporizador);
+    temporizador = setTimeout(salvar, 700);
+  }
+
+  function salvar(opcoes) {
+    clearTimeout(temporizador);
+    if (enviando) { reenviar = true; return enviando; }
+    var campos = pendentes;
+    var temCampos = Object.keys(campos).length > 0;
+    if (!temCampos && etapaSalva === atual) return Promise.resolve(true);
+
+    pendentes = {};
+    var etapaEnviada = atual;
+    definirStatus('Salvando...');
+    enviando = api.post(PERFIL + '?acao=salvar', { etapa: etapaEnviada, campos: campos }, opcoes).then(function (r) {
+      enviando = false;
+      if (r.status === 401) { api.irParaLogin('medidas.html'); return false; }
+      if (!r.ok) {
+        // Devolve o que não foi salvo, sem cobrir o que a pessoa digitou depois
+        Object.keys(campos).forEach(function (k) {
+          if (!Object.prototype.hasOwnProperty.call(pendentes, k)) pendentes[k] = campos[k];
+        });
+        definirStatus('Não foi possível salvar. Vamos tentar de novo.', true);
+        clearTimeout(temporizador);
+        temporizador = setTimeout(salvar, 6000);
+        return false;
+      }
+      etapaSalva = etapaEnviada;
+      definirStatus('Salvo na sua conta');
+      if (reenviar) { reenviar = false; return salvar(); }
+      return true;
+    });
+    return enviando;
+  }
+
+  form.addEventListener('input', function (e) {
+    if (!e.target.id) return;
+    marcar(e.target.id);
+    agendarSalvamento();
+  });
+  form.addEventListener('change', function (e) {
+    if (e.target.tagName === 'SELECT' || e.target.type === 'date') {
+      marcar(e.target.id);
+      salvar();
+    }
+  });
+  // Sair da página (ir ao guia, fechar a aba) não perde o que acabou de ser digitado
+  window.addEventListener('pagehide', function () {
+    if (Object.keys(pendentes).length) salvar({ keepalive: true });
+  });
+
+  /* --- Validação ------------------------------------------------------------------- */
 
   function definirErro(id, mensagem) {
     var entrada = document.getElementById(id);
@@ -273,26 +370,23 @@
 
   function validarEtapa(id) {
     if (porMedida[id]) return validarMedida(id, true);
-    if (id === 'nome') return definirErro(id, valor(id) ? '' : ETAPAS.nome.erro);
-    if (id === 'cidade') return definirErro(id, valor(id) ? '' : ETAPAS.cidade.erro);
+    if (id === 'consentimento') {
+      return definirErro(id, document.getElementById(id).checked ? '' : 'É preciso concordar para continuar.');
+    }
+    if (id === 'nome') return definirErro(id, valor(id).length >= 2 ? '' : ETAPAS.nome.erro);
     if (id === 'telefone') {
       var d = valor(id).replace(/\D/g, '');
       return definirErro(id, d.length === 10 || d.length === 11 ? '' : ETAPAS.telefone.erro);
     }
-    return true;
-  }
-
-  function primeiraPendente() {
-    var seq = sequencia();
-    for (var i = 0; i < seq.length; i++) {
-      var id = seq[i];
-      if (id === 'revisao') return null;
-      if (id === 'cima' && estado.cima === null) return id;
-      if (id === 'baixo' && estado.baixo === null) return id;
-      if (porMedida[id] && !validarMedida(id, false)) return id;
-      if ((id === 'nome' || id === 'cidade' || id === 'telefone') && !validarEtapa(id)) return id;
+    if (id === 'cep') return definirErro(id, valor(id).replace(/\D/g, '').length === 8 ? '' : ETAPAS.cep.erro);
+    if (id === 'endereco') {
+      var ok = true;
+      [['logradouro', 'Informe a rua ou avenida.'], ['numero', 'Informe o número (ou "s/n").'], ['bairro', 'Informe o bairro.'], ['cidade', 'Informe a cidade.'], ['uf', 'Escolha o estado.']].forEach(function (par) {
+        ok = definirErro(par[0], valor(par[0]) ? '' : par[1]) && ok;
+      });
+      return ok;
     }
-    return null;
+    return true;
   }
 
   /* --- Navegação ------------------------------------------------------------------- */
@@ -328,12 +422,13 @@
   function mostrar(id, opcoes) {
     opcoes = opcoes || {};
     var seq = sequencia();
-    if (seq.indexOf(id) === -1) id = 'nome';
+    if (seq.indexOf(id) === -1) id = seq[0];
 
     var anterior = atual;
     var direcao = anterior && seq.indexOf(id) < seq.indexOf(anterior) ? 'anima-tras' : 'anima-frente';
     atual = id;
-    document.body.classList.toggle('etapa-avancada', id !== 'nome');
+    if (anterior) aviso.hidden = true;
+    document.body.classList.toggle('etapa-avancada', id !== seq[0]);
 
     form.querySelectorAll('.etapa').forEach(function (etapa) {
       var ativa = etapa.getAttribute('data-etapa') === id;
@@ -348,11 +443,17 @@
     botaoContinuar.hidden = tipo === 'decisao' || tipo === 'revisao';
     botaoContinuar.textContent = voltarParaRevisao ? 'Salvar e revisar' : 'Continuar';
 
-    if (id === 'revisao') montarRevisao();
+    if (id === 'revisao') {
+      montarRevisao();
+      botaoConcluir.textContent = jaConcluido ? 'Salvar alterações' : 'Concluir cadastro';
+      confirmacao.hidden = true;
+      erroGeral.textContent = '';
+    }
+    if (id === 'endereco') buscarCep();
     atualizarDecisoes();
     atualizarProgresso(id);
     mostrarNoPainel(porMedida[id] || null);
-    salvar();
+    if (opcoes.salvar !== false) salvar();
 
     if (opcoes.historico === 'novo') history.pushState({ etapa: id }, '');
     else if (opcoes.historico === 'trocar') history.replaceState({ etapa: id }, '');
@@ -360,18 +461,41 @@
     if (opcoes.foco !== false) {
       rolarParaTopoDoForm();
       var etapaEl = form.querySelector('.etapa[data-etapa="' + id + '"]');
-      var alvo = etapaEl.querySelector('input, select, textarea') || etapaEl.querySelector('h2');
-      if (tipo === 'preferencias' || tipo === 'revisao' || tipo === 'decisao') alvo = etapaEl.querySelector('h2');
+      var alvo = (tipo === 'preferencias' || tipo === 'revisao' || tipo === 'decisao' || tipo === 'consentimento')
+        ? etapaEl.querySelector('h2')
+        : etapaEl.querySelector('input, select, textarea');
+      // Com a rua preenchida pelo CEP, o que falta primeiro é o número
+      if (id === 'endereco' && valor('logradouro')) alvo = document.getElementById('numero');
       if (alvo) alvo.focus({ preventScroll: true });
     }
   }
 
+  function camposDaEtapa(id) {
+    if (id === 'endereco') return ENDERECO;
+    if (id === 'preferencias') return ['cor', 'tecido', 'caimento', 'data_desejada', 'observacoes'];
+    return [id];
+  }
+
   function avancar() {
     if (!validarEtapa(atual)) {
-      var entrada = document.getElementById(atual);
+      var entrada = document.querySelector('.etapa:not([hidden]) [aria-invalid="true"]') || document.getElementById(atual);
       if (entrada) entrada.focus();
       return;
     }
+    camposDaEtapa(atual).forEach(marcar);
+
+    if (atual === 'consentimento') {
+      pendentes.consentimento = true;
+      var seqAntes = sequencia();
+      var seguinte = seqAntes[seqAntes.indexOf(atual) + 1];
+      salvar().then(function (ok) {
+        if (ok === false) { definirErro('consentimento', 'Não foi possível salvar. Tente de novo.'); return; }
+        precisaConsentir = false;
+        mostrar(seguinte, { historico: 'novo' });
+      });
+      return;
+    }
+
     if (voltarParaRevisao) { voltarParaRevisao = false; mostrar('revisao', { historico: 'novo' }); return; }
     var seq = sequencia();
     mostrar(seq[seq.indexOf(atual) + 1], { historico: 'novo' });
@@ -379,29 +503,29 @@
 
   botaoVoltar.addEventListener('click', function () {
     voltarParaRevisao = false;
+    camposDaEtapa(atual).forEach(marcar);
     var seq = sequencia();
     var i = seq.indexOf(atual);
     if (i > 0) mostrar(seq[i - 1], { historico: 'novo' });
   });
 
-  // Respostas de Sim e Não
   form.addEventListener('click', function (e) {
     var b = e.target.closest ? e.target.closest('[data-decisao]') : null;
     if (b) {
       var id = b.getAttribute('data-decisao');
       var sim = b.getAttribute('data-valor') === 'sim';
       var erro = document.getElementById(id + '-erro');
+      var campo = id === 'cima' ? 'parte_cima' : 'parte_baixo';
       erro.textContent = '';
       voltarParaRevisao = false;
+      estado[id] = sim;
+      pendentes[campo] = sim;
+      atualizarDecisoes();
       if (id === 'baixo' && !sim && estado.cima === false) {
-        estado.baixo = false;
-        atualizarDecisoes();
         erro.textContent = 'Escolha pelo menos uma das partes. Toque em Sim ou volte para a parte de cima.';
         salvar();
         return;
       }
-      estado[id] = sim;
-      atualizarDecisoes();
       var seq = sequencia();
       // Pequena pausa para a pessoa ver a escolha marcada
       setTimeout(function () { mostrar(seq[seq.indexOf(id) + 1], { historico: 'novo' }); }, 260);
@@ -410,29 +534,13 @@
 
     var alterar = e.target.closest ? e.target.closest('[data-alterar]') : null;
     if (alterar) {
+      var alvo = alterar.getAttribute('data-alterar');
+      if (alvo === 'nome') mostrarNome = true;
+      if (alvo === 'telefone') mostrarTelefone = true;
       voltarParaRevisao = true;
-      mostrar(alterar.getAttribute('data-alterar'), { historico: 'novo' });
-      return;
+      mostrar(alvo, { historico: 'novo' });
     }
-
-    var recomecar = e.target.closest ? e.target.closest('[data-recomecar]') : null;
-    if (recomecar) recomecarTudo();
   });
-
-  document.querySelector('[data-recomecar-topo]').addEventListener('click', recomecarTudo);
-
-  function recomecarTudo() {
-    form.querySelectorAll('.etapa input, .etapa select, .etapa textarea').forEach(function (el) { el.value = ''; });
-    form.querySelectorAll('.erro, .aviso').forEach(function (el) { el.textContent = ''; });
-    estado.cima = null;
-    estado.baixo = null;
-    avisoConfirmado = {};
-    voltarParaRevisao = false;
-    confirmacao.hidden = true;
-    aviso.hidden = true;
-    apagarSalvo();
-    mostrar('nome', { historico: 'novo' });
-  }
 
   // O botão Voltar do celular anda entre as etapas e fecha a imagem ampliada
   window.addEventListener('popstate', function (e) {
@@ -471,6 +579,12 @@
 
   function dataBrasileira(iso) { return iso.split('-').reverse().join('/'); }
 
+  function textoEndereco() {
+    var linha = valor('logradouro') + (valor('numero') ? ', ' + valor('numero') : '');
+    if (valor('complemento')) linha += ' (' + valor('complemento') + ')';
+    return linha + ' · ' + valor('bairro') + ' · ' + valor('cidade') + '/' + valor('uf');
+  }
+
   function montarRevisao() {
     var prefs = '';
     if (valor('cor')) prefs += itemRevisao('Cor', valor('cor'), 'preferencias');
@@ -485,66 +599,21 @@
     document.getElementById('revisao-conteudo').innerHTML =
       grupoRevisao('Seus dados',
         itemRevisao('Nome', valor('nome'), 'nome') +
-        itemRevisao('WhatsApp', valor('telefone'), 'telefone') +
-        itemRevisao('Cidade', valor('cidade'), 'cidade')) +
+        itemRevisao('Telefone', valor('telefone'), 'telefone') +
+        itemRevisao('CEP', valor('cep'), 'cep') +
+        itemRevisao('Endereço', textoEndereco(), 'endereco', true)) +
       grupoRevisao('Sobre você', geral) +
       (estado.cima ? grupoRevisao('Parte de cima', itensMedidas(dados.cima)) : '') +
       (estado.baixo ? grupoRevisao('Parte de baixo', itensMedidas(dados.baixo)) : '') +
       grupoRevisao('Preferências', prefs);
   }
 
-  /* --- Mensagem e envio --------------------------------------------------------------- */
+  /* --- Concluir ------------------------------------------------------------------------- */
 
-  function linhasMedidas(lista) {
-    return lista.map(function (m) {
-      return m.rotulo + ': ' + formatar(lerNumero(valor(m.id))) + ' ' + m.unidade;
-    });
-  }
-
-  function montarMensagem() {
-    var l = ['*NOVAS MEDIDAS | ANDRE RAUBER*', ''];
-    l.push('*Cliente*', 'Nome: ' + valor('nome'), 'WhatsApp: ' + valor('telefone'), 'Cidade/UF: ' + valor('cidade'), '');
-
-    l.push('*Geral*');
-    l = l.concat(linhasMedidas(dados.geral));
-    if (valor('tamanho')) l.push('Tamanho que costuma usar: ' + valor('tamanho'));
-    l.push('');
-
-    if (estado.cima) l = l.concat(['*Parte de cima*'], linhasMedidas(dados.cima), ['']);
-    if (estado.baixo) l = l.concat(['*Parte de baixo*'], linhasMedidas(dados.baixo), ['']);
-
-    var prefs = [];
-    if (valor('cor')) prefs.push('Cor: ' + valor('cor'));
-    if (valor('tecido')) prefs.push('Tecido: ' + valor('tecido'));
-    if (valor('caimento')) prefs.push('Caimento: ' + valor('caimento'));
-    if (valor('data_desejada')) prefs.push('Preciso até: ' + dataBrasileira(valor('data_desejada')));
-    if (valor('observacoes')) prefs.push('Observações: ' + valor('observacoes'));
-    if (prefs.length) l = l.concat(['*Preferências*'], prefs);
-
-    return l.join('\n').trim();
-  }
-
-  function salvarNoBanco() {
-    if (!config.salvarNoBanco) return;
-    var corpo = {
-      nome: valor('nome'), telefone: valor('telefone'), cidade: valor('cidade'),
-      parte_cima: estado.cima === true, parte_baixo: estado.baixo === true,
-      tamanho: valor('tamanho'), cor: valor('cor'), tecido: valor('tecido'),
-      caimento: valor('caimento'), data_desejada: valor('data_desejada'), observacoes: valor('observacoes'),
-      website: form.elements.website.value,
-      medidas: {}
-    };
-    dados.geral.concat(estado.cima ? dados.cima : [], estado.baixo ? dados.baixo : []).forEach(function (m) {
-      corpo.medidas[m.id] = lerNumero(valor(m.id));
-    });
-    // Se o salvamento falhar, o cliente ainda envia pelo WhatsApp: nada se perde
-    fetch(config.endereco, {
-      method: 'POST',
-      keepalive: true,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(corpo)
-    }).catch(function (erro) { console.warn('Não foi possível salvar no banco:', erro); });
-  }
+  var ETAPA_DO_CAMPO = {
+    logradouro: 'endereco', numero: 'endereco', bairro: 'endereco', cidade: 'endereco', uf: 'endereco',
+    parte_cima: 'cima', parte_baixo: 'baixo'
+  };
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
@@ -552,19 +621,30 @@
 
     erroGeral.textContent = '';
     confirmacao.hidden = true;
-    var pendente = primeiraPendente();
-    if (pendente) { mostrar(pendente, { historico: 'novo' }); return; }
-    if (estado.cima !== true && estado.baixo !== true) { mostrar('cima', { historico: 'novo' }); return; }
+    botaoConcluir.disabled = true;
 
-    var url = 'https://wa.me/' + config.whatsapp + '?text=' + encodeURIComponent(montarMensagem());
-    linkReabrir.href = url;
-    salvarNoBanco();
-
-    // Abre na hora do clique, senão o navegador pode bloquear a nova aba.
-    // O link da confirmação cobre os casos em que a aba não abrir.
-    window.open(url, '_blank', 'noopener');
-    confirmacao.hidden = false;
-    confirmacao.scrollIntoView({ block: 'nearest' });
+    Promise.resolve(salvar()).then(function () {
+      return api.post(PERFIL + '?acao=concluir', {});
+    }).then(function (r) {
+      botaoConcluir.disabled = false;
+      if (r.status === 401) { api.irParaLogin('medidas.html'); return; }
+      if (r.ok) {
+        jaConcluido = true;
+        botaoConcluir.textContent = 'Salvar alterações';
+        confirmacao.hidden = false;
+        confirmacao.focus({ preventScroll: true });
+        confirmacao.scrollIntoView({ block: 'nearest' });
+        return;
+      }
+      var pendente = (r.dados.pendentes || [])[0];
+      if (pendente) {
+        if (pendente === 'nome') mostrarNome = true;
+        if (pendente === 'telefone') mostrarTelefone = true;
+        mostrar(ETAPA_DO_CAMPO[pendente] || pendente, { historico: 'novo' });
+        return;
+      }
+      erroGeral.textContent = r.erro;
+    });
   });
 
   /* --- Figura: painel ao lado e imagem ampliada ------------------------------------------ */
@@ -615,13 +695,60 @@
     if (entrada) entrada.focus({ preventScroll: true });
   });
 
-  /* --- Início ------------------------------------------------------------------------------ */
+  /* --- Início: busca o que já foi preenchido -------------------------------------------- */
 
-  var salvo = restaurar();
-  var inicial = 'nome';
-  if (salvo) {
-    if (sequencia().indexOf(salvo.etapa) !== -1) inicial = salvo.etapa;
-    if (inicial !== 'nome' || valor('nome')) aviso.hidden = false;
+  function preencher(usuario, cadastro) {
+    document.getElementById('nome').value = usuario.nome || '';
+    telefone.value = api.mascaraTelefone(usuario.telefone || '');
+    cep.value = api.mascaraCep(cadastro.cep || '');
+    cepBuscado = (cadastro.cep || '').length === 8 ? cadastro.cep : '';
+
+    ['logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'uf', 'tamanho', 'cor', 'tecido', 'caimento', 'observacoes'].forEach(function (id) {
+      document.getElementById(id).value = cadastro[id] || '';
+    });
+    document.getElementById('data_desejada').value = cadastro.data_desejada || '';
+    Object.keys(porMedida).forEach(function (id) {
+      var v = cadastro[id];
+      document.getElementById(id).value = v === null || v === undefined ? '' : formatar(parseFloat(v));
+    });
+
+    function sn(v) { return v === null || v === undefined ? null : Number(v) === 1; }
+    estado.cima = sn(cadastro.parte_cima);
+    estado.baixo = sn(cadastro.parte_baixo);
+    precisaConsentir = !usuario.consentiu;
+    mostrarNome = String(usuario.nome || '').length < 2;
+    var d = String(usuario.telefone || '');
+    mostrarTelefone = d.length !== 10 && d.length !== 11;
+    jaConcluido = Boolean(cadastro.concluido_em);
+    etapaSalva = cadastro.etapa_atual || null;
   }
-  mostrar(inicial, { foco: false, historico: 'trocar' });
+
+  function erroAoCarregar(mensagem) {
+    carregando.textContent = mensagem;
+    carregando.hidden = false;
+  }
+
+  try { localStorage.removeItem('ar-medidas-v1'); } catch (erro) { /* nada a fazer */ }
+
+  api.get(PERFIL).then(function (r) {
+    if (r.status === 401) { api.irParaLogin('medidas.html'); return; }
+    if (!r.ok) {
+      erroAoCarregar('Não foi possível carregar seu cadastro. Tente novamente em instantes.');
+      return;
+    }
+    preencher(r.dados.usuario, r.dados.cadastro);
+    carregando.hidden = true;
+    form.hidden = false;
+    document.getElementById('painel').hidden = false;
+
+    var seq = sequencia();
+    var salva = r.dados.cadastro.etapa_atual;
+    var pedeRevisao = new URLSearchParams(location.search).get('revisar') === '1' && jaConcluido;
+    var inicial = seq[0];
+    if (pedeRevisao) inicial = 'revisao';
+    else if (salva && seq.indexOf(salva) !== -1 && !precisaConsentir) inicial = salva;
+
+    if (inicial !== seq[0] && !pedeRevisao) aviso.hidden = false;
+    mostrar(inicial, { foco: false, historico: 'trocar' });
+  });
 })();

@@ -1,14 +1,8 @@
 /* ==========================================================================
-   Configurações do site — é aqui que você muda número e liga o banco de dados
+   Configurações do site
+   As configurações do servidor (banco, Google, e-mail) ficam em api/config.php
    ========================================================================== */
 window.AR_CONFIG = {
-  // WhatsApp que recebe as medidas: 55 (Brasil) + DDD + número, só dígitos
-  whatsapp: '5554997096003',
-
-  // false = só envia pelo WhatsApp e nada fica guardado no site.
-  // true  = também salva no banco de dados. Antes, siga o passo a passo do README.md.
-  salvarNoBanco: false,
-
-  // Arquivo PHP que recebe os dados quando salvarNoBanco é true
-  endereco: 'api/salvar-medidas.php'
+  // WhatsApp dos links de contato: 55 (Brasil) + DDD + número, só dígitos
+  whatsapp: '5554997096003'
 };
