@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tabela de Medidas | Andre Rauber</title>
-  <meta name="description" content="Preencha suas medidas de parte de cima e parte de baixo e envie pelo WhatsApp para fazer sua peça sob medida.">
+  <meta name="description" content="Informe suas medidas passo a passo e envie pelo WhatsApp para fazer sua peça sob medida.">
   <link rel="canonical" href="https://andrerauber.com/medidas.html">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="pt_BR">
   <meta property="og:site_name" content="Andre Rauber">
   <meta property="og:title" content="Tabela de Medidas | Andre Rauber">
-  <meta property="og:description" content="Preencha suas medidas e envie pelo WhatsApp.">
+  <meta property="og:description" content="Informe suas medidas passo a passo e envie pelo WhatsApp.">
   <meta property="og:url" content="https://andrerauber.com/medidas.html">
   <meta property="og:image" content="https://andrerauber.com/assets/img/compartilhar.png">
   <meta name="theme-color" content="#f4f1ea">
@@ -18,7 +18,7 @@
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..500;1,6..96,400&family=Jost:wght@300..500&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
   <link rel="stylesheet" href="assets/css/style.css">
   <script>document.documentElement.classList.add('js');</script>
 </head>
@@ -44,15 +44,14 @@
   </header>
 
   <main id="principal">
-    <section class="abertura conteudo">
+    <section class="abertura abertura-compacta conteudo">
       <span class="etiqueta">Tabela de Medidas</span>
-      <div class="abertura-medidas">
-        <div>
-          <h1 class="titulo-xl">Suas medidas,<br>sua peça.</h1>
-          <p class="lead">Preencha com calma, de preferência com a ajuda de alguém. No final, o site monta a mensagem pronta para enviar pelo WhatsApp.</p>
-        </div>
-        <a class="link-seta" href="guia-de-medidas.html" target="_blank" rel="noopener">Como tirar as medidas <span aria-hidden="true">→</span></a>
-      </div>
+      <h1 class="titulo-m">Uma informação de cada vez. Em poucos minutos, está pronto.</h1>
+      <p class="retomada" id="aviso-retomada" hidden>
+        <span>Suas respostas estavam salvas neste aparelho.</span>
+        <button class="texto-botao" type="button" data-recomecar-topo>Começar do zero</button>
+      </p>
+      <p class="etapa-desc"><a href="guia-de-medidas.html">Ver o guia ilustrado</a>. Suas respostas continuam salvas quando você voltar.</p>
     </section>
 
     <div class="conteudo medidas-layout">
@@ -62,142 +61,37 @@
           <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
         </div>
 
-        <fieldset class="bloco">
-          <legend>
-            <span class="bloco-titulo"><span class="bloco-num">01</span><span class="titulo-m">Seus dados</span></span>
-          </legend>
-          <p class="bloco-desc">Para respondermos você e calcularmos o envio.</p>
-          <div class="campos">
-            <div class="campo campo-inteiro">
-              <label for="nome">Nome completo</label>
-              <div class="campo-entrada"><input id="nome" name="nome" type="text" autocomplete="name" maxlength="120" aria-describedby="nome-erro"></div>
-              <p class="erro" id="nome-erro"></p>
-            </div>
-            <div class="campo">
-              <label for="telefone">WhatsApp com DDD</label>
-              <div class="campo-entrada"><input id="telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="(54) 99999-9999" aria-describedby="telefone-erro"></div>
-              <p class="erro" id="telefone-erro"></p>
-            </div>
-            <div class="campo">
-              <label for="cidade">Cidade e estado</label>
-              <div class="campo-entrada"><input id="cidade" name="cidade" type="text" autocomplete="address-level2" maxlength="120" placeholder="Curitiba, PR" aria-describedby="cidade-erro"></div>
-              <p class="erro" id="cidade-erro"></p>
-            </div>
-          </div>
-        </fieldset>
+        <div class="progresso" role="progressbar" aria-label="Progresso do preenchimento" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="barra-progresso"></span></div>
 
-        <fieldset class="bloco">
-          <legend>
-            <span class="bloco-titulo"><span class="bloco-num">02</span><span class="titulo-m">O que você quer fazer?</span></span>
-          </legend>
-          <p class="bloco-desc">As medidas aparecem conforme a sua escolha.</p>
-          <div class="escolhas">
-            <label class="escolha">
-              <input id="escolha-cima" type="checkbox" name="parte_cima">
-              <span class="escolha-corpo">
-                <span class="escolha-topo"><span class="titulo-s">Parte de cima</span><span class="escolha-marca" aria-hidden="true"></span></span>
-                <span class="escolha-desc">Camisa, camiseta, blazer</span>
-              </span>
-            </label>
-            <label class="escolha">
-              <input id="escolha-baixo" type="checkbox" name="parte_baixo">
-              <span class="escolha-corpo">
-                <span class="escolha-topo"><span class="titulo-s">Parte de baixo</span><span class="escolha-marca" aria-hidden="true"></span></span>
-                <span class="escolha-desc">Calça</span>
-              </span>
-            </label>
-          </div>
-          <p class="escolhas-nota">Para um terno, marque as duas.</p>
-          <p class="erro" id="erro-partes" role="alert"></p>
-        </fieldset>
+        <div id="etapas"></div>
+        <noscript><p>Para preencher a tabela, ative o JavaScript ou chame no <a href="https://wa.me/5554997096003">WhatsApp</a>.</p></noscript>
 
-        <fieldset class="bloco">
-          <legend>
-            <span class="bloco-titulo"><span class="bloco-num">03</span><span class="titulo-m">Medidas gerais</span></span>
-          </legend>
-          <p class="bloco-desc">Elas ajudam a conferir a proporção do conjunto.</p>
-          <div class="campos" id="campos-geral-medidas"></div>
-          <div class="campos" style="margin-top:2rem">
-            <div class="campo campo-inteiro">
-              <label for="tamanho">Tamanho que costuma usar <span class="opcional">(opcional)</span></label>
-              <div class="campo-entrada"><input id="tamanho" name="tamanho" type="text" maxlength="60" placeholder="Camisa M, calça 42"></div>
-            </div>
-          </div>
-        </fieldset>
-
-        <fieldset class="bloco" id="bloco-cima" hidden>
-          <legend>
-            <span class="bloco-titulo"><span class="bloco-num">04</span><span class="titulo-m">Parte de cima</span></span>
-          </legend>
-          <p class="bloco-desc">Em centímetros, com a fita firme e sem apertar. <a href="guia-de-medidas.html#cima" target="_blank" rel="noopener">Ver o guia ilustrado</a>.</p>
-          <div class="campos" id="campos-cima"></div>
-        </fieldset>
-
-        <fieldset class="bloco" id="bloco-baixo" hidden>
-          <legend>
-            <span class="bloco-titulo"><span class="bloco-num">05</span><span class="titulo-m">Parte de baixo</span></span>
-          </legend>
-          <p class="bloco-desc">Em centímetros, com a fita firme e sem apertar. <a href="guia-de-medidas.html#baixo" target="_blank" rel="noopener">Ver o guia ilustrado</a>.</p>
-          <div class="campos" id="campos-baixo"></div>
-        </fieldset>
-
-        <fieldset class="bloco">
-          <legend>
-            <span class="bloco-titulo"><span class="bloco-num">06</span><span class="titulo-m">Suas preferências</span></span>
-          </legend>
-          <p class="bloco-desc">Tudo opcional. Se ainda não souber, a gente decide junto na conversa.</p>
-          <div class="campos">
-            <div class="campo">
-              <label for="cor">Cor <span class="opcional">(opcional)</span></label>
-              <div class="campo-entrada"><input id="cor" name="cor" type="text" maxlength="80" placeholder="Preto, off-white, azul-marinho"></div>
-            </div>
-            <div class="campo">
-              <label for="tecido">Tecido <span class="opcional">(opcional)</span></label>
-              <div class="campo-entrada"><input id="tecido" name="tecido" type="text" maxlength="80" placeholder="Algodão, linho, alfaiataria"></div>
-            </div>
-            <div class="campo">
-              <label for="caimento">Caimento <span class="opcional">(opcional)</span></label>
-              <div class="campo-entrada">
-                <select id="caimento" name="caimento">
-                  <option value="">Selecione</option>
-                  <option>Ajustado</option>
-                  <option>Regular</option>
-                  <option>Amplo</option>
-                  <option>Quero orientação</option>
-                </select>
-              </div>
-            </div>
-            <div class="campo">
-              <label for="data_desejada">Preciso até <span class="opcional">(opcional)</span></label>
-              <div class="campo-entrada"><input id="data_desejada" name="data_desejada" type="date"></div>
-            </div>
-            <div class="campo campo-inteiro">
-              <label for="observacoes">Observações <span class="opcional">(opcional)</span></label>
-              <div class="campo-entrada"><textarea id="observacoes" name="observacoes" rows="3" maxlength="800" placeholder="Qual peça você quer, referências de estilo, o que costuma incomodar nas suas roupas"></textarea></div>
-            </div>
-          </div>
-        </fieldset>
-
-        <div class="envio">
-          <p class="erro envio-erro" id="erro-geral" role="alert"></p>
-          <button class="botao botao-cheio" type="submit">Enviar pelo WhatsApp</button>
-          <p class="envio-nota" id="nota-privacidade">Suas medidas vão direto para o WhatsApp da Andre Rauber. Este site não guarda nenhuma delas. Você revisa a mensagem antes de enviar. Veja a <a href="privacidade.html">política de privacidade</a>.</p>
-          <div class="confirmacao" id="confirmacao" role="status" hidden>
-            <h3 class="titulo-s">Sua mensagem está pronta.</h3>
-            <p>Agora é só tocar em enviar no WhatsApp. Se ele não abriu sozinho, use o botão abaixo.</p>
-            <a class="link-seta" id="reabrir-whatsapp" href="#" target="_blank" rel="noopener">Abrir o WhatsApp <span aria-hidden="true">→</span></a>
-          </div>
+        <div class="etapas-nav" id="etapas-nav" hidden>
+          <button class="texto-botao" id="botao-voltar" type="button">Voltar</button>
+          <button class="botao botao-cheio" id="botao-continuar" type="submit">Continuar</button>
         </div>
       </form>
 
       <aside class="painel" aria-label="Onde medir">
         <span class="etiqueta">Onde medir</span>
-        <div class="painel-figura" id="painel-figura"></div>
+        <button class="painel-ampliar" id="painel-ampliar" type="button" disabled><span class="painel-figura" id="painel-figura" style="display:block"></span></button>
         <h2 class="titulo-s painel-titulo" id="painel-titulo" aria-live="polite"></h2>
         <p class="painel-texto" id="painel-texto"></p>
       </aside>
     </div>
   </main>
+
+  <dialog class="modal-figura" id="modal-figura" aria-labelledby="modal-titulo">
+    <button class="modal-fechar" id="modal-fechar" type="button" aria-label="Fechar a imagem">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+    <div class="modal-desenho" id="modal-desenho"></div>
+    <div class="modal-texto">
+      <h2 class="titulo-m" id="modal-titulo"></h2>
+      <p id="modal-como"></p>
+      <p class="guia-erro"><strong>Erro comum:</strong> <span id="modal-erro"></span></p>
+    </div>
+  </dialog>
 
   <footer class="rodape sobre-preto">
     <div class="conteudo">

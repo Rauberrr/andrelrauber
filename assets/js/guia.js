@@ -6,7 +6,7 @@
   var figura = window.AR_FIGURA;
 
   function cartao(m) {
-    return '<article class="guia-item revelar">' +
+    return '<article class="guia-item revelar" id="' + m.id + '">' +
       '<div class="guia-figura">' + figura.desenhar(m, m.recorte) + '</div>' +
       '<div>' +
         '<h3 class="titulo-s">' + m.rotulo + '</h3>' +
@@ -23,4 +23,10 @@
   preencher('guia-cima', dados.cima);
   preencher('guia-baixo', dados.baixo);
   preencher('guia-geral', dados.geral);
+
+  // Os cartões nascem depois do carregamento: vai até o que foi pedido no link
+  if (location.hash) {
+    var alvo = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (alvo) alvo.scrollIntoView();
+  }
 })();
