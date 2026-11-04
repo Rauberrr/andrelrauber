@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minha conta | Andre Rauber</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <a class="pular" href="#principal">Pular para o conteúdo</a>
+
+  <header class="topo">
+    <div class="conteudo topo-interno">
+      <a class="topo-logo" href="index.html" aria-label="Andre Rauber, página inicial">
+        <img class="logo-branca" src="assets/img/logo-branca.png" alt="" width="888" height="91">
+        <img class="logo-preta" src="assets/img/logo-preta.png" alt="" width="888" height="91">
+      </a>
+      <nav class="nav" aria-label="Principal">
+        <ul class="nav-lista">
+          <li><a href="index.html">Início</a></li>
+          <li><a href="a-marca.html">A Marca</a></li>
+          <li><a href="medidas.html">Tabela de Medidas</a></li>
+          <li><a href="contato.html">Contato</a></li>
+          <li><a href="minha-conta.html" aria-current="page">Minha conta</a></li>
+        </ul>
+      </nav>
+      <button class="menu-botao" type="button" aria-expanded="false" aria-label="Abrir menu"><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main id="principal" class="conteudo conta">
+    <p class="carregando" id="carregando">Carregando sua conta...</p>
+
+    <div id="conta-conteudo" hidden>
+      <span class="etiqueta">Minha conta</span>
+      <h1 class="titulo-l" id="conta-ola"></h1>
+
+      <section class="conta-status" aria-labelledby="conta-status-titulo">
+        <h2 class="titulo-s" id="conta-status-titulo"></h2>
+        <p id="conta-status-texto"></p>
+        <div class="progresso" role="progressbar" aria-label="Progresso do cadastro" aria-valuemin="0" aria-valuemax="100" id="conta-progresso"><span id="conta-barra"></span></div>
+        <a class="botao botao-cheio" id="conta-acao" href="medidas.html"></a>
+      </section>
+
+      <div id="conta-dados"></div>
+
+      <section class="conta-rodape">
+        <div class="conta-botoes">
+          <button class="botao" type="button" id="conta-sair">Sair</button>
+          <a class="botao" id="conta-painel" href="painel.html" hidden>Painel de clientes</a>
+          <a class="botao" id="conta-senha" href="esqueci-senha.html" hidden>Trocar senha</a>
+        </div>
+
+        <details class="conta-excluir">
+          <summary>Excluir minha conta</summary>
+          <p>Isso apaga seus dados, suas medidas e seu histórico do banco de dados do site. Não dá para desfazer.</p>
+          <div class="campo">
+            <label for="excluir-confirmacao">Digite EXCLUIR para confirmar</label>
+            <div class="campo-entrada"><input id="excluir-confirmacao" type="text" autocomplete="off"></div>
+            <p class="erro" id="excluir-erro" role="alert"></p>
+          </div>
+          <button class="botao" type="button" id="conta-excluir">Excluir conta</button>
+        </details>
+      </section>
+    </div>
+  </main>
+
+  <footer class="rodape sobre-preto">
+    <div class="conteudo">
+      <div class="rodape-base" style="margin-top:0;border-top:0;padding-top:0">
+        <span>© <span data-ano>2026</span> Andre Rauber</span>
+        <a href="privacidade.html">Política de privacidade</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/medidas-dados.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/conta-api.js"></script>
+  <script src="assets/js/minha-conta.js"></script>
+</body>
+</html>
