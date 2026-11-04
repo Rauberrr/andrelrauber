@@ -28,8 +28,10 @@ ErrorDocument 404 /404.html
 <IfModule mod_expires.c>
   ExpiresActive On
   ExpiresByType text/html "access plus 0 seconds"
-  ExpiresByType text/css "access plus 7 days"
-  ExpiresByType text/javascript "access plus 7 days"
-  ExpiresByType application/javascript "access plus 7 days"
+  # CSS e JavaScript são sempre conferidos com o servidor: uma cópia antiga
+  # misturada com páginas novas trava o site. Sem mudança, o navegador reaproveita.
+  ExpiresByType text/css "access plus 0 seconds"
+  ExpiresByType text/javascript "access plus 0 seconds"
+  ExpiresByType application/javascript "access plus 0 seconds"
   ExpiresByType image/png "access plus 30 days"
 </IfModule>

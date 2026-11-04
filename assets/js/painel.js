@@ -59,6 +59,16 @@
 
   /* --- Lista -------------------------------------------------------------------- */
 
+  // Conta o que foi preenchido. Parte respondida com "Não" sai da conta;
+  // parte ainda sem resposta entra, porque a pessoa pode querer fazer.
+  function resumoMedidas(p) {
+    var lista = dados.geral;
+    if (Number(p.parte_cima) !== 0 || p.parte_cima === null) lista = lista.concat(dados.cima);
+    if (Number(p.parte_baixo) !== 0 || p.parte_baixo === null) lista = lista.concat(dados.baixo);
+    var feitas = lista.filter(function (m) { return p[m.id] !== null && p[m.id] !== undefined; }).length;
+    return feitas === 0 ? 'Nenhuma ainda' : feitas + ' de ' + lista.length;
+  }
+
   function numeros() {
     var caixa = $('painel-numeros');
     caixa.textContent = '';
@@ -105,6 +115,15 @@
       cSit.appendChild(criar('span', 'painel-selo painel-selo-' + sit, SITUACOES[sit] + (sit === 'andamento' ? ' · ' + p.progresso + '%' : '')));
       linha.appendChild(cSit);
 
+      var cMedidas = document.createElement('td');
+      cMedidas.appendChild(criar('span', 'painel-suave', resumoMedidas(p)));
+      var verMedidas = criar('button', 'texto-botao', 'Ver medidas');
+      verMedidas.type = 'button';
+      verMedidas.setAttribute('aria-label', 'Ver medidas de ' + (p.nome || p.email));
+      verMedidas.addEventListener('click', function () { abrir(p.id, true); });
+      cMedidas.appendChild(verMedidas);
+      linha.appendChild(cMedidas);
+
       linha.appendChild(criar('td', '', sit === 'concluido' ? '' : (ROTULOS[p.etapa_atual] || p.etapa_atual || '')));
 
       var atividade = p.atualizado_em || p.ultimo_acesso_em || p.criado_em;
@@ -129,26 +148,31 @@
     preenchidos.forEach(function (i) {
       var l = criar('div', 'revisao-item');
       l.appendChild(criar('dt', 'revisao-rotulo', i[0]));
-      l.appendChild(criar('dd', 'revisao-valor', i[1]));
+      l.appendChild(criar('dd', i[1] === NAO_PREENCHIDO ? 'revisao-valor painel-suave' : 'revisao-valor', i[1]));
       dl.appendChild(l);
     });
     s.appendChild(dl);
     return s;
   }
 
+  // Toda medida aparece, mesmo vazia: assim dá para ver exatamente o que falta
+  var NAO_PREENCHIDO = 'Não preenchido';
+
   function itensMedida(lista, p) {
     return lista.map(function (m) {
       var v = p[m.id];
-      return [m.rotulo, v === null || v === undefined ? '' : String(parseFloat(v)).replace('.', ',') + ' ' + m.unidade];
+      return [m.rotulo, v === null || v === undefined ? NAO_PREENCHIDO : String(parseFloat(v)).replace('.', ',') + ' ' + m.unidade];
     });
   }
 
-  function simNao(v) {
-    if (v === null || v === undefined) return 'Ainda não respondeu';
-    return Number(v) === 1 ? 'Sim' : 'Não';
+  // As medidas da parte só entram quando a pessoa respondeu que quer fazer aquela peça
+  function blocoParte(titulo, resposta, lista, p) {
+    if (resposta === null || resposta === undefined) return bloco(titulo, [['Quer fazer', 'Ainda não respondeu']]);
+    if (Number(resposta) !== 1) return bloco(titulo, [['Quer fazer', 'Não']]);
+    return bloco(titulo, [['Quer fazer', 'Sim']].concat(itensMedida(lista, p)));
   }
 
-  function abrir(id) {
+  function abrir(id, irParaMedidas) {
     api.get(ENDERECO + '?id=' + encodeURIComponent(id)).then(function (r) {
       if (!r.ok) return;
       var p = r.dados.pessoa;
@@ -164,9 +188,13 @@
       var endereco = [p.logradouro, p.numero, p.complemento, p.bairro, p.cidade, p.uf].filter(Boolean).join(', ');
       [
         bloco('Contato', [['E-mail', p.email], ['Telefone', api.mascaraTelefone(p.telefone || '')], ['CEP', api.mascaraCep(p.cep || '')], ['Endereço', endereco], ['Criou a conta com', p.origem === 'google' ? 'Google' : 'E-mail e senha']]),
-        bloco('Sobre a pessoa', itensMedida(dados.geral, p).concat([['Tamanho usual', p.tamanho]])),
-        bloco('Parte de cima', [['Quer fazer', simNao(p.parte_cima)]].concat(itensMedida(dados.cima, p))),
-        bloco('Parte de baixo', [['Quer fazer', simNao(p.parte_baixo)]].concat(itensMedida(dados.baixo, p))),
+        (function () {
+          var geral = bloco('Medidas gerais', itensMedida(dados.geral, p).concat([['Tamanho usual', p.tamanho]]));
+          geral.id = 'pessoa-medidas';
+          return geral;
+        })(),
+        blocoParte('Medidas: parte de cima', p.parte_cima, dados.cima, p),
+        blocoParte('Medidas: parte de baixo', p.parte_baixo, dados.baixo, p),
         bloco('Preferências', [['Cor', p.cor], ['Tecido', p.tecido], ['Caimento', p.caimento], ['Preciso até', p.data_desejada ? p.data_desejada.split('-').reverse().join('/') : ''], ['Observações', p.observacoes]])
       ].forEach(function (s) { if (s) caixa.appendChild(s); });
 
@@ -187,6 +215,7 @@
 
       $('modal-pessoa').showModal();
       $('modal-pessoa').scrollTop = 0;
+      if (irParaMedidas) $('pessoa-medidas').scrollIntoView();
     });
   }
 

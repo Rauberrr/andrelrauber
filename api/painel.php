@@ -33,8 +33,7 @@ if ($id > 0) {
 }
 
 $pessoas = consultar(
-    'SELECT u.id, u.nome, u.email, u.telefone, u.origem, u.criado_em, u.ultimo_acesso_em,
-            c.cidade, c.uf, c.etapa_atual, c.progresso, c.iniciado_em, c.atualizado_em, c.concluido_em
+    'SELECT u.id, u.nome, u.email, u.telefone, u.origem, u.criado_em, u.ultimo_acesso_em, c.*
      FROM usuarios u LEFT JOIN cadastros c ON c.usuario_id = u.id
      ORDER BY COALESCE(c.atualizado_em, u.criado_em) DESC, u.id DESC
      LIMIT 1000'
