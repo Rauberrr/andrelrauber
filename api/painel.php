@@ -29,11 +29,14 @@ if ($id > 0) {
         falhar(404, 'Pessoa não encontrada.');
     }
     $eventos = consultar('SELECT tipo, etapa, detalhes, criado_em FROM eventos WHERE usuario_id = ? ORDER BY id DESC LIMIT 300', [$id])->fetchAll();
-    responder(200, ['pessoa' => $pessoa, 'eventos' => $eventos]);
+    // Só os tipos e as quantidades: as fotos pertencem à pessoa
+    $pecas = consultar('SELECT tipo, COUNT(*) AS total FROM pecas WHERE usuario_id = ? GROUP BY tipo ORDER BY total DESC', [$id])->fetchAll();
+    responder(200, ['pessoa' => $pessoa, 'eventos' => $eventos, 'pecas' => $pecas]);
 }
 
 $pessoas = consultar(
-    'SELECT u.id, u.nome, u.email, u.telefone, u.origem, u.criado_em, u.ultimo_acesso_em, c.*
+    'SELECT u.id, u.nome, u.email, u.telefone, u.origem, u.criado_em, u.ultimo_acesso_em, c.*,
+            (SELECT COUNT(*) FROM pecas p WHERE p.usuario_id = u.id) AS total_pecas
      FROM usuarios u LEFT JOIN cadastros c ON c.usuario_id = u.id
      ORDER BY COALESCE(c.atualizado_em, u.criado_em) DESC, u.id DESC
      LIMIT 1000'

@@ -61,7 +61,31 @@ Sem isso, o botão do Google fica escondido e o resto funciona normalmente.
 - [ ] Ver a pessoa e o histórico em `painel.html`
 - [ ] Usar "Esqueci minha senha" e ver se o e-mail chega (confira o spam)
 - [ ] Entrar com o Google
+- [ ] No celular, cadastrar peças em `guarda-roupa.html` e ver os looks
+- [ ] Tentar abrir `api/fotos-pecas/.htaccess` no navegador: deve dar erro 403
 - [ ] Excluir a conta de teste em "Minha conta"
+
+## Guarda-roupa
+
+Em `guarda-roupa.html`, cada cliente fotografa as próprias peças, descreve cada uma e recebe sugestões de looks.
+
+### Atualizar um site que já está no ar
+
+Faça nesta ordem, porque o painel depende das tabelas novas:
+
+1. No phpMyAdmin, selecione o banco, clique em **Importar** e envie `api/banco.sql` de novo. Ele só cria o que falta e não apaga nada.
+2. No Gerenciador de Arquivos, envie todos os `.html`, `sitemap.xml` e as pastas `assets` e `api`, mantendo o seu `api/config.php`.
+3. Confira se `api/fotos-pecas/.htaccess` foi junto. Sem esse arquivo, o site o recria ao salvar a primeira foto.
+
+Ao atualizar o site depois, nunca apague a pasta `api/fotos-pecas`: é nela que ficam as fotos dos clientes. Ela não vai para o GitHub, então inclua essa pasta nos seus backups.
+
+### Como funciona
+
+- **Fundo das fotos:** é retirado no aparelho da pessoa, com a biblioteca `@imgly/background-removal` 1.7.0, sem custo por foto. Na primeira vez, o aparelho baixa cerca de 45 MB. Se não funcionar, a pessoa pode cadastrar a foto como está.
+- **Licença da biblioteca:** AGPL. Antes de usar comercialmente, confira as condições ou fale com a IMG.LY sobre uma licença comercial.
+- **Fotos:** ficam em `api/fotos-pecas`, bloqueadas ao acesso direto, e só abrem para a pessoa dona delas. O servidor regrava cada imagem, o que apaga dados como a localização. Nem o painel mostra as fotos.
+- **Looks:** as regras de cor, ocasião, clima e caimento estão em `assets/js/guarda-roupa-looks.js`. As listas de tipos, cores e cortes estão em `assets/js/guarda-roupa-dados.js` e `api/guarda-roupa.php`, que precisam ficar iguais.
+- **Limites:** 60 peças por pessoa e 40 envios por hora, definidos em `api/guarda-roupa.php`.
 
 ## Como acompanhar os clientes
 

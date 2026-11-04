@@ -88,15 +88,7 @@ function agora(): string
 // esse formato sem permissão do navegador, o que bloqueia ações forjadas.
 function exigir_post(): array
 {
-    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
-        header('Allow: POST');
-        falhar(405, 'Método não permitido.');
-    }
-    $origem = $_SERVER['HTTP_ORIGIN'] ?? '';
-    $host = parse_url('//' . ($_SERVER['HTTP_HOST'] ?? ''), PHP_URL_HOST);
-    if ($origem !== '' && parse_url($origem, PHP_URL_HOST) !== $host) {
-        falhar(403, 'Origem não permitida.');
-    }
+    conferir_post_do_site();
     if (stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== 0) {
         falhar(415, 'Formato não aceito.');
     }
@@ -106,6 +98,19 @@ function exigir_post(): array
         falhar(400, 'Dados inválidos.');
     }
     return $dados;
+}
+
+function conferir_post_do_site(): void
+{
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+        header('Allow: POST');
+        falhar(405, 'Método não permitido.');
+    }
+    $origem = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $host = parse_url('//' . ($_SERVER['HTTP_HOST'] ?? ''), PHP_URL_HOST);
+    if ($origem !== '' && parse_url($origem, PHP_URL_HOST) !== $host) {
+        falhar(403, 'Origem não permitida.');
+    }
 }
 
 function texto(array $origem, string $chave, int $limite): string
@@ -253,6 +258,44 @@ function registrar_evento(int $usuarioId, string $tipo, ?string $etapa = null, ?
         'INSERT INTO eventos (usuario_id, tipo, etapa, detalhes, criado_em) VALUES (?, ?, ?, ?, ?)',
         [$usuarioId, $tipo, $etapa, $detalhes === null ? null : mb_substr($detalhes, 0, 500, 'UTF-8'), agora()]
     );
+}
+
+/* --- Fotos do guarda-roupa ---------------------------------------------------------- */
+
+// As fotos ficam numa pasta bloqueada ao acesso direto e só saem por api/foto-peca.php,
+// que confere se a foto é mesmo de quem está pedindo.
+function pasta_fotos(): string
+{
+    $pasta = (string) (config()['pasta_fotos'] ?? (__DIR__ . '/fotos-pecas'));
+    if (!is_dir($pasta) && !mkdir($pasta, 0755, true) && !is_dir($pasta)) {
+        throw new RuntimeException('Não foi possível criar a pasta de fotos.');
+    }
+    $bloqueio = $pasta . '/.htaccess';
+    if (!is_file($bloqueio)) {
+        file_put_contents($bloqueio, "Require all denied\n");
+    }
+    return $pasta;
+}
+
+function apagar_foto(string $arquivo): void
+{
+    if (preg_match('/^[a-f0-9]{32}\.(webp|png|jpg)$/', $arquivo) !== 1) {
+        return;
+    }
+    $caminho = pasta_fotos() . '/' . $arquivo;
+    if (is_file($caminho) && !unlink($caminho)) {
+        error_log('Andre Rauber: não foi possível apagar uma foto.');
+    }
+}
+
+function apagar_guarda_roupa(int $usuarioId): void
+{
+    $arquivos = consultar('SELECT arquivo FROM pecas WHERE usuario_id = ?', [$usuarioId])->fetchAll(PDO::FETCH_COLUMN);
+    foreach ($arquivos as $arquivo) {
+        apagar_foto((string) $arquivo);
+    }
+    consultar('DELETE FROM looks WHERE usuario_id = ?', [$usuarioId]);
+    consultar('DELETE FROM pecas WHERE usuario_id = ?', [$usuarioId]);
 }
 
 /* --- E-mail --------------------------------------------------------------------- */

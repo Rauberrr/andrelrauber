@@ -7,6 +7,7 @@
   var api = window.AR_API;
   var dados = window.AR_MEDIDAS;
   var ROTULOS = window.AR_ETAPAS_ROTULOS;
+  var ROTULOS_PECAS = window.AR_GR.porTipo;
   var ENDERECO = 'api/painel.php';
   var pessoas = [];
 
@@ -14,7 +15,8 @@
   var EVENTOS = {
     conta_criada: 'Criou a conta', login: 'Entrou na conta', etapa: 'Chegou na etapa', respostas: 'Salvou respostas',
     concluido: 'Concluiu o cadastro', atualizado: 'Alterou o cadastro concluído', senha_pedida: 'Pediu para redefinir a senha',
-    senha_redefinida: 'Redefiniu a senha', google_vinculado: 'Vinculou a conta ao Google'
+    senha_redefinida: 'Redefiniu a senha', google_vinculado: 'Vinculou a conta ao Google',
+    peca_adicionada: 'Adicionou peça ao guarda-roupa', peca_excluida: 'Excluiu peça do guarda-roupa'
   };
 
   function $(id) { return document.getElementById(id); }
@@ -124,6 +126,8 @@
       cMedidas.appendChild(verMedidas);
       linha.appendChild(cMedidas);
 
+      linha.appendChild(criar('td', '', String(Number(p.total_pecas) || 0)));
+
       linha.appendChild(criar('td', '', sit === 'concluido' ? '' : (ROTULOS[p.etapa_atual] || p.etapa_atual || '')));
 
       var atividade = p.atualizado_em || p.ultimo_acesso_em || p.criado_em;
@@ -195,7 +199,10 @@
         })(),
         blocoParte('Medidas: parte de cima', p.parte_cima, dados.cima, p),
         blocoParte('Medidas: parte de baixo', p.parte_baixo, dados.baixo, p),
-        bloco('Preferências', [['Cor', p.cor], ['Tecido', p.tecido], ['Caimento', p.caimento], ['Preciso até', p.data_desejada ? p.data_desejada.split('-').reverse().join('/') : ''], ['Observações', p.observacoes]])
+        bloco('Preferências', [['Cor', p.cor], ['Tecido', p.tecido], ['Caimento', p.caimento], ['Preciso até', p.data_desejada ? p.data_desejada.split('-').reverse().join('/') : ''], ['Observações', p.observacoes]]),
+        bloco('Guarda-roupa', r.dados.pecas.map(function (item) {
+          return [ROTULOS_PECAS[item.tipo] ? ROTULOS_PECAS[item.tipo].rotulo : item.tipo, String(item.total)];
+        }))
       ].forEach(function (s) { if (s) caixa.appendChild(s); });
 
       var hist = criar('section', 'revisao-grupo');
