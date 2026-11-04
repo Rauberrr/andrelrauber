@@ -267,12 +267,15 @@ function enviar_email(string $para, string $assunto, string $corpo): bool
     if (!empty($c['email_arquivo'])) {
         return file_put_contents($c['email_arquivo'], json_encode([$para, $assunto, $corpo]) . "\n", FILE_APPEND) !== false;
     }
+    $remetente = (string) ($c['email_remetente'] ?? '');
     $cabecalhos = [
         'MIME-Version: 1.0',
         'Content-Type: text/plain; charset=UTF-8',
-        'From: Andre Rauber <' . ($c['email_remetente'] ?? '') . '>',
+        'From: Andre Rauber <' . $remetente . '>',
     ];
-    $enviado = mail($para, mb_encode_mimeheader($assunto, 'UTF-8'), $corpo, implode("\r\n", $cabecalhos));
+    // Sem o -f, a hospedagem envia em nome do servidor, e o Gmail costuma recusar
+    $parametros = filter_var($remetente, FILTER_VALIDATE_EMAIL) ? '-f' . $remetente : '';
+    $enviado = mail($para, mb_encode_mimeheader($assunto, 'UTF-8'), $corpo, implode("\r\n", $cabecalhos), $parametros);
     if (!$enviado) {
         error_log('Andre Rauber: falha ao enviar e-mail.');
     }

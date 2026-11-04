@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261104a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -54,6 +54,15 @@
 
     <div class="conteudo medidas-layout">
       <p class="carregando" id="carregando">Carregando seu cadastro...</p>
+      <script>
+        // Se algum script falhar, a pessoa recebe uma saída em vez de esperar para sempre
+        setTimeout(function () {
+          var aviso = document.getElementById('carregando');
+          if (aviso && !aviso.hidden && aviso.textContent.indexOf('Carregando') === 0) {
+            aviso.innerHTML = 'Não foi possível abrir a tabela. <a href="medidas.html">Atualize a página</a> ou fale conosco pelo <a href="https://wa.me/5554997096003">WhatsApp</a>.';
+          }
+        }, 20000);
+      </script>
 
       <form id="form-medidas" novalidate hidden>
         <div class="progresso" role="progressbar" aria-label="Progresso do preenchimento" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="barra-progresso"></span></div>
@@ -119,10 +128,10 @@
     </div>
   </footer>
 
-  <script src="assets/js/config.js"></script>
-  <script src="assets/js/medidas-dados.js"></script>
-  <script src="assets/js/main.js"></script>
-  <script src="assets/js/conta-api.js"></script>
-  <script src="assets/js/medidas-form.js"></script>
+  <script src="assets/js/config.js?v=20261104a"></script>
+  <script src="assets/js/medidas-dados.js?v=20261104a"></script>
+  <script src="assets/js/main.js?v=20261104a"></script>
+  <script src="assets/js/conta-api.js?v=20261104a"></script>
+  <script src="assets/js/medidas-form.js?v=20261104a"></script>
 </body>
 </html>

@@ -750,5 +750,9 @@
 
     if (inicial !== seq[0] && !pedeRevisao) aviso.hidden = false;
     mostrar(inicial, { foco: false, historico: 'trocar' });
+  }).catch(function (erro) {
+    console.error(erro);
+    form.hidden = true;
+    erroAoCarregar('Não foi possível abrir a tabela. Atualize a página e, se continuar, fale conosco pelo WhatsApp.');
   });
 })();
