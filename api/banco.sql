@@ -93,6 +93,38 @@ CREATE TABLE IF NOT EXISTS redefinicoes_senha (
   CONSTRAINT fk_redefinicao_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Guarda-roupa: cada peça tem uma foto e uma descrição
+CREATE TABLE IF NOT EXISTS pecas (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  usuario_id INT UNSIGNED NOT NULL,
+  tipo VARCHAR(30) NOT NULL,
+  cor VARCHAR(30) NOT NULL,
+  corte VARCHAR(30) NOT NULL DEFAULT '',
+  tecido VARCHAR(30) NOT NULL DEFAULT '',
+  formalidade VARCHAR(20) NOT NULL DEFAULT 'casual',
+  clima VARCHAR(20) NOT NULL DEFAULT 'qualquer',
+  apelido VARCHAR(60) NOT NULL DEFAULT '',
+  arquivo VARCHAR(64) NOT NULL,
+  fundo_removido TINYINT(1) NOT NULL DEFAULT 0,
+  criado_em DATETIME NOT NULL,
+  atualizado_em DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_peca_usuario (usuario_id, id),
+  CONSTRAINT fk_peca_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Looks que a pessoa salvou ou descartou. A chave são os números das peças em ordem.
+CREATE TABLE IF NOT EXISTS looks (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  usuario_id INT UNSIGNED NOT NULL,
+  chave VARCHAR(120) NOT NULL,
+  situacao VARCHAR(12) NOT NULL,
+  criado_em DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_look (usuario_id, chave),
+  CONSTRAINT fk_look_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Limite de tentativas de login, registro e recuperação de senha
 CREATE TABLE IF NOT EXISTS tentativas (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,

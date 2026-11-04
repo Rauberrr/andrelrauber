@@ -3,3 +3,5 @@ api/config.php
 
 # Configuração local do ambiente de visualização
 .claude/
+api/fotos-pecas/*
+!api/fotos-pecas/.htaccess
