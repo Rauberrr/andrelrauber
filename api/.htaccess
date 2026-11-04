@@ -1,0 +1,5 @@
+# Protege a senha do banco e a estrutura das tabelas
+<FilesMatch "^(config\.php|config\.exemplo\.php|banco\.sql)$">
+  Require all denied
+</FilesMatch>
+Options -Indexes
