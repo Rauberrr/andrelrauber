@@ -21,19 +21,31 @@ window.AR_API = (function () {
     return { status: 0, ok: false, dados: {}, erro: INDISPONIVEL };
   }
 
+  // Um servidor que não responde vira erro, em vez de deixar a tela esperando para sempre
+  var LIMITE_MS = 15000;
+
+  function pedir(url, opcoes) {
+    var controle = new AbortController();
+    var limite = setTimeout(function () { controle.abort(); }, LIMITE_MS);
+    opcoes.signal = controle.signal;
+    opcoes.credentials = 'same-origin';
+    return fetch(url, opcoes).then(ler).catch(falhaDeRede).then(function (resposta) {
+      clearTimeout(limite);
+      return resposta;
+    });
+  }
+
   function get(url) {
-    return fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
-      .then(ler, falhaDeRede);
+    return pedir(url, { headers: { Accept: 'application/json' } });
   }
 
   function post(url, corpo, opcoes) {
-    return fetch(url, {
+    return pedir(url, {
       method: 'POST',
-      credentials: 'same-origin',
       keepalive: Boolean(opcoes && opcoes.keepalive),
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(corpo || {})
-    }).then(ler, falhaDeRede);
+    });
   }
 
   function mascaraTelefone(valor) {
