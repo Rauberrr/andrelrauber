@@ -1,0 +1,5 @@
+# Senha do banco de dados: nunca vai para o repositório
+api/config.php
+
+# Configuração local do ambiente de visualização
+.claude/
