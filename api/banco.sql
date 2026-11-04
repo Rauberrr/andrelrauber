@@ -125,6 +125,19 @@ CREATE TABLE IF NOT EXISTS looks (
   CONSTRAINT fk_look_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Nome e observação que a pessoa dá a um look, como "Jantar de sexta"
+CREATE TABLE IF NOT EXISTS looks_notas (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  usuario_id INT UNSIGNED NOT NULL,
+  chave VARCHAR(120) NOT NULL,
+  nome VARCHAR(60) NOT NULL DEFAULT '',
+  observacao VARCHAR(300) NOT NULL DEFAULT '',
+  atualizado_em DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_look_nota (usuario_id, chave),
+  CONSTRAINT fk_look_nota_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Limite de tentativas de login, registro e recuperação de senha
 CREATE TABLE IF NOT EXISTS tentativas (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
