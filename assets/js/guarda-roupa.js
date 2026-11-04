@@ -11,6 +11,9 @@
 
   var pecas = [];
   var decisoes = {};
+  var notas = {};
+  // Looks que acabaram de sair de Rejeitados: aparecem primeiro nas sugestões
+  var recuperados = [];
   var maximo = 60;
   var consentiu = false;
   var paginaLooks = 1;
@@ -447,8 +450,10 @@
     api.post(ENDERECO + '?acao=excluir', { id: id }).then(function (r) {
       if (!r.ok) { mostrarErros(r); return; }
       pecas = pecas.filter(function (p) { return p.id !== id; });
-      Object.keys(decisoes).forEach(function (chave) {
-        if (chave.split('-').indexOf(String(id)) !== -1) delete decisoes[chave];
+      [decisoes, notas].forEach(function (mapa) {
+        Object.keys(mapa).forEach(function (chave) {
+          if (chave.split('-').indexOf(String(id)) !== -1) delete mapa[chave];
+        });
       });
       desenharPecas();
       $('gr-modal').close();
@@ -458,9 +463,14 @@
 
   /* --- Avisos ------------------------------------------------------------------------------ */
 
+  var temporizadorDoAviso = null;
+
   function avisar(texto, desfazer) {
     var caixa = $('gr-aviso');
     caixa.textContent = '';
+    window.clearTimeout(temporizadorDoAviso);
+    // O aviso cobre parte da tela, então não fica lá para sempre
+    temporizadorDoAviso = window.setTimeout(function () { caixa.textContent = ''; }, desfazer ? 12000 : 5000);
     caixa.appendChild(criar('span', '', texto));
     if (desfazer) {
       var b = criar('button', 'texto-botao', 'Desfazer');
@@ -479,9 +489,13 @@
     return gr.FORMALIDADES.filter(function (f) { return f.nivel === n; })[0].rotulo;
   }
 
+  function idsDoLook(look) {
+    return look.pecas.map(function (p) { return p.id; });
+  }
+
   function decidir(look, situacao) {
-    var ids = look.pecas.map(function (p) { return p.id; });
-    return api.post(ENDERECO + '?acao=look', { pecas: ids, situacao: situacao }).then(function (r) {
+    var antes = decisoes[look.chave];
+    return api.post(ENDERECO + '?acao=look', { pecas: idsDoLook(look), situacao: situacao }).then(function (r) {
       if (!r.ok) {
         if (r.status === 401) { api.irParaLogin('guarda-roupa.html'); return; }
         avisar(r.erro || 'Não foi possível salvar. Tente de novo.');
@@ -489,20 +503,108 @@
       }
       if (situacao === 'nenhum') delete decisoes[r.dados.chave];
       else decisoes[r.dados.chave] = situacao;
+      if (situacao === 'nenhum' && antes === 'descartado') recuperados.unshift(r.dados.chave);
       desenharLooks();
-      if (situacao === 'salvo') avisar('Look salvo.');
-      if (situacao === 'descartado') {
-        avisar('Look descartado.', function () { decidir(look, 'nenhum'); });
+      if (situacao === 'salvo') {
+        if (antes === 'descartado') avisar('Look salvo.', function () { decidir(look, 'descartado'); });
+        else avisar('Look salvo.');
+      } else if (situacao === 'descartado') {
+        avisar('Look rejeitado. Para recuperar depois, escolha Rejeitados em Mostrar.', function () { decidir(look, antes || 'nenhum'); });
+      } else if (antes === 'descartado') {
+        avisar('O look voltou para as sugestões.', function () { decidir(look, 'descartado'); });
+      } else if (antes === 'salvo') {
+        avisar('Look retirado dos salvos.', function () { decidir(look, 'salvo'); });
       }
     });
   }
 
+  function campoDaNota(id, rotulo, elemento) {
+    var campo = criar('div', 'campo');
+    var etiqueta = criar('label', '', rotulo);
+    etiqueta.htmlFor = id;
+    elemento.id = id;
+    var entrada = criar('div', 'campo-entrada');
+    entrada.appendChild(elemento);
+    campo.appendChild(etiqueta);
+    campo.appendChild(entrada);
+    return campo;
+  }
+
+  function formularioDaNota(look, aoFechar) {
+    var nota = notas[look.chave] || {};
+    var form = criar('form', 'gr-look-nota');
+    form.noValidate = true;
+
+    var nome = document.createElement('input');
+    nome.type = 'text';
+    nome.maxLength = 60;
+    nome.placeholder = 'Ex.: Jantar de sexta';
+    nome.value = nota.nome || '';
+    form.appendChild(campoDaNota('look-nome-' + look.chave, 'Nome do look', nome));
+
+    var observacao = document.createElement('textarea');
+    observacao.maxLength = 300;
+    observacao.rows = 3;
+    observacao.placeholder = 'Ex.: Levar o casaco se esfriar';
+    observacao.value = nota.observacao || '';
+    form.appendChild(campoDaNota('look-obs-' + look.chave, 'Observação', observacao));
+
+    var erro = criar('p', 'erro');
+    erro.setAttribute('role', 'alert');
+    form.appendChild(erro);
+
+    var acoes = criar('div', 'gr-look-acoes');
+    var salvar = criar('button', 'botao botao-cheio', 'Guardar');
+    salvar.type = 'submit';
+    var cancelar = criar('button', 'texto-botao', 'Cancelar');
+    cancelar.type = 'button';
+    cancelar.addEventListener('click', aoFechar);
+    acoes.appendChild(salvar);
+    acoes.appendChild(cancelar);
+    form.appendChild(acoes);
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      erro.textContent = '';
+      salvar.disabled = true;
+      salvar.setAttribute('aria-busy', 'true');
+      var eraSalvo = decisoes[look.chave] === 'salvo';
+      api.post(ENDERECO + '?acao=look-nota', {
+        pecas: idsDoLook(look),
+        nome: nome.value.trim(),
+        observacao: observacao.value.trim()
+      }).then(function (r) {
+        salvar.disabled = false;
+        salvar.removeAttribute('aria-busy');
+        if (!r.ok) {
+          if (r.status === 401) { api.irParaLogin('guarda-roupa.html'); return; }
+          erro.textContent = r.erro || 'Não foi possível salvar. Tente de novo.';
+          return;
+        }
+        if (r.dados.nome || r.dados.observacao) {
+          notas[r.dados.chave] = { nome: r.dados.nome, observacao: r.dados.observacao };
+        } else {
+          delete notas[r.dados.chave];
+        }
+        if (r.dados.situacao !== 'nenhum') decisoes[r.dados.chave] = r.dados.situacao;
+        desenharLooks();
+        avisar(!eraSalvo && r.dados.situacao === 'salvo'
+          ? 'Pronto. O look também foi para os Salvos.'
+          : 'Nome e observação atualizados.');
+      });
+    });
+    return { elemento: form, foco: nome };
+  }
+
   function cartaoDeLook(look, numero) {
+    var nota = notas[look.chave] || {};
+    var decisao = decisoes[look.chave];
     var cartao = criar('article', 'gr-look');
     var cab = criar('header', 'gr-look-cab');
-    cab.appendChild(criar('h3', 'titulo-s', 'Look ' + numero));
+    cab.appendChild(criar('h3', 'titulo-s', nota.nome || 'Look ' + numero));
     if (look.nivel) cab.appendChild(criar('span', 'etiqueta', rotuloNivel(look.nivel)));
     cartao.appendChild(cab);
+    if (nota.observacao) cartao.appendChild(criar('p', 'gr-look-obs', nota.observacao));
 
     var grade = criar('ul', 'gr-look-pecas');
     look.pecas.forEach(function (p) {
@@ -520,7 +622,8 @@
     }
 
     var acoes = criar('div', 'gr-look-acoes');
-    var salvo = decisoes[look.chave] === 'salvo';
+    var salvo = decisao === 'salvo';
+    var rejeitado = decisao === 'descartado';
     var salvar = criar('button', salvo ? 'botao botao-cheio' : 'botao', salvo ? 'Salvo' : 'Salvar look');
     salvar.type = 'button';
     salvar.setAttribute('aria-pressed', String(salvo));
@@ -528,21 +631,46 @@
       decidir(look, salvo ? 'nenhum' : 'salvo');
     });
     acoes.appendChild(salvar);
-    if (!salvo) {
-      var fora = criar('button', 'texto-botao', 'Não gostei');
-      fora.type = 'button';
-      fora.addEventListener('click', function () { decidir(look, 'descartado'); });
-      acoes.appendChild(fora);
+    if (rejeitado) {
+      var voltar = criar('button', 'texto-botao', 'Voltar para sugestões');
+      voltar.type = 'button';
+      voltar.addEventListener('click', function () { decidir(look, 'nenhum'); });
+      acoes.appendChild(voltar);
+    } else {
+      if (!salvo) {
+        var fora = criar('button', 'texto-botao', 'Não gostei');
+        fora.type = 'button';
+        fora.addEventListener('click', function () { decidir(look, 'descartado'); });
+        acoes.appendChild(fora);
+      }
+      var editar = criar('button', 'texto-botao', nota.nome || nota.observacao ? 'Editar nome e observação' : 'Dar nome ou observação');
+      editar.type = 'button';
+      editar.setAttribute('aria-expanded', 'false');
+      var aberto = null;
+      var fecharNota = function () {
+        cartao.removeChild(aberto.elemento);
+        aberto = null;
+        editar.setAttribute('aria-expanded', 'false');
+        editar.focus();
+      };
+      editar.addEventListener('click', function () {
+        if (aberto) { fecharNota(); return; }
+        aberto = formularioDaNota(look, fecharNota);
+        cartao.appendChild(aberto.elemento);
+        editar.setAttribute('aria-expanded', 'true');
+        aberto.foco.focus();
+      });
+      acoes.appendChild(editar);
     }
     cartao.appendChild(acoes);
     return cartao;
   }
 
-  function looksSalvos() {
+  function looksComDecisao(situacao) {
     var porId = {};
     pecas.forEach(function (p) { porId[p.id] = p; });
     return Object.keys(decisoes).filter(function (chave) {
-      return decisoes[chave] === 'salvo';
+      return decisoes[chave] === situacao;
     }).map(function (chave) {
       var lista = chave.split('-').map(function (id) { return porId[id]; }).filter(Boolean);
       return { chave: chave, pecas: lista, motivos: [] };
@@ -558,22 +686,29 @@
     var lista;
 
     $('gr-looks-filtros').hidden = falta.length > 0;
-    $('gr-filtro-nivel').closest('.campo').hidden = mostrar === 'salvos';
-    $('gr-filtro-clima').closest('.campo').hidden = mostrar === 'salvos';
+    var soSugestoes = mostrar === 'sugeridos';
+    $('gr-filtro-nivel').closest('.campo').hidden = !soSugestoes;
+    $('gr-filtro-clima').closest('.campo').hidden = !soSugestoes;
 
     if (falta.length) {
       lista = [];
       mensagem = 'Para montar looks, adicione ' + falta.join(' e ') + '.';
     } else if (mostrar === 'salvos') {
-      lista = looksSalvos();
+      lista = looksComDecisao('salvo');
       if (!lista.length) mensagem = 'Você ainda não salvou nenhum look.';
+    } else if (mostrar === 'rejeitados') {
+      lista = looksComDecisao('descartado');
+      if (!lista.length) mensagem = 'Nenhum look rejeitado. Os que você marcar com Não gostei ficam aqui.';
     } else {
       var nivel = Number($('gr-filtro-nivel').value) || null;
       lista = motor.sugerir(pecas, { nivel: nivel, clima: $('gr-filtro-clima').value }, decisoes);
+      lista = lista.filter(function (l) { return recuperados.indexOf(l.chave) !== -1; }).concat(
+        lista.filter(function (l) { return recuperados.indexOf(l.chave) === -1; })
+      );
       if (!lista.length) mensagem = 'Nenhuma combinação com esses filtros. Experimente outro filtro ou adicione mais peças.';
     }
 
-    var limite = mostrar === 'salvos' ? lista.length : paginaLooks * motor.POR_PAGINA;
+    var limite = soSugestoes ? paginaLooks * motor.POR_PAGINA : lista.length;
     lista.slice(0, limite).forEach(function (look, i) {
       caixa.appendChild(cartaoDeLook(look, i + 1));
     });
@@ -635,6 +770,7 @@
     consentiu = r.dados.consentiu;
     $('gr-maximo').textContent = String(maximo);
     r.dados.looks.slice().reverse().forEach(function (l) { decisoes[l.chave] = l.situacao; });
+    r.dados.notas.forEach(function (n) { notas[n.chave] = { nome: n.nome, observacao: n.observacao }; });
     $('gr-dentro').hidden = false;
     desenharPecas();
     abrirAba(location.hash === '#looks' ? 'looks' : 'pecas');

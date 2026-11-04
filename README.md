@@ -95,7 +95,8 @@ Ao atualizar o site depois, nunca apague a pasta `api/fotos-pecas`: é nela que 
 - **Licença da biblioteca:** AGPL. Antes de usar comercialmente, confira as condições ou fale com a IMG.LY sobre uma licença comercial.
 - **Fotos:** ficam em `api/fotos-pecas`, bloqueadas ao acesso direto, e só abrem para a pessoa dona delas. O servidor regrava cada imagem, o que apaga dados como a localização. Nem o painel mostra as fotos.
 - **Looks:** as regras de cor, ocasião, clima e caimento estão em `assets/js/guarda-roupa-looks.js`. As listas de tipos, cores e cortes estão em `assets/js/guarda-roupa-dados.js` e `api/guarda-roupa.php`, que precisam ficar iguais.
-- **Limites:** 60 peças por pessoa e 40 envios por hora, definidos em `api/guarda-roupa.php`.
+- **Limites:** 60 peças por pessoa, 40 envios por hora e 300 looks com nome ou observação, definidos em `api/guarda-roupa.php`.
+- **Nome e observação dos looks:** ficam na tabela `looks_notas`. Dar nome a uma sugestão também a guarda em Salvos.
 
 ## Como acompanhar os clientes
 
