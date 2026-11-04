@@ -23,10 +23,11 @@ window.AR_API = (function () {
 
   // Um servidor que não responde vira erro, em vez de deixar a tela esperando para sempre
   var LIMITE_MS = 15000;
+  var LIMITE_ENVIO_MS = 90000;
 
-  function pedir(url, opcoes) {
+  function pedir(url, opcoes, limiteMs) {
     var controle = new AbortController();
-    var limite = setTimeout(function () { controle.abort(); }, LIMITE_MS);
+    var limite = setTimeout(function () { controle.abort(); }, limiteMs || LIMITE_MS);
     opcoes.signal = controle.signal;
     opcoes.credentials = 'same-origin';
     return fetch(url, opcoes).then(ler).catch(falhaDeRede).then(function (resposta) {
@@ -48,6 +49,15 @@ window.AR_API = (function () {
     });
   }
 
+  // Envio de arquivo: rede de celular pode demorar mais que um pedido comum
+  function enviar(url, formulario) {
+    return pedir(url, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      body: formulario
+    }, LIMITE_ENVIO_MS);
+  }
+
   function mascaraTelefone(valor) {
     var d = String(valor).replace(/\D/g, '').slice(0, 11);
     if (d.length > 10) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7);
@@ -62,7 +72,7 @@ window.AR_API = (function () {
   }
 
   // Só volta para páginas do próprio site, para o link não levar a outro lugar
-  var DESTINOS = ['medidas.html', 'minha-conta.html', 'painel.html'];
+  var DESTINOS = ['medidas.html', 'minha-conta.html', 'painel.html', 'guarda-roupa.html'];
   function destino(padrao) {
     var pedido = new URLSearchParams(location.search).get('voltar');
     return DESTINOS.indexOf(pedido) !== -1 ? pedido : padrao;
@@ -73,7 +83,7 @@ window.AR_API = (function () {
   }
 
   return {
-    get: get, post: post, mascaraTelefone: mascaraTelefone, mascaraCep: mascaraCep,
+    get: get, post: post, enviar: enviar, mascaraTelefone: mascaraTelefone, mascaraCep: mascaraCep,
     destino: destino, irParaLogin: irParaLogin
   };
 })();

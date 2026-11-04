@@ -322,6 +322,7 @@ function acao_excluir(): void
         falhar(422, 'Digite EXCLUIR para confirmar.');
     }
     $id = (int) $usuario['id'];
+    apagar_guarda_roupa($id);
     consultar('DELETE FROM eventos WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM redefinicoes_senha WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM cadastros WHERE usuario_id = ?', [$id]);
