@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nova senha | Andre Rauber</title>
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <header class="topo">
+    <div class="conteudo topo-interno">
+      <a class="topo-logo" href="index.html" aria-label="Andre Rauber, página inicial">
+        <img class="logo-preta" src="assets/img/logo-preta.png" alt="" width="888" height="91">
+      </a>
+    </div>
+  </header>
+
+  <main id="principal" class="conteudo acesso-simples">
+    <span class="etiqueta">Sua conta</span>
+    <h1 class="titulo-m">Crie uma nova senha</h1>
+
+    <form id="form-redefinir" novalidate>
+      <p class="erro acesso-erro" role="alert"></p>
+      <div class="campo">
+        <label for="senha">Nova senha</label>
+        <div class="campo-entrada">
+          <input id="senha" name="senha" type="password" autocomplete="new-password" aria-describedby="ajuda-senha erro-senha">
+          <button class="texto-botao ver-senha" type="button" data-ver-senha="senha" aria-pressed="false">Mostrar</button>
+        </div>
+        <p class="ajuda" id="ajuda-senha">Pelo menos 8 caracteres.</p>
+        <p class="erro" id="erro-senha" role="alert"></p>
+      </div>
+      <button class="botao botao-cheio acesso-enviar" type="submit">Salvar nova senha</button>
+    </form>
+
+    <p class="acesso-rodape"><a href="esqueci-senha.html">Pedir um novo link</a></p>
+  </main>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/conta-api.js"></script>
+  <script src="assets/js/conta-acesso.js"></script>
+</body>
+</html>

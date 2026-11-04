@@ -37,6 +37,7 @@
           <li><a href="a-marca.html">A Marca</a></li>
           <li><a href="medidas.html" aria-current="page">Tabela de Medidas</a></li>
           <li><a href="contato.html">Contato</a></li>
+          <li><a href="minha-conta.html">Minha conta</a></li>
         </ul>
       </nav>
       <button class="menu-botao" type="button" aria-expanded="false" aria-label="Abrir menu"><span></span><span></span></button>
@@ -46,21 +47,15 @@
   <main id="principal">
     <section class="abertura abertura-compacta conteudo">
       <span class="etiqueta">Tabela de Medidas</span>
-      <h1 class="titulo-m">Uma informação de cada vez. Em poucos minutos, está pronto.</h1>
-      <p class="retomada" id="aviso-retomada" hidden>
-        <span>Suas respostas estavam salvas neste aparelho.</span>
-        <button class="texto-botao" type="button" data-recomecar-topo>Começar do zero</button>
-      </p>
-      <p class="etapa-desc"><a href="guia-de-medidas.html">Ver o guia ilustrado</a>. Suas respostas continuam salvas quando você voltar.</p>
+      <h1 class="titulo-m">Uma informação de cada vez, sem precisar mandar mensagem.</h1>
+      <p class="retomada" id="aviso-retomada" hidden>Continuando de onde você parou.</p>
+      <p class="etapa-desc"><a href="guia-de-medidas.html">Ver o guia ilustrado</a>. Tudo fica salvo na sua conta enquanto você preenche.</p>
     </section>
 
     <div class="conteudo medidas-layout">
-      <form id="form-medidas" novalidate>
-        <div class="isca" aria-hidden="true">
-          <label for="website">Não preencha este campo</label>
-          <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
-        </div>
+      <p class="carregando" id="carregando">Carregando seu cadastro...</p>
 
+      <form id="form-medidas" novalidate hidden>
         <div class="progresso" role="progressbar" aria-label="Progresso do preenchimento" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="barra-progresso"></span></div>
 
         <div id="etapas"></div>
@@ -70,9 +65,10 @@
           <button class="texto-botao" id="botao-voltar" type="button">Voltar</button>
           <button class="botao botao-cheio" id="botao-continuar" type="submit">Continuar</button>
         </div>
+        <p class="status-salvo" id="status-salvo" role="status"></p>
       </form>
 
-      <aside class="painel" aria-label="Onde medir">
+      <aside class="painel" id="painel" aria-label="Onde medir" hidden>
         <span class="etiqueta">Onde medir</span>
         <button class="painel-ampliar" id="painel-ampliar" type="button" disabled><span class="painel-figura" id="painel-figura" style="display:block"></span></button>
         <h2 class="titulo-s painel-titulo" id="painel-titulo" aria-live="polite"></h2>
@@ -126,6 +122,7 @@
   <script src="assets/js/config.js"></script>
   <script src="assets/js/medidas-dados.js"></script>
   <script src="assets/js/main.js"></script>
+  <script src="assets/js/conta-api.js"></script>
   <script src="assets/js/medidas-form.js"></script>
 </body>
 </html>

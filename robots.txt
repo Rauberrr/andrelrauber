@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /minha-conta.html
+Disallow: /painel.html
+Disallow: /redefinir-senha.html
 
 Sitemap: https://andrerauber.com/sitemap.xml

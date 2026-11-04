@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar | Andre Rauber</title>
+  <meta name="description" content="Entre na sua conta da Andre Rauber para ver e alterar suas medidas.">
+  <link rel="canonical" href="https://andrerauber.com/entrar.html">
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <a class="pular" href="#principal">Pular para o conteúdo</a>
+
+  <header class="topo">
+    <div class="conteudo topo-interno">
+      <a class="topo-logo" href="index.html" aria-label="Andre Rauber, página inicial">
+        <img class="logo-branca" src="assets/img/logo-branca.png" alt="" width="888" height="91">
+        <img class="logo-preta" src="assets/img/logo-preta.png" alt="" width="888" height="91">
+      </a>
+      <nav class="nav" aria-label="Principal">
+        <ul class="nav-lista">
+          <li><a href="index.html">Início</a></li>
+          <li><a href="a-marca.html">A Marca</a></li>
+          <li><a href="medidas.html">Tabela de Medidas</a></li>
+          <li><a href="contato.html">Contato</a></li>
+          <li><a href="minha-conta.html" aria-current="page">Minha conta</a></li>
+        </ul>
+      </nav>
+      <button class="menu-botao" type="button" aria-expanded="false" aria-label="Abrir menu"><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main id="principal" class="conteudo acesso">
+    <section class="acesso-motivo">
+      <span class="etiqueta">Sua conta</span>
+      <h1 class="titulo-l">Suas medidas continuam aqui.</h1>
+      <p class="lead">Entre para continuar de onde parou ou conferir suas informações. Não é preciso enviar mensagem.</p>
+      <p class="acesso-chamada">Ainda não tem conta? <a href="criar-conta.html">Veja por que criar uma</a>.</p>
+    </section>
+
+    <section class="acesso-caixa" aria-labelledby="titulo-form">
+      <h2 class="titulo-m" id="titulo-form">Entrar</h2>
+
+      <div class="acesso-google" id="acesso-google" hidden>
+        <div class="google-botao" id="google-botao"></div>
+        <p class="acesso-ou"><span>ou</span></p>
+      </div>
+
+      <form id="form-entrar" novalidate>
+        <p class="erro acesso-erro" role="alert"></p>
+        <div class="campo">
+          <label for="email">E-mail</label>
+          <div class="campo-entrada"><input id="email" name="email" type="email" autocomplete="email" maxlength="190"></div>
+        </div>
+        <div class="campo">
+          <label for="senha">Senha</label>
+          <div class="campo-entrada">
+            <input id="senha" name="senha" type="password" autocomplete="current-password">
+            <button class="texto-botao ver-senha" type="button" data-ver-senha="senha" aria-pressed="false">Mostrar</button>
+          </div>
+        </div>
+        <p class="acesso-esqueci"><a href="esqueci-senha.html">Esqueci minha senha</a></p>
+        <button class="botao botao-cheio acesso-enviar" type="submit">Entrar</button>
+      </form>
+
+      <p class="acesso-rodape">Não tem conta? <a href="criar-conta.html">Criar conta</a></p>
+    </section>
+  </main>
+
+  <footer class="rodape sobre-preto">
+    <div class="conteudo">
+      <div class="rodape-base" style="margin-top:0;border-top:0;padding-top:0">
+        <span>© <span data-ano>2026</span> Andre Rauber</span>
+        <a href="privacidade.html">Política de privacidade</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/conta-api.js"></script>
+  <script src="assets/js/conta-acesso.js"></script>
+</body>
+</html>

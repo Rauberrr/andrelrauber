@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel de clientes | Andre Rauber</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <header class="topo rolou">
+    <div class="conteudo topo-interno">
+      <a class="topo-logo" href="index.html" aria-label="Andre Rauber, página inicial">
+        <img class="logo-preta" src="assets/img/logo-preta.png" alt="" width="888" height="91">
+      </a>
+      <a class="link-seta" href="minha-conta.html">Minha conta</a>
+    </div>
+  </header>
+
+  <main id="principal" class="conteudo painel-admin">
+    <span class="etiqueta">Painel</span>
+    <h1 class="titulo-m">Clientes</h1>
+    <p class="carregando" id="carregando">Carregando...</p>
+
+    <div id="painel-conteudo" hidden>
+      <dl class="painel-numeros" id="painel-numeros"></dl>
+
+      <div class="painel-filtros">
+        <div class="campo">
+          <label for="busca">Buscar</label>
+          <div class="campo-entrada"><input id="busca" type="search" placeholder="Nome, e-mail, telefone ou cidade"></div>
+        </div>
+        <div class="campo">
+          <label for="filtro">Situação</label>
+          <div class="campo-entrada">
+            <select id="filtro">
+              <option value="">Todas</option>
+              <option value="nao_comecou">Não começou</option>
+              <option value="andamento">Parou no meio</option>
+              <option value="concluido">Concluído</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="painel-tabela-caixa">
+        <table class="painel-tabela">
+          <thead>
+            <tr><th scope="col">Pessoa</th><th scope="col">Telefone</th><th scope="col">Situação</th><th scope="col">Parou em</th><th scope="col">Última atividade</th></tr>
+          </thead>
+          <tbody id="painel-linhas"></tbody>
+        </table>
+      </div>
+      <p class="carregando" id="painel-vazio" hidden>Ninguém encontrado.</p>
+    </div>
+  </main>
+
+  <dialog class="modal-figura modal-pessoa" id="modal-pessoa" aria-labelledby="pessoa-nome">
+    <button class="modal-fechar" id="pessoa-fechar" type="button" aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+    <div class="modal-texto" id="pessoa-conteudo"></div>
+  </dialog>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/medidas-dados.js"></script>
+  <script src="assets/js/conta-api.js"></script>
+  <script src="assets/js/painel.js"></script>
+</body>
+</html>

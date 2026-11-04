@@ -144,6 +144,21 @@ window.AR_MEDIDAS = (function () {
   return { geral: geral, cima: cima, baixo: baixo };
 })();
 
+/* Nomes das etapas, usados no painel para mostrar onde cada pessoa parou */
+window.AR_ETAPAS_ROTULOS = (function () {
+  'use strict';
+  var d = window.AR_MEDIDAS;
+  var r = {
+    consentimento: 'Aceite da privacidade', nome: 'Nome', telefone: 'Telefone', cep: 'CEP', endereco: 'Endereço',
+    tamanho: 'Tamanho usual', preferencias: 'Preferências', cima: 'Pergunta: parte de cima', baixo: 'Pergunta: parte de baixo',
+    revisao: 'Revisão final'
+  };
+  d.geral.forEach(function (m) { r[m.id] = m.rotulo; });
+  d.cima.forEach(function (m) { r[m.id] = m.rotulo + ' (cima)'; });
+  d.baixo.forEach(function (m) { r[m.id] = m.rotulo + ' (baixo)'; });
+  return r;
+})();
+
 /* Desenha a figura. Tudo em SVG, sem imagens: fica nítido em qualquer tela. */
 window.AR_FIGURA = (function () {
   'use strict';
