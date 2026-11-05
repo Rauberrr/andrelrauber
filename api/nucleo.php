@@ -299,6 +299,18 @@ function apagar_guarda_roupa(int $usuarioId): void
     consultar('DELETE FROM pecas WHERE usuario_id = ?', [$usuarioId]);
 }
 
+/* --- Pedidos --------------------------------------------------------------------- */
+
+// Um pedido pago há menos de 90 dias ainda pode estar em confecção ou em garantia
+function tem_pedido_em_andamento(int $usuarioId): bool
+{
+    $desde = date('Y-m-d H:i:s', time() - 90 * 86400);
+    return (int) consultar(
+        "SELECT COUNT(*) FROM pedidos WHERE usuario_id = ? AND atualizado_em > ? AND situacao IN ('pago', 'processando', 'contestado')",
+        [$usuarioId, $desde]
+    )->fetchColumn() > 0;
+}
+
 /* --- E-mail --------------------------------------------------------------------- */
 
 function enviar_email(string $para, string $assunto, string $corpo): bool

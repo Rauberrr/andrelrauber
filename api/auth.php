@@ -322,7 +322,12 @@ function acao_excluir(): void
         falhar(422, 'Digite EXCLUIR para confirmar.');
     }
     $id = (int) $usuario['id'];
+    // Sem isso, o dono perderia o registro de uma peça paga que ainda está sendo feita
+    if (tem_pedido_em_andamento($id)) {
+        falhar(409, 'Você tem um pedido em andamento. Fale conosco para excluir sua conta.');
+    }
     apagar_guarda_roupa($id);
+    consultar('DELETE FROM pedidos WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM eventos WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM redefinicoes_senha WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM cadastros WHERE usuario_id = ?', [$id]);

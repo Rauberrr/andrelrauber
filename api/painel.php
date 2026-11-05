@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 define('AR_API', true);
 require __DIR__ . '/nucleo.php';
+require __DIR__ . '/mercadopago.php';
 
 $usuario = exigir_login();
 if ((int) $usuario['admin'] !== 1) {
@@ -31,7 +32,11 @@ if ($id > 0) {
     $eventos = consultar('SELECT tipo, etapa, detalhes, criado_em FROM eventos WHERE usuario_id = ? ORDER BY id DESC LIMIT 300', [$id])->fetchAll();
     // Só os tipos e as quantidades: as fotos pertencem à pessoa
     $pecas = consultar('SELECT tipo, COUNT(*) AS total FROM pecas WHERE usuario_id = ? GROUP BY tipo ORDER BY total DESC', [$id])->fetchAll();
-    responder(200, ['pessoa' => $pessoa, 'eventos' => $eventos, 'pecas' => $pecas]);
+    $pedidos = consultar(
+        'SELECT codigo, descricao, valor_centavos, frete_centavos, situacao, metodo, parcelas, pago_em, criado_em FROM pedidos WHERE usuario_id = ? ORDER BY id DESC',
+        [$id]
+    )->fetchAll();
+    responder(200, ['pessoa' => $pessoa, 'eventos' => $eventos, 'pecas' => $pecas, 'pedidos' => $pedidos, 'pagamentosAtivos' => mp_ativo()]);
 }
 
 $pessoas = consultar(

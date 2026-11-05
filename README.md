@@ -6,7 +6,7 @@ Site em HTML, CSS e JavaScript, com contas de clientes em PHP e MySQL.
 
 ## Atualizar o site pelo GitHub
 
-O site é publicado pelo **Git Version Control** do cPanel, a partir da branch `guarda-roupa`. Salvar no GitHub não muda o site sozinho.
+O site é publicado pelo **Git Version Control** do cPanel, a partir da branch `pagamentos`. Salvar no GitHub não muda o site sozinho.
 
 1. Se o `api/banco.sql` mudou, importe-o no phpMyAdmin primeiro.
 2. No cPanel, abra **Git Version Control**, clique em **Manage** e na aba **Pull or Deploy**.
@@ -97,6 +97,35 @@ Ao atualizar o site depois, nunca apague a pasta `api/fotos-pecas`: é nela que 
 - **Looks:** as regras de cor, ocasião, clima e caimento estão em `assets/js/guarda-roupa-looks.js`. As listas de tipos, cores e cortes estão em `assets/js/guarda-roupa-dados.js` e `api/guarda-roupa.php`, que precisam ficar iguais.
 - **Limites:** 60 peças por pessoa, 40 envios por hora e 300 looks com nome ou observação, definidos em `api/guarda-roupa.php`.
 - **Nome e observação dos looks:** ficam na tabela `looks_notas`. Dar nome a uma sugestão também a guarda em Salvos.
+
+## Pedidos e pagamento
+
+O cliente paga o valor total pelo Mercado Pago, com Pix ou cartão, em Minha conta. Você cria cada pedido no painel, na ficha da pessoa, com a descrição, o valor e o frete.
+
+### Ligar o pagamento
+
+1. No Mercado Pago, cadastre uma chave Pix na conta e ative as credenciais de produção da aplicação.
+2. Em **Suas integrações > Webhooks > Configurar notificações**, preencha `https://andrerauber.com/api/pagamento-aviso.php` em produção, marque o evento **Pagamentos** e salve. Revele a assinatura secreta gerada.
+3. No Gerenciador de Arquivos, edite `api/config.php` diretamente, sem criar cópias dele dentro de `public_html`, e acrescente, antes do `];` do final:
+
+```php
+'mercadopago_token' => 'cole-aqui-o-access-token-de-producao',
+'mercadopago_assinatura' => 'cole-aqui-a-assinatura-secreta',
+'mercadopago_parcelas' => 0,
+```
+
+4. Crie um pedido de R$ 1,00 para a sua própria conta, pague pelo site e confira se ele muda para **Pago**. Depois, estorne pelo Mercado Pago.
+
+Nunca envie esses valores por mensagem nem os coloque no GitHub.
+
+### Como funciona
+
+- **Confirmação:** o site só marca um pedido como pago depois de consultar o pagamento no Mercado Pago e conferir o valor. Se o aviso falhar, o pedido é conferido quando o cliente volta ao site, e o painel tem o botão **Conferir no Mercado Pago**.
+- **Parcelas:** com `mercadopago_parcelas` em 0, valem as opções do Mercado Pago. Com outro número, de 1 a 36, esse é o máximo oferecido.
+- **Boleto:** fica fora das opções, para a confecção não depender de um pagamento que demora a compensar.
+- **Estorno:** é feito pelo Mercado Pago. O pedido muda para **Pagamento devolvido** quando o aviso chega.
+- **Exclusão de conta:** quem tem pedido pago, em análise ou em disputa, com movimento nos últimos 90 dias, precisa falar com você para excluir a conta.
+- **Condições:** o texto fica em `condicoes-de-compra.html`. Peça a um advogado para revisar antes de vender.
 
 ## Como acompanhar os clientes
 
