@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261104d">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261104e">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -43,6 +43,12 @@
     <div id="conta-conteudo" hidden>
       <span class="etiqueta">Minha conta</span>
       <h1 class="titulo-l" id="conta-ola"></h1>
+
+      <section class="conta-pedidos" id="conta-pedidos" aria-labelledby="pedidos-titulo" hidden>
+        <h2 class="titulo-s" id="pedidos-titulo">Seus pedidos</h2>
+        <p class="pedidos-aviso" id="pedidos-aviso" role="status" hidden></p>
+        <ul class="pedidos-lista" id="pedidos-lista"></ul>
+      </section>
 
       <section class="conta-status" aria-labelledby="conta-status-titulo">
         <h2 class="titulo-s" id="conta-status-titulo"></h2>
@@ -79,6 +85,7 @@
     <div class="conteudo">
       <div class="rodape-base" style="margin-top:0;border-top:0;padding-top:0">
         <span>© <span data-ano>2026</span> Andre Rauber</span>
+        <a href="condicoes-de-compra.html">Condições de compra</a>
         <a href="privacidade.html">Política de privacidade</a>
       </div>
     </div>
@@ -89,5 +96,6 @@
   <script src="assets/js/main.js?v=20261104a"></script>
   <script src="assets/js/conta-api.js?v=20261104c"></script>
   <script src="assets/js/minha-conta.js?v=20261104c"></script>
+  <script src="assets/js/pedidos.js?v=20261104e"></script>
 </body>
 </html>

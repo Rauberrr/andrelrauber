@@ -24,4 +24,12 @@ return [
 
     // E-mail que recebe o aviso quando alguém conclui o cadastro. Vazio não avisa.
     'email_aviso' => 'andreluisrauber2006@gmail.com',
+
+    // Mercado Pago: Access Token de "Credenciais" e a assinatura secreta de "Webhooks".
+    // Vazio deixa o pagamento pelo site desligado. Nunca compartilhe esses valores.
+    'mercadopago_token' => '',
+    'mercadopago_assinatura' => '',
+
+    // Máximo de parcelas oferecidas. Com 0, valem as opções do próprio Mercado Pago.
+    'mercadopago_parcelas' => 0,
 ];

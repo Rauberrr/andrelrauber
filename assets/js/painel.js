@@ -16,7 +16,21 @@
     conta_criada: 'Criou a conta', login: 'Entrou na conta', etapa: 'Chegou na etapa', respostas: 'Salvou respostas',
     concluido: 'Concluiu o cadastro', atualizado: 'Alterou o cadastro concluído', senha_pedida: 'Pediu para redefinir a senha',
     senha_redefinida: 'Redefiniu a senha', google_vinculado: 'Vinculou a conta ao Google',
-    peca_adicionada: 'Adicionou peça ao guarda-roupa', peca_excluida: 'Excluiu peça do guarda-roupa'
+    peca_adicionada: 'Adicionou peça ao guarda-roupa', peca_excluida: 'Excluiu peça do guarda-roupa',
+    pedido_criado: 'Pedido criado', pedido_cancelado: 'Pedido cancelado', pagamento_aberto: 'Abriu a tela de pagamento',
+    pagamento_iniciado: 'Pagamento em análise', pagamento_aprovado: 'Pagamento aprovado', pagamento_estornado: 'Pagamento devolvido',
+    pagamento_contestado: 'Pagamento em disputa', pagamento_duplicado: 'Pagamento em duplicidade',
+    pagamento_divergente: 'Pagamento com valor diferente'
+  };
+
+  var PEDIDOS = 'api/pedidos.php?acao=';
+  var SITUACOES_PEDIDO = {
+    aguardando: 'Aguardando pagamento', processando: 'Pagamento em análise', pago: 'Pago',
+    contestado: 'Pagamento em disputa', estornado: 'Pagamento devolvido', cancelado: 'Cancelado'
+  };
+  var METODOS = {
+    credit_card: 'Cartão de crédito', debit_card: 'Cartão de débito', bank_transfer: 'Pix',
+    account_money: 'Saldo do Mercado Pago', digital_currency: 'Linha de Crédito'
   };
 
   function $(id) { return document.getElementById(id); }
@@ -176,7 +190,122 @@
     return bloco(titulo, [['Quer fazer', 'Sim']].concat(itensMedida(lista, p)));
   }
 
-  function abrir(id, irParaMedidas) {
+  /* --- Pedidos -------------------------------------------------------------------------- */
+
+  function reais(centavos) {
+    return (centavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  function linhaDoPedido(pedido, pessoaId) {
+    var item = criar('li', 'painel-pedido');
+    var total = Number(pedido.valor_centavos) + Number(pedido.frete_centavos);
+    var frete = Number(pedido.frete_centavos) > 0 ? ' (frete de ' + reais(Number(pedido.frete_centavos)) + ')' : '';
+    item.appendChild(criar('strong', '', pedido.descricao));
+    item.appendChild(criar('span', '', reais(total) + frete));
+    var detalhes = [SITUACOES_PEDIDO[pedido.situacao] || pedido.situacao];
+    if (METODOS[pedido.metodo]) detalhes.push(METODOS[pedido.metodo] + (Number(pedido.parcelas) > 1 ? ' em ' + pedido.parcelas + 'x' : ''));
+    detalhes.push(dataHora(pedido.pago_em || pedido.criado_em));
+    item.appendChild(criar('span', 'painel-suave', detalhes.join(' · ')));
+
+    var acoes = criar('div', 'painel-pedido-acoes');
+    var erro = criar('p', 'erro');
+    erro.setAttribute('role', 'alert');
+    function acao(rotulo, caminho, confirmar) {
+      var b = criar('button', 'texto-botao', rotulo);
+      b.type = 'button';
+      b.addEventListener('click', function () {
+        if (confirmar && !window.confirm(confirmar)) return;
+        erro.textContent = '';
+        b.disabled = true;
+        api.post(PEDIDOS + caminho, { codigo: pedido.codigo }).then(function (r) {
+          b.disabled = false;
+          if (r.ok) { abrir(pessoaId, false, true); return; }
+          erro.textContent = r.erro || 'Não foi possível concluir. Tente de novo.';
+        });
+      });
+      acoes.appendChild(b);
+    }
+    acao('Conferir no Mercado Pago', 'conferir');
+    if (pedido.situacao === 'aguardando' || pedido.situacao === 'processando') {
+      acao('Cancelar pedido', 'cancelar', 'Cancelar este pedido? O cliente não poderá mais pagá-lo.');
+    }
+    item.appendChild(acoes);
+    item.appendChild(erro);
+    return item;
+  }
+
+  function campoDoPedido(id, rotulo, atributos) {
+    var campo = criar('div', 'campo');
+    var etiqueta = criar('label', '', rotulo);
+    etiqueta.htmlFor = id;
+    var entrada = criar('div', 'campo-entrada');
+    var input = document.createElement('input');
+    input.id = id;
+    input.type = 'text';
+    Object.keys(atributos).forEach(function (a) { input.setAttribute(a, atributos[a]); });
+    entrada.appendChild(input);
+    var erro = criar('p', 'erro');
+    erro.id = 'erro-' + id;
+    campo.appendChild(etiqueta);
+    campo.appendChild(entrada);
+    campo.appendChild(erro);
+    return campo;
+  }
+
+  function formularioDePedido(pessoaId) {
+    var form = criar('form', 'painel-novo-pedido');
+    form.noValidate = true;
+    form.appendChild(criar('h4', 'etiqueta', 'Novo pedido'));
+    form.appendChild(campoDoPedido('pedido-descricao', 'Descrição', { maxlength: '160', placeholder: 'Ex.: Blazer azul-marinho sob medida' }));
+    form.appendChild(campoDoPedido('pedido-valor', 'Valor da peça (R$)', { inputmode: 'decimal', placeholder: '800,00' }));
+    form.appendChild(campoDoPedido('pedido-frete', 'Frete (R$, opcional)', { inputmode: 'decimal', placeholder: '35,00' }));
+    var erroGeral = criar('p', 'erro');
+    erroGeral.setAttribute('role', 'alert');
+    form.appendChild(erroGeral);
+    var botao = criar('button', 'botao botao-cheio', 'Criar pedido');
+    botao.type = 'submit';
+    form.appendChild(botao);
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      ['descricao', 'valor', 'frete'].forEach(function (c) { $('erro-pedido-' + c).textContent = ''; });
+      erroGeral.textContent = '';
+      botao.disabled = true;
+      api.post(PEDIDOS + 'criar', {
+        usuario_id: pessoaId,
+        descricao: $('pedido-descricao').value,
+        valor: $('pedido-valor').value,
+        frete: $('pedido-frete').value
+      }).then(function (r) {
+        botao.disabled = false;
+        if (r.ok) { abrir(pessoaId, false, true); return; }
+        var campos = r.dados.campos || {};
+        Object.keys(campos).forEach(function (c) {
+          var alvo = $('erro-pedido-' + c);
+          if (alvo) alvo.textContent = campos[c];
+        });
+        erroGeral.textContent = r.erro || 'Não foi possível criar o pedido. Tente de novo.';
+      });
+    });
+    return form;
+  }
+
+  function blocoDePedidos(pessoaId, dadosPessoa) {
+    var s = criar('section', 'revisao-grupo');
+    s.appendChild(criar('h3', 'titulo-s revisao-cab', 'Pedidos'));
+    if (!dadosPessoa.pagamentosAtivos) {
+      s.appendChild(criar('p', 'painel-aviso', 'O Mercado Pago ainda não está configurado. O cliente vê o pedido, mas ainda não consegue pagar pelo site.'));
+    }
+    if (dadosPessoa.pedidos.length) {
+      var lista = criar('ul', 'painel-pedidos');
+      dadosPessoa.pedidos.forEach(function (pedido) { lista.appendChild(linhaDoPedido(pedido, pessoaId)); });
+      s.appendChild(lista);
+    }
+    s.appendChild(formularioDePedido(pessoaId));
+    return s;
+  }
+
+  function abrir(id, irParaMedidas, manterPosicao) {
     api.get(ENDERECO + '?id=' + encodeURIComponent(id)).then(function (r) {
       if (!r.ok) return;
       var p = r.dados.pessoa;
@@ -191,6 +320,7 @@
 
       var endereco = [p.logradouro, p.numero, p.complemento, p.bairro, p.cidade, p.uf].filter(Boolean).join(', ');
       [
+        blocoDePedidos(id, r.dados),
         bloco('Contato', [['E-mail', p.email], ['Telefone', api.mascaraTelefone(p.telefone || '')], ['CEP', api.mascaraCep(p.cep || '')], ['Endereço', endereco], ['Criou a conta com', p.origem === 'google' ? 'Google' : 'E-mail e senha']]),
         (function () {
           var geral = bloco('Medidas gerais', itensMedida(dados.geral, p).concat([['Tamanho usual', p.tamanho]]));
@@ -220,8 +350,8 @@
       hist.appendChild(lista);
       caixa.appendChild(hist);
 
-      $('modal-pessoa').showModal();
-      $('modal-pessoa').scrollTop = 0;
+      if (!$('modal-pessoa').open) $('modal-pessoa').showModal();
+      if (!manterPosicao) $('modal-pessoa').scrollTop = 0;
       if (irParaMedidas) $('pessoa-medidas').scrollIntoView();
     });
   }
