@@ -6,7 +6,7 @@
 deployment:
   tasks:
     - export DEPLOYPATH=../../public_html/
-    - /bin/cp 404.html a-marca.html contato.html criar-conta.html entrar.html esqueci-senha.html guarda-roupa.html guia-de-medidas.html index.html medidas.html minha-conta.html painel.html privacidade.html redefinir-senha.html $DEPLOYPATH
+    - /bin/cp 404.html a-marca.html condicoes-de-compra.html contato.html criar-conta.html entrar.html esqueci-senha.html guarda-roupa.html guia-de-medidas.html index.html medidas.html minha-conta.html painel.html privacidade.html redefinir-senha.html $DEPLOYPATH
     - /bin/cp robots.txt sitemap.xml $DEPLOYPATH
     - /bin/cp -R assets $DEPLOYPATH
     - /bin/cp -R api $DEPLOYPATH

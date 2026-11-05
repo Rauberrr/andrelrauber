@@ -138,6 +138,29 @@ CREATE TABLE IF NOT EXISTS looks_notas (
   CONSTRAINT fk_look_nota_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Pedidos criados no painel e pagos pelo Mercado Pago. Valores em centavos.
+-- Nenhum dado de cartão é guardado aqui.
+CREATE TABLE IF NOT EXISTS pedidos (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  usuario_id INT UNSIGNED NOT NULL,
+  codigo CHAR(32) NOT NULL,
+  descricao VARCHAR(160) NOT NULL,
+  valor_centavos INT UNSIGNED NOT NULL,
+  frete_centavos INT UNSIGNED NOT NULL DEFAULT 0,
+  situacao VARCHAR(12) NOT NULL DEFAULT 'aguardando',
+  mp_pagamento_id VARCHAR(30) NOT NULL DEFAULT '',
+  metodo VARCHAR(30) NOT NULL DEFAULT '',
+  parcelas INT UNSIGNED NOT NULL DEFAULT 0,
+  aceitou_condicoes_em DATETIME NULL,
+  pago_em DATETIME NULL,
+  criado_em DATETIME NOT NULL,
+  atualizado_em DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_pedido_codigo (codigo),
+  KEY idx_pedido_usuario (usuario_id, id),
+  CONSTRAINT fk_pedido_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Limite de tentativas de login, registro e recuperação de senha
 CREATE TABLE IF NOT EXISTS tentativas (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,

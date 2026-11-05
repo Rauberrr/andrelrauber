@@ -986,6 +986,31 @@ em { font-style: italic; }
 .conta-status { margin-block: 2rem; padding: clamp(1.25rem, 3vw, 2.25rem); background: var(--off-2); }
 .conta-status p { margin-top: .5rem; color: var(--cinza); }
 .conta-status .progresso { margin-block: 1.5rem; }
+.conta-pedidos { margin-block: 2rem; }
+.pedidos-aviso { margin-top: 1rem; padding: .75rem 1rem; background: var(--off-2); border-left: 2px solid var(--bordo); }
+.pedidos-lista { display: grid; gap: 1rem; margin-top: 1rem; }
+.pedido { display: grid; gap: 1rem; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--linha); }
+.pedido-cab { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem 1.5rem; }
+.pedido-cab h3 { min-width: 0; overflow-wrap: anywhere; }
+.pedido-valores { display: grid; gap: .35rem; max-width: 24rem; }
+.pedido-linha { display: flex; justify-content: space-between; gap: 1rem; }
+.pedido-linha dd { margin: 0; }
+.pedido-total { font-weight: 500; }
+.pedido-nota { font-size: .92rem; line-height: 1.45; color: var(--cinza); }
+.pedido-pagar { display: grid; justify-items: start; gap: .85rem; }
+.pedido-pagar .erro { margin: 0; }
+.pedido-pagar .erro:empty { display: none; }
+.pedido-pagar a { color: var(--bordo); text-underline-offset: 3px; }
+.pedido-selo-pago { background: var(--preto); border-color: var(--preto); color: var(--off); }
+.pedido-selo-aguardando, .pedido-selo-processando, .pedido-selo-contestado { border-color: var(--bordo); color: var(--bordo); }
+.pedido-selo-cancelado, .pedido-selo-estornado { color: var(--cinza); }
+.painel-pedidos { display: grid; gap: .75rem; margin-bottom: 1.5rem; }
+.painel-pedido { display: grid; gap: .35rem; padding-block: .75rem; border-bottom: 1px solid var(--linha); overflow-wrap: anywhere; }
+.painel-pedido-acoes { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; }
+.painel-novo-pedido { display: grid; gap: 1.25rem; padding: 1.25rem; background: var(--off-2); }
+.painel-novo-pedido .botao { justify-self: start; }
+.painel-novo-pedido .erro:empty { display: none; }
+.painel-aviso { margin-bottom: 1rem; padding: .75rem 1rem; background: var(--off-2); border-left: 2px solid var(--bordo); font-size: .92rem; }
 .conta-rodape { margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--linha); }
 .conta-botoes { display: flex; flex-wrap: wrap; gap: 1rem; }
 .conta-botoes [hidden] { display: none; }
