@@ -57,11 +57,12 @@ UPDATE usuarios SET admin = 1 WHERE email = 'seu-email@exemplo.com';
 
 Sem isso, o botão do Google fica escondido e o resto funciona normalmente.
 
-1. Acesse [console.cloud.google.com](https://console.cloud.google.com) e crie um projeto.
-2. Em **APIs e serviços > Tela de consentimento OAuth**, preencha o nome do site e publique.
-3. Em **Credenciais > Criar credenciais > ID do cliente OAuth**, escolha **Aplicativo da Web**.
-4. Em **Origens JavaScript autorizadas**, adicione `https://andrerauber.com`.
-5. Copie o ID do cliente para `google_client_id` no `api/config.php`.
+1. Abra a [página de marca do Google Auth Platform](https://console.developers.google.com/auth/branding) e crie um projeto, se ele pedir.
+2. Preencha o nome do aplicativo, o e-mail de suporte, o domínio autorizado `andrerauber.com`, a página inicial `https://andrerauber.com` e a política de privacidade `https://andrerauber.com/privacidade.html`. Salve.
+3. Na página de público-alvo (**Audience**), publique o aplicativo, para qualquer conta Google conseguir entrar.
+4. Em [Clientes](https://console.developers.google.com/auth/clients), crie um cliente do tipo **Aplicativo da Web**.
+5. Em **Origens JavaScript autorizadas**, adicione `https://andrerauber.com`. Não precisa de URI de redirecionamento.
+6. Copie o ID do cliente, que termina em `.apps.googleusercontent.com`, para `google_client_id` no `api/config.php`. Esse ID não é secreto, mas ainda assim fica só nesse arquivo.
 
 ### 6. Conferir antes de divulgar
 
@@ -94,8 +95,11 @@ Ao atualizar o site depois, nunca apague a pasta `api/fotos-pecas`: é nela que 
 - **Fundo das fotos:** é retirado no aparelho da pessoa, com a biblioteca `@imgly/background-removal` 1.7.0, sem custo por foto. Na primeira vez, o aparelho baixa cerca de 45 MB. Se não funcionar, a pessoa pode cadastrar a foto como está.
 - **Licença da biblioteca:** AGPL. Antes de usar comercialmente, confira as condições ou fale com a IMG.LY sobre uma licença comercial.
 - **Fotos:** ficam em `api/fotos-pecas`, bloqueadas ao acesso direto, e só abrem para a pessoa dona delas. O servidor regrava cada imagem, o que apaga dados como a localização. Nem o painel mostra as fotos.
+- **Peças sugeridas:** cada pessoa recebe as peças da lista `GR_SUGERIDAS`, em `api/guarda-roupa.php`, na primeira vez que abre o guarda-roupa. As fotos sem fundo ficam em `assets/img/sugeridas`, e as originais, em `imagens-guarda-roupa`, fora do GitHub. Para acrescentar uma peça, inclua a foto e a linha na lista: quem já tem conta também a recebe.
+- **Peças excluídas:** ficam na aba Excluídas, com as fotos, até a pessoa adicionar de novo ou apagar de vez. As sugeridas só saem junto com a conta, porque a foto é da marca.
+- **Várias peças de uma vez:** em **Adicionar várias**, a pessoa faz todas as fotos, descreve cada uma enquanto o fundo sai em segundo plano e guarda até 20 de cada vez. O código fica em `assets/js/guarda-roupa-lote.js`.
 - **Looks:** as regras de cor, ocasião, clima e caimento estão em `assets/js/guarda-roupa-looks.js`. As listas de tipos, cores e cortes estão em `assets/js/guarda-roupa-dados.js` e `api/guarda-roupa.php`, que precisam ficar iguais.
-- **Limites:** 60 peças por pessoa, 40 envios por hora e 300 looks com nome ou observação, definidos em `api/guarda-roupa.php`.
+- **Limites:** 60 peças próprias por pessoa, 120 somando as excluídas, 80 envios por hora e 300 looks com nome ou observação, definidos em `api/guarda-roupa.php`. As sugeridas não contam.
 - **Nome e observação dos looks:** ficam na tabela `looks_notas`. Dar nome a uma sugestão também a guarda em Salvos.
 
 ## Pedidos e pagamento
@@ -126,6 +130,12 @@ Nunca envie esses valores por mensagem nem os coloque no GitHub.
 - **Estorno:** é feito pelo Mercado Pago. O pedido muda para **Pagamento devolvido** quando o aviso chega.
 - **Exclusão de conta:** quem tem pedido pago, em análise ou em disputa, com movimento nos últimos 90 dias, precisa falar com você para excluir a conta.
 - **Condições:** o texto fica em `condicoes-de-compra.html`. Peça a um advogado para revisar antes de vender.
+
+## E-mail das contas
+
+Ao criar uma conta, o site recusa formato errado, erro comum de digitação, como `gmail.con`, e domínio que não existe. Depois, envia um link de confirmação, válido por 7 dias. Só esse link prova que a caixa de e-mail é real.
+
+A pessoa pode usar a conta antes de confirmar, porque o e-mail às vezes cai no spam. Minha conta mostra um aviso com a opção de reenviar, e a ficha de cada cliente no painel mostra se o e-mail foi confirmado. Quem entra com o Google já chega confirmado.
 
 ## Como acompanhar os clientes
 

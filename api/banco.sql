@@ -93,6 +93,17 @@ CREATE TABLE IF NOT EXISTS redefinicoes_senha (
   CONSTRAINT fk_redefinicao_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Links de confirmação de e-mail: só o hash do código fica guardado
+CREATE TABLE IF NOT EXISTS confirmacoes_email (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  usuario_id INT UNSIGNED NOT NULL,
+  token_hash CHAR(64) NOT NULL,
+  expira_em DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_confirmacao_token (token_hash),
+  CONSTRAINT fk_confirmacao_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Guarda-roupa: cada peça tem uma foto e uma descrição
 CREATE TABLE IF NOT EXISTS pecas (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -124,6 +135,28 @@ CREATE TABLE IF NOT EXISTS looks (
   UNIQUE KEY uq_look (usuario_id, chave),
   CONSTRAINT fk_look_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Peças que a pessoa excluiu e pode adicionar de novo
+CREATE TABLE IF NOT EXISTS pecas_excluidas (
+  peca_id INT UNSIGNED NOT NULL,
+  usuario_id INT UNSIGNED NOT NULL,
+  excluida_em DATETIME NOT NULL,
+  PRIMARY KEY (peca_id),
+  KEY idx_excluida_usuario (usuario_id),
+  CONSTRAINT fk_excluida_peca FOREIGN KEY (peca_id) REFERENCES pecas (id) ON DELETE CASCADE,
+  CONSTRAINT fk_excluida_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Peças sugeridas pela marca que a pessoa já recebeu. Impede que voltem depois de excluídas.
+CREATE TABLE IF NOT EXISTS pecas_sugeridas_recebidas (
+  usuario_id INT UNSIGNED NOT NULL,
+  codigo VARCHAR(60) NOT NULL,
+  PRIMARY KEY (usuario_id, codigo),
+  CONSTRAINT fk_sugerida_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- "Esporte fino" passou a se chamar "Misto". Importar de novo não muda mais nada.
+UPDATE pecas SET formalidade = 'misto' WHERE formalidade = 'esporte_fino';
 
 -- Nome e observação que a pessoa dá a um look, como "Jantar de sexta"
 CREATE TABLE IF NOT EXISTS looks_notas (

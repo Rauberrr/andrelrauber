@@ -127,6 +127,49 @@ function texto(array $origem, string $chave, int $limite): string
     return mb_substr(trim($valor), 0, $limite, 'UTF-8');
 }
 
+// Erros de digitação comuns nos provedores mais usados no Brasil
+const EMAIL_DOMINIOS_TROCADOS = [
+    'gmail.con' => 'gmail.com', 'gmail.co' => 'gmail.com', 'gmail.cm' => 'gmail.com', 'gmail.om' => 'gmail.com',
+    'gmail.com.br' => 'gmail.com', 'gmial.com' => 'gmail.com', 'gamil.com' => 'gmail.com', 'gmai.com' => 'gmail.com',
+    'gmal.com' => 'gmail.com', 'gnail.com' => 'gmail.com', 'gmaill.com' => 'gmail.com',
+    'hotmail.con' => 'hotmail.com', 'hotmail.co' => 'hotmail.com', 'hotmial.com' => 'hotmail.com',
+    'hotmal.com' => 'hotmail.com', 'hotamil.com' => 'hotmail.com', 'homail.com' => 'hotmail.com',
+    'outlook.con' => 'outlook.com', 'outlok.com' => 'outlook.com', 'outloo.com' => 'outlook.com',
+    'yahoo.con' => 'yahoo.com', 'yaho.com' => 'yahoo.com', 'yahoo.com.bt' => 'yahoo.com.br',
+    'icloud.con' => 'icloud.com', 'icoud.com' => 'icloud.com',
+];
+
+// Devolve o motivo de recusa, ou null se o e-mail parece bom. Só o link de confirmação
+// prova que a caixa existe: aqui são barrados o formato errado e o domínio impossível.
+function problema_no_email(string $email): ?string
+{
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return 'Informe um e-mail válido.';
+    }
+    $partes = explode('@', $email);
+    $dominio = (string) end($partes);
+    if (isset(EMAIL_DOMINIOS_TROCADOS[$dominio])) {
+        return 'Confira o e-mail. Você quis dizer ' . $partes[0] . '@' . EMAIL_DOMINIOS_TROCADOS[$dominio] . '?';
+    }
+    if ((config()['email_checar_dominio'] ?? true) && !dominio_recebe_email($dominio)) {
+        return 'Não encontramos o domínio deste e-mail. Confira se digitou certo.';
+    }
+    return null;
+}
+
+function dominio_recebe_email(string $dominio): bool
+{
+    if (!function_exists('checkdnsrr')) {
+        return true;
+    }
+    $nome = $dominio . '.';
+    if (@checkdnsrr($nome, 'MX') || @checkdnsrr($nome, 'A') || @checkdnsrr($nome, 'AAAA')) {
+        return true;
+    }
+    // Se nem o Gmail responde, o problema é a consulta, e a pessoa não pode ser barrada
+    return !@checkdnsrr('gmail.com.', 'MX');
+}
+
 function so_digitos(string $valor, int $limite): string
 {
     return substr((string) preg_replace('/\D/', '', $valor), 0, $limite);
@@ -218,6 +261,7 @@ function dados_publicos(array $usuario): array
         'admin' => (int) $usuario['admin'] === 1,
         'temSenha' => $usuario['senha_hash'] !== null,
         'consentiu' => $usuario['consentiu_em'] !== null,
+        'emailVerificado' => (int) $usuario['email_verificado'] === 1,
     ];
 }
 
@@ -296,6 +340,8 @@ function apagar_guarda_roupa(int $usuarioId): void
     }
     consultar('DELETE FROM looks_notas WHERE usuario_id = ?', [$usuarioId]);
     consultar('DELETE FROM looks WHERE usuario_id = ?', [$usuarioId]);
+    consultar('DELETE FROM pecas_excluidas WHERE usuario_id = ?', [$usuarioId]);
+    consultar('DELETE FROM pecas_sugeridas_recebidas WHERE usuario_id = ?', [$usuarioId]);
     consultar('DELETE FROM pecas WHERE usuario_id = ?', [$usuarioId]);
 }
 
