@@ -10,6 +10,7 @@
   var ENDERECO = 'api/guarda-roupa.php';
 
   var pecas = [];
+  var excluidas = [];
   var decisoes = {};
   var notas = {};
   // Looks que acabaram de sair de Rejeitados: aparecem primeiro nas sugestões
@@ -36,7 +37,7 @@
 
   /* --- Abas -------------------------------------------------------------------- */
 
-  var ABAS = ['pecas', 'looks'];
+  var ABAS = ['pecas', 'looks', 'excluidas'];
 
   function abrirAba(nome, foco) {
     ABAS.forEach(function (a) {
@@ -49,7 +50,8 @@
     if (foco) $('aba-' + nome).focus();
     $('gr-aviso').textContent = '';
     if (nome === 'looks') desenharLooks();
-    var hash = nome === 'looks' ? '#looks' : '#pecas';
+    if (nome === 'excluidas') desenharExcluidas();
+    var hash = '#' + nome;
     if (location.hash !== hash) history.replaceState(null, '', hash);
   }
 
@@ -59,7 +61,8 @@
     botao.addEventListener('keydown', function (e) {
       if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
       e.preventDefault();
-      abrirAba(ABAS[(i + 1) % ABAS.length], true);
+      var passo = e.key === 'ArrowRight' ? 1 : ABAS.length - 1;
+      abrirAba(ABAS[(i + passo) % ABAS.length], true);
     });
   });
 
@@ -85,6 +88,8 @@
     grade.textContent = '';
     var grupo = $('gr-filtro-grupo').value;
     var lista = pecas.filter(function (p) {
+      if (grupo === 'sugeridas') return p.sugerida;
+      if (grupo === 'minhas') return !p.sugerida;
       return !grupo || (gr.porTipo[p.tipo] && gr.porTipo[p.tipo].grupo === grupo);
     });
 
@@ -96,20 +101,126 @@
       botao.appendChild(figuraDaPeca(p));
       botao.addEventListener('click', function () { abrirEdicao(p.id); });
       item.appendChild(botao);
+      if (p.sugerida) item.appendChild(criar('span', 'etiqueta gr-selo', 'Sugerida'));
       item.appendChild(criar('p', 'gr-descricao', gr.descrever(p)));
       if (p.apelido) item.appendChild(criar('p', 'gr-apelido', p.apelido));
+      var excluir = criar('button', 'texto-botao gr-peca-acao', 'Excluir');
+      excluir.type = 'button';
+      excluir.setAttribute('aria-label', 'Excluir: ' + gr.descrever(p));
+      excluir.addEventListener('click', function () { excluirPeca(p.id); });
+      item.appendChild(excluir);
       grade.appendChild(item);
     });
 
+    var proprias = pecasProprias();
+    var temSugeridas = pecas.length > proprias;
     $('gr-contagem').textContent = pecas.length === 1 ? '1 peça' : pecas.length + ' peças';
     $('gr-vazio').hidden = pecas.length > 0;
     $('gr-pecas-filtro').hidden = pecas.length === 0;
     $('gr-filtro-vazio').hidden = pecas.length === 0 || lista.length > 0;
-    $('gr-adicionar').disabled = pecas.length >= maximo;
-    $('gr-limite').hidden = pecas.length < maximo;
+    $('gr-adicionar').disabled = proprias >= maximo;
+    $('gr-adicionar-varias').disabled = proprias >= maximo;
+    $('gr-limite').hidden = proprias < maximo;
+    $('gr-sem-sugeridas').hidden = !temSugeridas;
+    atualizarContagemExcluidas();
+  }
+
+  function pecasProprias() {
+    return pecas.filter(function (p) { return !p.sugerida; }).length;
+  }
+
+  function atualizarContagemExcluidas() {
+    $('aba-excluidas').textContent = excluidas.length ? 'Excluídas (' + excluidas.length + ')' : 'Excluídas';
   }
 
   $('gr-filtro-grupo').addEventListener('change', desenharPecas);
+
+  /* --- Excluir e adicionar de novo --------------------------------------------------------- */
+
+  function falhaAoSalvar(r) {
+    if (r.status === 401) { api.irParaLogin('guarda-roupa.html'); return; }
+    avisar(r.erro || 'Não foi possível salvar. Tente de novo.');
+  }
+
+  function excluirPeca(id, aoConcluir) {
+    return api.post(ENDERECO + '?acao=excluir', { id: id }).then(function (r) {
+      if (!r.ok) { falhaAoSalvar(r); return; }
+      var peca = pecas.filter(function (p) { return p.id === id; })[0];
+      pecas = pecas.filter(function (p) { return p.id !== id; });
+      if (peca) excluidas.unshift(peca);
+      desenharPecas();
+      if (aoConcluir) aoConcluir();
+      avisar('Peça excluída. Ela fica na aba Excluídas.', function () { restaurarPeca(id); });
+    });
+  }
+
+  function restaurarPeca(id) {
+    return api.post(ENDERECO + '?acao=restaurar', { id: id }).then(function (r) {
+      if (!r.ok) { falhaAoSalvar(r); return; }
+      excluidas = excluidas.filter(function (p) { return p.id !== id; });
+      pecas.unshift(r.dados.peca);
+      paginaLooks = 1;
+      desenharPecas();
+      desenharExcluidas();
+      avisar('Peça de volta no seu guarda-roupa.');
+    });
+  }
+
+  function apagarDeVez(id) {
+    if (!window.confirm('Apagar esta peça e a foto dela de vez? Os looks salvos com ela também saem. Não dá para desfazer.')) return;
+    api.post(ENDERECO + '?acao=apagar', { id: id }).then(function (r) {
+      if (!r.ok) { falhaAoSalvar(r); return; }
+      excluidas = excluidas.filter(function (p) { return p.id !== id; });
+      [decisoes, notas].forEach(function (mapa) {
+        Object.keys(mapa).forEach(function (chave) {
+          if (chave.split('-').indexOf(String(id)) !== -1) delete mapa[chave];
+        });
+      });
+      desenharExcluidas();
+      atualizarContagemExcluidas();
+      avisar('Peça apagada de vez.');
+    });
+  }
+
+  $('gr-sem-sugeridas').addEventListener('click', function () {
+    var quantas = pecas.length - pecasProprias();
+    if (!window.confirm('Tirar as ' + quantas + ' peças sugeridas? Elas ficam na aba Excluídas, caso queira alguma de volta.')) return;
+    api.post(ENDERECO + '?acao=excluir-sugeridas').then(function (r) {
+      if (!r.ok) { falhaAoSalvar(r); return; }
+      excluidas = pecas.filter(function (p) { return p.sugerida; }).concat(excluidas);
+      pecas = pecas.filter(function (p) { return !p.sugerida; });
+      paginaLooks = 1;
+      desenharPecas();
+      avisar('Peças sugeridas retiradas. Elas ficam na aba Excluídas.');
+    });
+  });
+
+  function desenharExcluidas() {
+    var grade = $('gr-excluidas');
+    grade.textContent = '';
+    excluidas.forEach(function (p) {
+      var item = criar('li', 'gr-peca');
+      item.appendChild(figuraDaPeca(p));
+      if (p.sugerida) item.appendChild(criar('span', 'etiqueta gr-selo', 'Sugerida'));
+      item.appendChild(criar('p', 'gr-descricao', gr.descrever(p)));
+      if (p.apelido) item.appendChild(criar('p', 'gr-apelido', p.apelido));
+      var acoes = criar('div', 'gr-peca-acoes');
+      var voltar = criar('button', 'botao', 'Adicionar de novo');
+      voltar.type = 'button';
+      voltar.addEventListener('click', function () { restaurarPeca(p.id); });
+      acoes.appendChild(voltar);
+      if (!p.sugerida) {
+        var apagar = criar('button', 'texto-botao gr-excluir', 'Apagar de vez');
+        apagar.type = 'button';
+        apagar.addEventListener('click', function () { apagarDeVez(p.id); });
+        acoes.appendChild(apagar);
+      }
+      item.appendChild(acoes);
+      grade.appendChild(item);
+    });
+    $('gr-excluidas-vazio').hidden = excluidas.length > 0;
+    $('gr-excluidas-texto').hidden = excluidas.length === 0;
+  }
 
   /* --- Cadastro: etapas ---------------------------------------------------------------- */
 
@@ -445,20 +556,7 @@
   }
 
   $('gr-excluir').addEventListener('click', function () {
-    if (!window.confirm('Excluir esta peça e a foto dela? Os looks salvos com ela também saem.')) return;
-    var id = rascunho.id;
-    api.post(ENDERECO + '?acao=excluir', { id: id }).then(function (r) {
-      if (!r.ok) { mostrarErros(r); return; }
-      pecas = pecas.filter(function (p) { return p.id !== id; });
-      [decisoes, notas].forEach(function (mapa) {
-        Object.keys(mapa).forEach(function (chave) {
-          if (chave.split('-').indexOf(String(id)) !== -1) delete mapa[chave];
-        });
-      });
-      desenharPecas();
-      $('gr-modal').close();
-      avisar('Peça excluída.');
-    });
+    excluirPeca(rascunho.id, function () { $('gr-modal').close(); });
   });
 
   /* --- Avisos ------------------------------------------------------------------------------ */
@@ -484,10 +582,6 @@
   }
 
   /* --- Looks -------------------------------------------------------------------------------- */
-
-  function rotuloNivel(n) {
-    return gr.FORMALIDADES.filter(function (f) { return f.nivel === n; })[0].rotulo;
-  }
 
   function idsDoLook(look) {
     return look.pecas.map(function (p) { return p.id; });
@@ -602,7 +696,8 @@
     var cartao = criar('article', 'gr-look');
     var cab = criar('header', 'gr-look-cab');
     cab.appendChild(criar('h3', 'titulo-s', nota.nome || 'Look ' + numero));
-    if (look.nivel) cab.appendChild(criar('span', 'etiqueta', rotuloNivel(look.nivel)));
+    var ocasiao = look.ocasiao || motor.rotuloDaOcasiao(look.pecas);
+    if (ocasiao) cab.appendChild(criar('span', 'etiqueta', ocasiao));
     cartao.appendChild(cab);
     if (nota.observacao) cartao.appendChild(criar('p', 'gr-look-obs', nota.observacao));
 
@@ -672,9 +767,11 @@
     return Object.keys(decisoes).filter(function (chave) {
       return decisoes[chave] === situacao;
     }).map(function (chave) {
-      var lista = chave.split('-').map(function (id) { return porId[id]; }).filter(Boolean);
-      return { chave: chave, pecas: lista, motivos: [] };
-    }).filter(function (l) { return l.pecas.length >= 2; }).reverse();
+      var ids = chave.split('-');
+      var lista = ids.map(function (id) { return porId[id]; }).filter(Boolean);
+      // Com alguma peça em Excluídas, o look fica guardado e volta junto com ela
+      return { chave: chave, pecas: lista, motivos: [], completo: lista.length === ids.length };
+    }).filter(function (l) { return l.completo; }).reverse();
   }
 
   function desenharLooks() {
@@ -700,8 +797,7 @@
       lista = looksComDecisao('descartado');
       if (!lista.length) mensagem = 'Nenhum look rejeitado. Os que você marcar com Não gostei ficam aqui.';
     } else {
-      var nivel = Number($('gr-filtro-nivel').value) || null;
-      lista = motor.sugerir(pecas, { nivel: nivel, clima: $('gr-filtro-clima').value }, decisoes);
+      lista = motor.sugerir(pecas, { ocasiao: $('gr-filtro-nivel').value, clima: $('gr-filtro-clima').value }, decisoes);
       lista = lista.filter(function (l) { return recuperados.indexOf(l.chave) !== -1; }).concat(
         lista.filter(function (l) { return recuperados.indexOf(l.chave) === -1; })
       );
@@ -738,7 +834,11 @@
 
   /* --- Início --------------------------------------------------------------------------------- */
 
-  preencherSelect('gr-filtro-grupo', gr.GRUPOS, 'Todas as peças');
+  preencherSelect('gr-filtro-grupo', [
+    { id: 'minhas', rotulo: 'Só as minhas' }, { id: 'sugeridas', rotulo: 'Só as sugeridas' }
+  ].concat(gr.GRUPOS), 'Todas as peças');
+  preencherSelect('gr-filtro-nivel', gr.FORMALIDADES, 'Todas');
+  preencherSelect('gr-filtro-clima', gr.CLIMAS.filter(function (c) { return c.id !== 'qualquer'; }), 'Qualquer');
   preencherSelect('gr-tecido', gr.TECIDOS, 'Não sei ou prefiro não informar');
   preencherSelect('gr-cor', gr.CORES, 'Escolha');
   preencherSelect('gr-corte', gr.CORTES, 'Escolha');
@@ -754,6 +854,19 @@
     $('gr-tipo').appendChild(grupo);
   });
 
+  // O cadastro de várias peças, em outro arquivo, conversa com esta tela por aqui
+  window.AR_GR_TELA = {
+    vagas: function () { return Math.max(0, maximo - pecasProprias()); },
+    jaConsentiu: function () { return consentiu; },
+    aoGuardar: function (peca) {
+      consentiu = true;
+      pecas.unshift(peca);
+      paginaLooks = 1;
+      desenharPecas();
+    },
+    avisar: avisar
+  };
+
   api.get(ENDERECO).then(function (r) {
     $('carregando').hidden = true;
     if (r.status === 401) {
@@ -766,6 +879,7 @@
       return;
     }
     pecas = r.dados.pecas;
+    excluidas = r.dados.excluidas;
     maximo = r.dados.maximoPecas;
     consentiu = r.dados.consentiu;
     $('gr-maximo').textContent = String(maximo);
@@ -773,6 +887,7 @@
     r.dados.notas.forEach(function (n) { notas[n.chave] = { nome: n.nome, observacao: n.observacao }; });
     $('gr-dentro').hidden = false;
     desenharPecas();
-    abrirAba(location.hash === '#looks' ? 'looks' : 'pecas');
+    var inicial = location.hash.slice(1);
+    abrirAba(ABAS.indexOf(inicial) !== -1 ? inicial : 'pecas');
   });
 })();
