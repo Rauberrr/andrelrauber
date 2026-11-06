@@ -17,13 +17,21 @@ window.AR_LOOKS = (function () {
     'azul_marinho|preto': 1, 'marrom|preto': 1, 'caramelo|preto': 1, 'caqui|preto': 1
   };
 
-  var NIVEIS = { casual: 1, esporte_fino: 2, social: 3 };
+  // Só as melhores entram na conta de variedade, que fica lenta com muitas combinações
+  var MAXIMO_PARA_VARIAR = 240;
+  // Calças e shorts de esporte não combinam com camisa, blazer ou sapato de couro
+  var BAIXO_ESPORTIVO = { calca_moletom: 1, short_esportivo: 1 };
+  var CAMADA_ARRUMADA = { blazer: 1, colete: 1, sobretudo: 1 };
+  var CALCADO_ESPORTIVO = { tenis: 1, sandalia: 1, chinelo: 1 };
+
+  var NIVEIS = { esporte_fino: 2 };
+  gr.FORMALIDADES.forEach(function (f) { NIVEIS[f.id] = f.nivel; });
 
   function par(a, b) { return a < b ? a + '|' + b : b + '|' + a; }
   // Nas frases, a calça jeans aparece como jeans, e não pela cor
   function nomeCor(p) { return p.tipo === 'jeans' ? 'jeans' : gr.porCor[p.cor].nome; }
   function grupo(p) { return gr.porTipo[p.tipo] ? gr.porTipo[p.tipo].grupo : ''; }
-  function nivelDe(p) { return NIVEIS[p.formalidade] || 1; }
+  function nivelDe(p) { return NIVEIS[p.formalidade] !== undefined ? NIVEIS[p.formalidade] : 1; }
 
   // Jeans combina como neutro, mesmo sendo azul
   function neutra(p) { return p.tipo === 'jeans' || gr.porCor[p.cor].neutra; }
@@ -72,12 +80,47 @@ window.AR_LOOKS = (function () {
 
   function aceitaClima(p, clima) {
     if (!clima) return true;
+    if (clima === 'meia_estacao') return p.clima === 'qualquer' || p.clima === 'meia_estacao';
     return clima === 'calor' ? p.clima !== 'frio' : p.clima !== 'calor';
   }
 
   function nivelDoLook(lista) {
     var soma = lista.reduce(function (t, p) { return t + nivelDe(p); }, 0);
-    return Math.round(soma / lista.length);
+    return soma / lista.length;
+  }
+
+  function roupasECalcados(lista) {
+    return lista.filter(function (p) { return grupo(p) !== 'acessorio'; });
+  }
+
+  // Misto é o que junta peça arrumada com peça casual, como camisa com jeans e tênis
+  function ehMisto(lista) {
+    var niveis = roupasECalcados(lista).map(nivelDe);
+    return Math.min.apply(null, niveis) <= 1 && Math.max.apply(null, niveis) >= 2;
+  }
+
+  // A ocasião mais marcada nas roupas e calçados. No empate, a mais arrumada.
+  function ocasiaoDoLook(lista) {
+    if (ehMisto(lista)) return 'misto';
+    var principais = roupasECalcados(lista);
+    var contagem = {};
+    principais.forEach(function (p) {
+      var id = gr.porFormalidade[p.formalidade] ? p.formalidade : 'misto';
+      contagem[id] = (contagem[id] || 0) + 1;
+    });
+    var melhor = '';
+    Object.keys(contagem).forEach(function (id) {
+      if (!melhor || contagem[id] > contagem[melhor] ||
+        (contagem[id] === contagem[melhor] && NIVEIS[id] > NIVEIS[melhor])) {
+        melhor = id;
+      }
+    });
+    return melhor;
+  }
+
+  function rotuloDaOcasiao(lista) {
+    var f = gr.porFormalidade[ocasiaoDoLook(lista)];
+    return f ? (f.curto || f.rotulo) : '';
   }
 
   function chaveDe(lista) {
@@ -108,24 +151,34 @@ window.AR_LOOKS = (function () {
     return { nota: nota / base.length, motivo: motivo };
   }
 
-  function melhorCom(opcoes, base, clima, aceita) {
-    var melhor = null;
+  // Com notas iguais, a semente alterna entre as opções, para os looks não repetirem o mesmo tênis
+  function melhorCom(opcoes, base, clima, aceita, semente) {
+    var empatadas = [];
+    var maior = -Infinity;
     opcoes.forEach(function (p) {
       if (!aceitaClima(p, clima) || !aceita(p)) return;
       if (!formalidadeCombina(base.concat([p])) || !climaCombina(base.concat([p]))) return;
       var a = avaliarAcrescimo(p, base);
-      if (a && a.nota >= 0 && (!melhor || a.nota > melhor.nota)) {
-        melhor = { peca: p, nota: a.nota, motivo: a.motivo };
-      }
+      if (!a || a.nota < 0 || a.nota < maior) return;
+      if (a.nota > maior) { maior = a.nota; empatadas = []; }
+      empatadas.push({ peca: p, nota: a.nota, motivo: a.motivo });
     });
-    return melhor;
+    return empatadas.length ? empatadas[(semente || 0) % empatadas.length] : null;
   }
 
-  function montarCandidato(grupos, cima, baixo, camada, clima, nivelPedido) {
+  // Pares que as regras de cor deixariam passar, mas ninguém usaria
+  function combinacaoEstranha(cima, baixo, camada) {
+    if (cima.tipo === 'regata' && camada) return true;
+    if (!BAIXO_ESPORTIVO[baixo.tipo]) return false;
+    return cima.tipo === 'camisa' || cima.tipo === 'polo' || Boolean(camada && CAMADA_ARRUMADA[camada.tipo]);
+  }
+
+  function montarCandidato(grupos, cima, baixo, camada, clima) {
     var roupa = camada && camada !== baixo ? [cima, camada, baixo] : [cima, baixo];
     if (!roupa.every(function (p) { return aceitaClima(p, clima); })) return null;
     if (!formalidadeCombina(roupa) || !climaCombina(roupa)) return null;
-    if (cima.tipo === 'regata' && camada) return null;
+    if (combinacaoEstranha(cima, baixo, camada)) return null;
+    var semente = cima.id + baixo.id;
 
     var motivos = [];
     var nota = 0;
@@ -151,7 +204,9 @@ window.AR_LOOKS = (function () {
       motivos.push(sobMedida > 1 ? 'As peças sob medida dão mais presença ao conjunto.' : 'A peça sob medida dá mais presença ao conjunto.');
     }
 
-    var calcado = melhorCom(grupos.calcado, roupa, clima, function () { return true; });
+    var calcado = melhorCom(grupos.calcado, roupa, clima, function (p) {
+      return !BAIXO_ESPORTIVO[baixo.tipo] || Boolean(CALCADO_ESPORTIVO[p.tipo]);
+    }, semente);
     var conjunto = roupa.slice();
     if (calcado) {
       conjunto.push(calcado.peca);
@@ -159,23 +214,30 @@ window.AR_LOOKS = (function () {
     }
 
     var nivel = nivelDoLook(conjunto);
-    if (nivelPedido && nivel !== nivelPedido) return null;
 
-    if (baixo.tipo !== 'bermuda' && baixo.tipo !== 'terno') {
-      var cinto = melhorCom(grupos.cinto, conjunto, clima, function () { return true; });
+    if (baixo.tipo !== 'bermuda' && baixo.tipo !== 'terno' && !BAIXO_ESPORTIVO[baixo.tipo]) {
+      var cinto = melhorCom(grupos.cinto, conjunto, clima, function () { return true; }, semente);
       if (cinto) conjunto.push(cinto.peca);
     }
-    if (nivel >= 2 && cima.tipo === 'camisa' && camada) {
-      var gravata = melhorCom(grupos.gravata, roupa, clima, function () { return nivel === 3; });
+    if (nivel >= 2.4 && cima.tipo === 'camisa' && camada) {
+      var gravata = melhorCom(grupos.gravata, roupa, clima, function () { return true; }, semente);
       if (gravata) conjunto.push(gravata.peca);
+    }
+    // O boné aparece em parte dos looks casuais, para não virar regra
+    if (nivel <= 1.5 && grupos.bone.length && semente % 3 === 0) {
+      var bone = melhorCom(grupos.bone, roupa, clima, function () { return true; }, semente);
+      if (bone) conjunto.push(bone.peca);
     }
 
     if (nota < NOTA_MINIMA) return null;
-    return { pecas: conjunto, chave: chaveDe(conjunto), nivel: nivel, nota: nota, motivos: motivos.slice(0, 3) };
+    return {
+      pecas: conjunto, chave: chaveDe(conjunto), nivel: nivel, misto: ehMisto(conjunto),
+      ocasiao: rotuloDaOcasiao(conjunto), nota: nota, motivos: motivos.slice(0, 3)
+    };
   }
 
   function separar(pecas) {
-    var g = { cima: [], baixo: [], camada: [], conjunto: [], calcado: [], cinto: [], gravata: [] };
+    var g = { cima: [], baixo: [], camada: [], conjunto: [], calcado: [], cinto: [], gravata: [], bone: [] };
     pecas.forEach(function (p) {
       var nome = grupo(p);
       if (nome === 'acessorio') {
@@ -212,34 +274,58 @@ window.AR_LOOKS = (function () {
     return saida;
   }
 
-  // filtros: { nivel: 1|2|3|null, clima: 'calor'|'frio'|'' }. decisoes: { chave: 'salvo'|'descartado' }
-  function sugerir(pecas, filtros, decisoes) {
+  function todasAsCombinacoes(pecas, clima) {
     var grupos = separar(pecas);
-    var nivel = filtros && filtros.nivel ? filtros.nivel : null;
-    var clima = filtros && filtros.clima ? filtros.clima : '';
     var vistos = {};
     var candidatos = [];
 
     function acrescentar(c) {
       if (!c || vistos[c.chave]) return;
-      if (decisoes && decisoes[c.chave] === 'descartado') return;
       vistos[c.chave] = true;
       candidatos.push(c);
     }
 
     grupos.cima.forEach(function (cima) {
       grupos.baixo.forEach(function (baixo) {
-        acrescentar(montarCandidato(grupos, cima, baixo, null, clima, nivel));
+        acrescentar(montarCandidato(grupos, cima, baixo, null, clima));
         grupos.camada.forEach(function (camada) {
-          acrescentar(montarCandidato(grupos, cima, baixo, camada, clima, nivel));
+          acrescentar(montarCandidato(grupos, cima, baixo, camada, clima));
         });
       });
       grupos.conjunto.forEach(function (terno) {
-        acrescentar(montarCandidato(grupos, cima, terno, terno, clima, nivel));
+        acrescentar(montarCandidato(grupos, cima, terno, terno, clima));
       });
     });
+    return candidatos;
+  }
 
-    return variar(candidatos);
+  // Salvar ou rejeitar um look redesenha a lista: sem as peças mudarem, a conta é reaproveitada
+  var guardadas = { chave: '', combinacoes: [] };
+
+  function combinacoesDe(pecas, clima) {
+    var chave = clima + '|' + pecas.map(function (p) {
+      return [p.id, p.tipo, p.cor, p.corte, p.formalidade, p.clima].join(':');
+    }).join(',');
+    if (guardadas.chave !== chave) {
+      guardadas = { chave: chave, combinacoes: todasAsCombinacoes(pecas, clima) };
+    }
+    return guardadas.combinacoes;
+  }
+
+  // filtros: { ocasiao: id da ocasião ou '', clima: id do clima ou '' }. decisoes: { chave: 'salvo'|'descartado' }
+  function sugerir(pecas, filtros, decisoes) {
+    var clima = filtros && filtros.clima ? filtros.clima : '';
+    var ocasiao = filtros && filtros.ocasiao ? gr.porFormalidade[filtros.ocasiao] : null;
+    var candidatos = combinacoesDe(pecas, clima).filter(function (c) {
+      if (decisoes && decisoes[c.chave] === 'descartado') return false;
+      if (!ocasiao) return true;
+      if (ocasiao.id === 'misto') return c.misto || c.ocasiao === ocasiao.curto;
+      if (ocasiao.id === 'casual' && c.misto) return false;
+      // Fora isso, vale a proximidade: um look arrumado serve para trabalho e também para festa
+      return Math.abs(c.nivel - ocasiao.nivel) <= 0.5;
+    });
+    candidatos.sort(function (a, b) { return b.nota - a.nota; });
+    return variar(candidatos.slice(0, MAXIMO_PARA_VARIAR));
   }
 
   // O que falta para o guarda-roupa começar a gerar looks
@@ -258,6 +344,6 @@ window.AR_LOOKS = (function () {
 
   return {
     POR_PAGINA: POR_PAGINA, sugerir: sugerir, oQueFalta: oQueFalta,
-    temSobreposicao: temSobreposicao, chaveDe: chaveDe
+    temSobreposicao: temSobreposicao, chaveDe: chaveDe, rotuloDaOcasiao: rotuloDaOcasiao
   };
 })();

@@ -17,6 +17,7 @@
     concluido: 'Concluiu o cadastro', atualizado: 'Alterou o cadastro concluído', senha_pedida: 'Pediu para redefinir a senha',
     senha_redefinida: 'Redefiniu a senha', google_vinculado: 'Vinculou a conta ao Google',
     peca_adicionada: 'Adicionou peça ao guarda-roupa', peca_excluida: 'Excluiu peça do guarda-roupa',
+    peca_restaurada: 'Adicionou de novo uma peça excluída', peca_apagada: 'Apagou de vez uma peça', email_confirmado: 'Confirmou o e-mail',
     pedido_criado: 'Pedido criado', pedido_cancelado: 'Pedido cancelado', pagamento_aberto: 'Abriu a tela de pagamento',
     pagamento_iniciado: 'Pagamento em análise', pagamento_aprovado: 'Pagamento aprovado', pagamento_estornado: 'Pagamento devolvido',
     pagamento_contestado: 'Pagamento em disputa', pagamento_duplicado: 'Pagamento em duplicidade',
@@ -321,7 +322,7 @@
       var endereco = [p.logradouro, p.numero, p.complemento, p.bairro, p.cidade, p.uf].filter(Boolean).join(', ');
       [
         blocoDePedidos(id, r.dados),
-        bloco('Contato', [['E-mail', p.email], ['Telefone', api.mascaraTelefone(p.telefone || '')], ['CEP', api.mascaraCep(p.cep || '')], ['Endereço', endereco], ['Criou a conta com', p.origem === 'google' ? 'Google' : 'E-mail e senha']]),
+        bloco('Contato', [['E-mail', p.email], ['E-mail confirmado', Number(p.email_verificado) === 1 ? 'Sim' : 'Ainda não'], ['Telefone', api.mascaraTelefone(p.telefone || '')], ['CEP', api.mascaraCep(p.cep || '')], ['Endereço', endereco], ['Criou a conta com', p.origem === 'google' ? 'Google' : 'E-mail e senha']]),
         (function () {
           var geral = bloco('Medidas gerais', itensMedida(dados.geral, p).concat([['Tamanho usual', p.tamanho]]));
           geral.id = 'pessoa-medidas';

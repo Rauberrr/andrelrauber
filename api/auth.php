@@ -37,6 +37,12 @@ switch ($acao) {
     case 'excluir':
         acao_excluir();
         break;
+    case 'confirmar-email':
+        acao_confirmar_email();
+        break;
+    case 'reenviar-confirmacao':
+        acao_reenviar_confirmacao();
+        break;
     default:
         falhar(404, 'Ação desconhecida.');
 }
@@ -86,8 +92,9 @@ function acao_registrar(): void
     if (mb_strlen($nome, 'UTF-8') < 2) {
         $erros['nome'] = 'Informe seu nome completo.';
     }
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $erros['email'] = 'Informe um e-mail válido.';
+    $problemaEmail = problema_no_email($email);
+    if ($problemaEmail !== null) {
+        $erros['email'] = $problemaEmail;
     }
     if (!telefone_valido($telefone)) {
         $erros['telefone'] = 'Informe seu telefone com DDD.';
@@ -120,8 +127,60 @@ function acao_registrar(): void
         throw $erro;
     }
 
+    enviar_confirmacao_de_email($usuario);
     abrir_sessao($usuario);
     responder(201, ['usuario' => dados_publicos($usuario)]);
+}
+
+// O link vale por 7 dias. Um novo pedido cancela os anteriores.
+function enviar_confirmacao_de_email(array $usuario): void
+{
+    $token = bin2hex(random_bytes(32));
+    consultar('DELETE FROM confirmacoes_email WHERE usuario_id = ?', [$usuario['id']]);
+    consultar(
+        'INSERT INTO confirmacoes_email (usuario_id, token_hash, expira_em) VALUES (?, ?, ?)',
+        [$usuario['id'], hash('sha256', $token), date('Y-m-d H:i:s', time() + 7 * 86400)]
+    );
+    $link = rtrim((string) config()['site_url'], '/') . '/confirmar-email.html?token=' . $token;
+    enviar_email(
+        (string) $usuario['email'],
+        'Confirme seu e-mail | Andre Rauber',
+        "Olá!\n\nPara confirmar que este e-mail é seu, abra o link abaixo em até 7 dias:\n\n{$link}\n\nSe não foi você que criou esta conta, é só ignorar este e-mail.\n\nAndre Rauber"
+    );
+}
+
+function acao_confirmar_email(): void
+{
+    $dados = exigir_post();
+    $chave = chave_limite('confirmar-email');
+    exigir_limite($chave, 20, 3600);
+    contar_tentativa($chave);
+
+    $pedido = consultar(
+        'SELECT * FROM confirmacoes_email WHERE token_hash = ? AND expira_em > ?',
+        [hash('sha256', texto($dados, 'token', 128)), agora()]
+    )->fetch();
+    if (!$pedido) {
+        falhar(400, 'Este link expirou ou já foi usado. Entre na sua conta para pedir outro.');
+    }
+    consultar('UPDATE usuarios SET email_verificado = 1 WHERE id = ?', [$pedido['usuario_id']]);
+    consultar('DELETE FROM confirmacoes_email WHERE usuario_id = ?', [$pedido['usuario_id']]);
+    registrar_evento((int) $pedido['usuario_id'], 'email_confirmado');
+    responder(200);
+}
+
+function acao_reenviar_confirmacao(): void
+{
+    exigir_post();
+    $usuario = exigir_login();
+    if ((int) $usuario['email_verificado'] === 1) {
+        responder(200);
+    }
+    $chave = chave_limite('reenviar-confirmacao', (string) $usuario['id']);
+    exigir_limite($chave, 3, 3600);
+    contar_tentativa($chave);
+    enviar_confirmacao_de_email($usuario);
+    responder(200);
 }
 
 function acao_entrar(): void
@@ -330,6 +389,7 @@ function acao_excluir(): void
     consultar('DELETE FROM pedidos WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM eventos WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM redefinicoes_senha WHERE usuario_id = ?', [$id]);
+    consultar('DELETE FROM confirmacoes_email WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM cadastros WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM usuarios WHERE id = ?', [$id]);
     encerrar_sessao();

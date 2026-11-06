@@ -91,11 +91,27 @@
       ])
     ].forEach(function (s) { if (s) caixa.appendChild(s); });
 
+    if (!u.emailVerificado) {
+      el('conta-email-endereco').textContent = u.email;
+      el('conta-email').hidden = false;
+    }
+
     el('conta-painel').hidden = !u.admin;
     el('conta-senha').hidden = !u.temSenha;
     el('carregando').hidden = true;
     el('conta-conteudo').hidden = false;
   }
+
+  el('conta-email-reenviar').addEventListener('click', function () {
+    var botao = el('conta-email-reenviar');
+    botao.disabled = true;
+    api.post(AUTH + 'reenviar-confirmacao').then(function (r) {
+      el('conta-email-aviso').textContent = r.ok
+        ? 'Enviamos um novo link. Se não chegar, confira a caixa de spam.'
+        : (r.erro || 'Não foi possível enviar agora. Tente de novo mais tarde.');
+      botao.disabled = !r.ok;
+    });
+  });
 
   el('conta-sair').addEventListener('click', function () {
     api.post(AUTH + 'sair').then(function () { location.replace('index.html'); });

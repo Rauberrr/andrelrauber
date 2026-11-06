@@ -1109,6 +1109,30 @@ em { font-style: italic; }
 .gr-mais { margin-top: 2.5rem; }
 .gr-convite { display: grid; justify-items: start; gap: .5rem; margin-top: 3rem; padding: clamp(1.25rem, 3vw, 2rem); background: var(--off-2); border-left: 2px solid var(--bordo); }
 
+.gr-ajuda-sugeridas { max-width: 44rem; margin-block: .5rem 1.75rem; font-size: .95rem; line-height: 1.5; color: var(--cinza); }
+.gr-ajuda-sugeridas [hidden] { display: none; }
+.gr-selo { display: block; margin-top: .6rem; font-size: .62rem; }
+.gr-peca-acao { margin-top: .35rem; font-size: .88rem; }
+.gr-peca-acoes { display: grid; justify-items: start; gap: .5rem; margin-top: .75rem; }
+#painel-excluidas > .gr-suave { max-width: 44rem; margin-bottom: 1.75rem; }
+
+.conta-email { margin-block: 2rem; padding: clamp(1.25rem, 3vw, 2rem); background: var(--off-2); border-left: 2px solid var(--bordo); overflow-wrap: anywhere; }
+.conta-email p { margin-top: .5rem; }
+.conta-email .texto-botao { margin-top: .75rem; }
+
+.lote-miniaturas { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: .6rem; margin-block: 1.25rem; }
+.lote-miniaturas:empty { display: none; }
+.lote-miniatura { position: relative; aspect-ratio: 4 / 5; background: var(--off-2); overflow: hidden; }
+.lote-miniatura img { width: 100%; height: 100%; object-fit: cover; }
+.lote-miniatura-tirar { position: absolute; top: .25rem; right: .25rem; width: 1.9rem; height: 1.9rem; padding: 0; border: 0; border-radius: 50%; background: var(--preto); color: var(--off); font-size: 1.1rem; line-height: 1; cursor: pointer; }
+.lote-fundo { margin-top: 1.25rem; }
+.lote-fundo[hidden] { display: none; }
+.lote-revisao { display: grid; gap: 1rem; margin-bottom: 1.25rem; }
+.lote-revisao-item { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 1rem; align-items: start; padding-bottom: 1rem; border-bottom: 1px solid var(--linha); }
+.lote-revisao-item .gr-foto { aspect-ratio: 4 / 5; }
+.lote-revisao-item .gr-suave { font-size: .88rem; }
+#lote-passo-descricao .etiqueta { margin-bottom: .75rem; padding-right: 4rem; }
+
 .gr-modal-corpo { margin-top: -56px; padding: 1.25rem clamp(1.25rem, 4vw, 2rem) 2rem; }
 .gr-modal-corpo h2 { padding-right: 4rem; margin-bottom: 1.25rem; }
 .gr-dicas { display: grid; gap: .5rem; margin-bottom: 1.75rem; color: var(--cinza); }

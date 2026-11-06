@@ -11,29 +11,39 @@ window.AR_GR = (function () {
     { id: 'acessorio', rotulo: 'Acessórios' }
   ];
 
-  // nivel: 1 casual, 2 esporte fino, 3 social
+  // nivel: 0 esportivo, 1 casual, 2 misto, 3 social. Serve para sugerir a ocasião de cada tipo.
   var TIPOS = [
     { id: 'camiseta', rotulo: 'Camiseta', grupo: 'cima', nivel: 1, clima: 'qualquer' },
     { id: 'regata', rotulo: 'Regata', grupo: 'cima', nivel: 1, clima: 'calor' },
     { id: 'polo', rotulo: 'Polo', grupo: 'cima', nivel: 1, clima: 'qualquer' },
     { id: 'camisa', rotulo: 'Camisa', grupo: 'cima', nivel: 2, clima: 'qualquer' },
+    { id: 'camisa_curta', rotulo: 'Camisa de manga curta', grupo: 'cima', nivel: 1, clima: 'calor' },
     { id: 'malha', rotulo: 'Malha ou suéter', grupo: 'cima', nivel: 2, clima: 'frio' },
     { id: 'moletom', rotulo: 'Moletom', grupo: 'cima', nivel: 1, clima: 'frio' },
     { id: 'blazer', rotulo: 'Blazer', grupo: 'camada', nivel: 2, clima: 'qualquer' },
     { id: 'jaqueta', rotulo: 'Jaqueta', grupo: 'camada', nivel: 1, clima: 'frio' },
     { id: 'casaco', rotulo: 'Casaco', grupo: 'camada', nivel: 2, clima: 'frio' },
+    { id: 'sobretudo', rotulo: 'Sobretudo', grupo: 'camada', nivel: 3, clima: 'frio' },
+    { id: 'cardigan', rotulo: 'Cardigã', grupo: 'camada', nivel: 2, clima: 'meia_estacao' },
     { id: 'colete', rotulo: 'Colete', grupo: 'camada', nivel: 2, clima: 'qualquer' },
     { id: 'terno', rotulo: 'Terno', grupo: 'conjunto', nivel: 3, clima: 'qualquer' },
-    { id: 'calca', rotulo: 'Calça', grupo: 'baixo', nivel: 2, clima: 'qualquer' },
+    { id: 'calca', rotulo: 'Calça social', grupo: 'baixo', nivel: 2, clima: 'qualquer' },
+    { id: 'calca_sarja', rotulo: 'Calça de sarja', grupo: 'baixo', nivel: 2, clima: 'qualquer' },
     { id: 'jeans', rotulo: 'Calça jeans', grupo: 'baixo', nivel: 1, clima: 'qualquer' },
+    { id: 'calca_moletom', rotulo: 'Calça de moletom', grupo: 'baixo', nivel: 1, clima: 'frio' },
     { id: 'bermuda', rotulo: 'Bermuda', grupo: 'baixo', nivel: 1, clima: 'calor' },
+    { id: 'short_esportivo', rotulo: 'Short esportivo', grupo: 'baixo', nivel: 0, clima: 'calor' },
     { id: 'sapato', rotulo: 'Sapato social', grupo: 'calcado', nivel: 3, clima: 'qualquer' },
     { id: 'mocassim', rotulo: 'Mocassim', grupo: 'calcado', nivel: 2, clima: 'qualquer' },
     { id: 'tenis', rotulo: 'Tênis', grupo: 'calcado', nivel: 1, clima: 'qualquer' },
     { id: 'bota', rotulo: 'Bota', grupo: 'calcado', nivel: 2, clima: 'frio' },
     { id: 'sandalia', rotulo: 'Sandália', grupo: 'calcado', nivel: 1, clima: 'calor' },
+    { id: 'chinelo', rotulo: 'Chinelo', grupo: 'calcado', nivel: 0, clima: 'calor' },
     { id: 'cinto', rotulo: 'Cinto', grupo: 'acessorio', nivel: 2, clima: 'qualquer' },
     { id: 'gravata', rotulo: 'Gravata', grupo: 'acessorio', nivel: 3, clima: 'qualquer' },
+    { id: 'bone', rotulo: 'Boné', grupo: 'acessorio', nivel: 1, clima: 'qualquer' },
+    { id: 'oculos', rotulo: 'Óculos', grupo: 'acessorio', nivel: 1, clima: 'qualquer' },
+    { id: 'relogio', rotulo: 'Relógio', grupo: 'acessorio', nivel: 2, clima: 'qualquer' },
     { id: 'acessorio', rotulo: 'Outro acessório', grupo: 'acessorio', nivel: 1, clima: 'qualquer' }
   ];
 
@@ -66,6 +76,7 @@ window.AR_GR = (function () {
     { id: 'sob_medida', rotulo: 'Sob medida' },
     { id: 'slim', rotulo: 'Slim' },
     { id: 'regular', rotulo: 'Regular' },
+    { id: 'reto', rotulo: 'Reto' },
     { id: 'relaxed', rotulo: 'Relaxed' },
     { id: 'oversized', rotulo: 'Oversized' }
   ];
@@ -74,25 +85,34 @@ window.AR_GR = (function () {
     { id: 'algodao', rotulo: 'Algodão' },
     { id: 'linho', rotulo: 'Linho' },
     { id: 'la', rotulo: 'Lã' },
+    { id: 'tricot', rotulo: 'Tricô' },
+    { id: 'moletom', rotulo: 'Moletom' },
     { id: 'alfaiataria', rotulo: 'Alfaiataria' },
     { id: 'jeans', rotulo: 'Jeans' },
     { id: 'couro', rotulo: 'Couro' },
+    { id: 'camurca', rotulo: 'Camurça' },
     { id: 'malha', rotulo: 'Malha' },
     { id: 'sarja', rotulo: 'Sarja' },
+    { id: 'veludo', rotulo: 'Veludo' },
     { id: 'seda', rotulo: 'Seda' },
     { id: 'sintetico', rotulo: 'Sintético' },
     { id: 'outro', rotulo: 'Outro' }
   ];
 
+  // nivel: quanto a ocasião é arrumada. Peças com níveis próximos combinam entre si.
   var FORMALIDADES = [
+    { id: 'esportivo', rotulo: 'Esportivo', nivel: 0 },
     { id: 'casual', rotulo: 'Casual', nivel: 1 },
-    { id: 'esporte_fino', rotulo: 'Esporte fino', nivel: 2 },
+    { id: 'misto', rotulo: 'Misto (social e casual)', curto: 'Misto', nivel: 2 },
+    { id: 'trabalho', rotulo: 'Trabalho', nivel: 2 },
+    { id: 'festa', rotulo: 'Festa e noite', nivel: 2.5 },
     { id: 'social', rotulo: 'Social', nivel: 3 }
   ];
 
   var CLIMAS = [
     { id: 'qualquer', rotulo: 'Qualquer clima' },
     { id: 'calor', rotulo: 'Calor' },
+    { id: 'meia_estacao', rotulo: 'Meia-estação' },
     { id: 'frio', rotulo: 'Frio' }
   ];
 
@@ -106,6 +126,7 @@ window.AR_GR = (function () {
   var porCor = indice(CORES);
   var porCorte = indice(CORTES);
   var porTecido = indice(TECIDOS);
+  var porFormalidade = indice(FORMALIDADES);
 
   // "Camiseta; cor preta; corte relaxed"
   function descrever(p) {
@@ -142,7 +163,7 @@ window.AR_GR = (function () {
 
   return {
     GRUPOS: GRUPOS, TIPOS: TIPOS, CORES: CORES, CORTES: CORTES, TECIDOS: TECIDOS,
-    FORMALIDADES: FORMALIDADES, CLIMAS: CLIMAS, porTipo: porTipo, porCor: porCor,
+    FORMALIDADES: FORMALIDADES, CLIMAS: CLIMAS, porTipo: porTipo, porCor: porCor, porFormalidade: porFormalidade,
     descrever: descrever, temCorte: temCorte,
     formalidadePadrao: formalidadePadrao, climaPadrao: climaPadrao
   };

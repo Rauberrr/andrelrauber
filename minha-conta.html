@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261104e">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261105a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -43,6 +43,13 @@
     <div id="conta-conteudo" hidden>
       <span class="etiqueta">Minha conta</span>
       <h1 class="titulo-l" id="conta-ola"></h1>
+
+      <section class="conta-email" id="conta-email" aria-labelledby="conta-email-titulo" hidden>
+        <h2 class="titulo-s" id="conta-email-titulo">Confirme seu e-mail</h2>
+        <p>Enviamos um link para <strong id="conta-email-endereco"></strong>. É por esse e-mail que avisamos sobre seus pedidos e que você recupera sua senha.</p>
+        <button class="texto-botao" id="conta-email-reenviar" type="button">Enviar o link de novo</button>
+        <p class="gr-suave" id="conta-email-aviso" role="status"></p>
+      </section>
 
       <section class="conta-pedidos" id="conta-pedidos" aria-labelledby="pedidos-titulo" hidden>
         <h2 class="titulo-s" id="pedidos-titulo">Seus pedidos</h2>
@@ -95,7 +102,7 @@
   <script src="assets/js/medidas-dados.js?v=20261104a"></script>
   <script src="assets/js/main.js?v=20261104a"></script>
   <script src="assets/js/conta-api.js?v=20261104c"></script>
-  <script src="assets/js/minha-conta.js?v=20261104c"></script>
+  <script src="assets/js/minha-conta.js?v=20261105a"></script>
   <script src="assets/js/pedidos.js?v=20261104e"></script>
 </body>
 </html>
