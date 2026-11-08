@@ -8,16 +8,27 @@
   var api = window.AR_API;
   var CHAVE = 'ar-alimentacao-v1';
   var ENDERECO = 'api/alimentacao.php';
-  var PASSOS = ['resumo', 'voce', 'comida', 'plano', 'compras'];
+  var PASSOS = ['resumo', 'voce', 'comida', 'plano', 'compras', 'acompanhamento'];
 
-  var estado = carregar() || novoEstado();
-  var conta = { logado: false, temNaConta: false, salvoEm: null, situacao: '' };
+  var estado = completar(carregar() || novoEstado());
+  var conta = { logado: false, temNaConta: false, salvoEm: null, situacao: '', medidas: null };
 
   function novoEstado() {
     return {
       perfil: { sexo: 'm', idade: '', altura: '', peso: '', atividade: 'leve', objetivo: 'manter', uf: '' },
-      itens: [], modo: 'ajustar', listaDe: 'plano', concluido: false, guardarNaConta: false, alteradoEm: 0
+      itens: [], modo: 'ajustar', listaDe: 'plano', concluido: false, guardarNaConta: false, alteradoEm: 0,
+      trocas: {}, despensa: {}, inicioPlano: '', registros: []
     };
+  }
+
+  // Dados guardados antes destas partes existirem ganham os campos que faltam
+  function completar(e) {
+    if (!e || typeof e !== 'object') return novoEstado();
+    if (!e.trocas || typeof e.trocas !== 'object' || Array.isArray(e.trocas)) e.trocas = {};
+    if (!e.despensa || typeof e.despensa !== 'object' || Array.isArray(e.despensa)) e.despensa = {};
+    if (!Array.isArray(e.registros)) e.registros = [];
+    if (typeof e.inicioPlano !== 'string') e.inicioPlano = '';
+    return e;
   }
 
   function $(id) { return document.getElementById(id); }
@@ -150,7 +161,7 @@
         var daConta = resposta.dados.dados;
         conta.temNaConta = Boolean(daConta);
         if (daConta && (daConta.alteradoEm || 0) >= (estado.alteradoEm || 0)) {
-          estado = daConta;
+          estado = completar(daConta);
           estado.guardarNaConta = true;
           conta.salvoEm = resposta.dados.atualizadoEm ? new Date(resposta.dados.atualizadoEm.replace(' ', 'T')) : null;
           try { localStorage.setItem(CHAVE, JSON.stringify(estado)); } catch (e) { /* segue */ }
@@ -174,6 +185,12 @@
       var c = r.dados.cadastro || {};
       var p = estado.perfil;
       var usou = false;
+      // Medidas do cadastro de roupas servem de ponto de partida no acompanhamento
+      var medidas = { peso: c.peso, cintura: c.cintura_cima || c.cintura_baixo, torax: c.torax, braco: c.braco, coxa: c.coxa };
+      if (Object.keys(medidas).some(function (k) { return medidas[k]; })) {
+        conta.medidas = medidas;
+        $('reg-do-cadastro').hidden = false;
+      }
       if (!p.altura && c.altura) { p.altura = Math.round(Number(c.altura)); usou = true; }
       if (!p.peso && c.peso) { p.peso = Math.round(Number(c.peso) * 10) / 10; usou = true; }
       if (!p.uf && c.uf && D.porEstado[c.uf]) { p.uf = c.uf; usou = true; }
@@ -202,6 +219,7 @@
     if (passo === 'resumo') desenharResumo();
     if (passo === 'plano') desenharPlano();
     if (passo === 'compras') desenharCompras();
+    if (passo === 'acompanhamento') desenharAcompanhamento();
     $('passo-' + passo).focus({ preventScroll: true });
     window.scrollTo({ top: $('alim-topo').getBoundingClientRect().top + window.scrollY - 90 });
   }
@@ -532,8 +550,76 @@
 
   function planoAtual(metas) {
     var itens = itensValidos();
-    if (estado.modo === 'novo' || !itens.length) return C.planoNovo(metas);
-    return C.planoAjustado(itens, metas);
+    var base = estado.modo === 'novo' || !itens.length ? C.planoNovo(metas) : C.planoAjustado(itens, metas);
+    return C.aplicarPreferencias(base, estado.trocas);
+  }
+
+  /* Trocar um alimento do plano por outro de calorias parecidas */
+
+  function abrirTrocas(item, li) {
+    var aberta = li.querySelector('.alim-trocas');
+    if (aberta) { aberta.remove(); return; }
+    document.querySelectorAll('#alim-plano .alim-trocas').forEach(function (t) { t.remove(); });
+    var caixa = criar('div', 'alim-trocas');
+    var original = item.origem || item.alimento;
+    caixa.appendChild(criar('p', 'alim-trocas-titulo', 'Trocar ' + minusculo(D.porAlimento[item.alimento].nome) + ' por:'));
+    var opcoes = C.opcoesDeTroca(item, estado.perfil.uf, 5);
+    if (!opcoes.length) caixa.appendChild(criar('p', 'alim-suave', 'Não encontramos uma troca com calorias parecidas para este item.'));
+    var lista = criar('ul', 'alim-trocas-lista');
+    opcoes.forEach(function (o) {
+      var custo = Math.abs(o.diferencaMes) < 1 ? 'mesmo custo' : (o.diferencaMes > 0 ? reais(o.diferencaMes) + ' a mais por mês' : reais(-o.diferencaMes) + ' a menos por mês');
+      var b = botao('', 'alim-troca');
+      b.appendChild(criar('span', 'alim-troca-nome', C.descreverItem(o.item)));
+      b.appendChild(criar('span', 'alim-suave', kcal(o.kcal) + ' · ' + custo));
+      b.addEventListener('click', function () {
+        var antes = estado.trocas[original];
+        estado.trocas[original] = o.item.alimento === original ? undefined : o.item.alimento;
+        if (!estado.trocas[original]) delete estado.trocas[original];
+        salvar();
+        desenharPlano();
+        retorno('Trocado: ' + minusculo(D.porAlimento[original].nome) + ' por ' + minusculo(D.porAlimento[o.item.alimento].nome) + ' no plano todo.', function () {
+          if (antes) estado.trocas[original] = antes; else delete estado.trocas[original];
+          salvar();
+          desenharPlano();
+        });
+      });
+      var itemLista = criar('li');
+      itemLista.appendChild(b);
+      lista.appendChild(itemLista);
+    });
+    caixa.appendChild(lista);
+    if (item.origem) {
+      caixa.appendChild(botao('Voltar para ' + minusculo(D.porAlimento[item.origem].nome), 'texto-botao', function () {
+        delete estado.trocas[item.origem];
+        salvar();
+        desenharPlano();
+        retorno('Voltou para ' + minusculo(D.porAlimento[item.origem].nome) + '.');
+      }));
+    }
+    li.appendChild(caixa);
+    caixa.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  function desenharTrocasEscolhidas() {
+    var caixa = $('alim-minhas-trocas');
+    caixa.textContent = '';
+    var chaves = Object.keys(estado.trocas).filter(function (k) { return D.porAlimento[k] && D.porAlimento[estado.trocas[k]]; });
+    caixa.hidden = !chaves.length;
+    if (!chaves.length) return;
+    caixa.appendChild(criar('p', 'alim-trocas-titulo', 'Suas trocas'));
+    var lista = criar('ul', 'alim-minhas-trocas-lista');
+    chaves.forEach(function (k) {
+      var li = criar('li');
+      li.appendChild(criar('span', '', D.porAlimento[k].nome + ' → ' + D.porAlimento[estado.trocas[k]].nome));
+      li.appendChild(botao('Desfazer', 'texto-botao', function () {
+        delete estado.trocas[k];
+        salvar();
+        desenharPlano();
+        retorno('Voltou para ' + minusculo(D.porAlimento[k].nome) + '.');
+      }));
+      lista.appendChild(li);
+    });
+    caixa.appendChild(lista);
   }
 
   function numeroDestaque(rotulo, valor, detalhe) {
@@ -573,6 +659,7 @@
     $('alim-modo-novo').setAttribute('aria-pressed', String(novo));
     $('alim-plano-titulo').textContent = novo ? 'Plano novo, montado para a sua meta' : 'O que você já come, com ajustes';
 
+    desenharTrocasEscolhidas();
     var caixa = $('alim-plano');
     caixa.textContent = '';
     C.REFEICOES.forEach(function (ref) {
@@ -591,10 +678,16 @@
         if (item.freq && item.freq !== 'diario') {
           linha.appendChild(criar('span', 'alim-suave', ' · ' + C.FREQUENCIAS.filter(function (f) { return f.id === item.freq; })[0].rotulo.toLowerCase()));
         }
-        if (item.novo) linha.appendChild(criar('span', 'alim-selo', 'Novo'));
+        if (item.preferencia) linha.appendChild(criar('span', 'alim-selo', 'Sua troca'));
+        else if (item.novo) linha.appendChild(criar('span', 'alim-selo', 'Novo'));
         else if (item.antes) linha.appendChild(criar('span', 'alim-selo', 'Trocado'));
         else if (item.porcao) linha.appendChild(criar('span', 'alim-selo alim-selo-claro', item.porcao === 'menos' ? 'Porção menor' : 'Porção maior'));
+        var trocar = botao('Não gosto: trocar', 'texto-botao alim-trocar');
+        trocar.setAttribute('aria-label', 'Trocar ' + C.descreverItem(item));
+        trocar.addEventListener('click', function () { abrirTrocas(item, li); });
+        linha.appendChild(trocar);
         li.appendChild(linha);
+        if (item.preferencia) li.appendChild(criar('p', 'alim-suave', 'No lugar de ' + minusculo(item.preferencia) + ', como você escolheu.'));
         if (item.antes) li.appendChild(criar('p', 'alim-suave', 'Antes: ' + item.antes + '.'));
         if (item.motivo) li.appendChild(criar('p', 'alim-suave', item.motivo));
         lista.appendChild(li);
@@ -736,6 +829,8 @@
       $('item-resumo').hidden = false;
     }
 
+    desenharDespensa(doPlano);
+
     var resumo = $('alim-custo');
     resumo.textContent = '';
     if (deHoje) resumo.appendChild(numeroDestaque('O que você come hoje', reais(deHoje.totalMes), reais(deHoje.totalDia) + ' por dia.'));
@@ -785,6 +880,366 @@
       (diferenca === 0 ? ', que está na média das capitais.' : ', onde a comida custa cerca de ' + Math.abs(diferenca) + '% ' + (diferenca > 0 ? 'a mais' : 'a menos') + ' que a média das capitais.') +
       ' No interior, os preços podem ser diferentes. Tudo é estimativa para uma pessoa.';
   }
+
+  /* --- Lista de compras: o que tem em casa e quando comprar ------------------------------------- */
+
+  function dataCurta(iso) {
+    var p = String(iso).split('-');
+    return p[2] + '/' + p[1];
+  }
+
+  function textoFaltam(dias) {
+    if (dias <= 0) return 'hoje';
+    return dias === 1 ? 'amanhã' : 'em ' + dias + ' dias';
+  }
+
+  // Lista do plano, sem a comida pronta, com a situação de cada produto em casa
+  function linhasDaDespensa(doPlano) {
+    return doPlano.lista.filter(function (l) { return !l.pronto; }).map(function (l) {
+      var registro = estado.despensa[l.produto.id];
+      return { linha: l, registro: registro, situacao: C.situacaoNoEstoque(l, registro) };
+    });
+  }
+
+  function avisosDaDespensa(doPlano) {
+    return linhasDaDespensa(doPlano).filter(function (x) {
+      return x.situacao.situacao !== 'ok' && x.registro && x.registro.compradoEm;
+    });
+  }
+
+  function descreverSugestao(l, sugestao) {
+    var preco = l.preco.valor;
+    if (sugestao.granel) {
+      return 'Para a semana, leve cerca de ' + quantidadeLegivel(sugestao.gramas, l.produto) + ' (' + reais(preco * sugestao.gramas / l.produto.qtd) + ').';
+    }
+    var texto = '';
+    if (sugestao.mes) texto = 'Você precisa de cerca de ' + quantidadeLegivel(sugestao.mes, l.produto) + ' por mês. ';
+    texto += 'Leve ' + (sugestao.embalagens === 1 ? '1 ' + l.produto.embalagem : sugestao.embalagens + ' × ' + l.produto.embalagem) +
+      ', por ' + reais(preco * sugestao.embalagens) + '. Dá para cerca de ' + Math.max(1, Math.round(sugestao.dias)) + ' dias.';
+    return texto;
+  }
+
+  function marcarComprado(l, embalagens, gramas) {
+    var id = l.produto.id;
+    var antes = estado.despensa[id] ? JSON.parse(JSON.stringify(estado.despensa[id])) : null;
+    estado.despensa[id] = {
+      compradoEm: C.hojeISO(), embalagens: embalagens, gramas: gramas,
+      ritmo: antes && antes.ritmo ? antes.ritmo : 1, acabouEm: ''
+    };
+    salvar();
+    desenharCompras();
+    var sit = C.situacaoNoEstoque(l, estado.despensa[id]);
+    retorno('Comprado: ' + minusculo(l.produto.nome) + '. Deve durar até ' + dataCurta(sit.acabaEm) + '.', function () {
+      if (antes) estado.despensa[id] = antes; else delete estado.despensa[id];
+      salvar();
+      desenharCompras();
+    });
+  }
+
+  function marcarAcabou(l) {
+    var id = l.produto.id;
+    var antes = JSON.parse(JSON.stringify(estado.despensa[id]));
+    var ritmo = C.novoRitmo(l, antes);
+    estado.despensa[id] = { compradoEm: antes.compradoEm, embalagens: antes.embalagens, gramas: antes.gramas, ritmo: ritmo, acabouEm: C.hojeISO() };
+    salvar();
+    desenharCompras();
+    var aviso = Math.abs(ritmo - (antes.ritmo || 1)) < 0.05 ? '' :
+      (ritmo > (antes.ritmo || 1) ? ' Você usa mais que o previsto: as próximas datas vêm mais cedo.' : ' Você usa menos que o previsto: as próximas datas vêm mais tarde.');
+    retorno('Anotado: ' + minusculo(l.produto.nome) + ' acabou.' + aviso, function () {
+      estado.despensa[id] = antes;
+      salvar();
+      desenharCompras();
+    });
+  }
+
+  function linhaDaDespensa(x) {
+    var l = x.linha;
+    var sit = x.situacao;
+    var li = criar('li', 'alim-despensa-item alim-despensa-' + sit.situacao);
+    var cab = criar('div', 'alim-despensa-linha');
+    var marca = criar('label', 'campo-marcar alim-despensa-marca');
+    var caixa = document.createElement('input');
+    caixa.type = 'checkbox';
+    caixa.checked = sit.situacao !== 'comprar';
+    marca.appendChild(caixa);
+    marca.appendChild(criar('span', 'alim-compra-nome', l.produto.nome));
+    cab.appendChild(marca);
+
+    var sugestao = C.sugestaoDeCompra(l, sit.ritmo);
+    var quantas = null;
+    if (sit.situacao === 'comprar' && !sugestao.granel) {
+      quantas = document.createElement('select');
+      quantas.setAttribute('aria-label', 'Quantas embalagens de ' + l.produto.nome);
+      for (var n = 1; n <= Math.max(6, sugestao.embalagens); n += 1) {
+        quantas.appendChild(new Option(n + ' × ' + l.produto.embalagem, String(n)));
+      }
+      quantas.value = String(sugestao.embalagens);
+      cab.appendChild(quantas);
+    }
+    li.appendChild(cab);
+
+    var detalhe = criar('p', 'alim-suave');
+    if (sit.situacao === 'comprar') {
+      var porque = '';
+      if (sit.motivo === 'acabou') porque = 'Acabou em ' + dataCurta(x.registro.acabouEm) + '. ';
+      if (sit.motivo === 'deve-ter-acabado') porque = 'Pela previsão, acabou em ' + dataCurta(sit.acabaEm) + '. Se ainda tem, toque em Ainda tenho. ';
+      detalhe.textContent = porque + descreverSugestao(l, sugestao);
+    } else {
+      detalhe.textContent = 'Em casa desde ' + dataCurta(x.registro.compradoEm) + '. Resta cerca de ' + quantidadeLegivel(sit.resta, l.produto) +
+        ', que acaba ' + textoFaltam(sit.faltam) + ' (' + dataCurta(sit.acabaEm) + ').' +
+        (sit.situacao === 'breve' ? ' Já coloque na lista.' : '') +
+        (sit.estraga ? ' Parte pode estragar antes de acabar.' : '');
+    }
+    li.appendChild(detalhe);
+
+    caixa.addEventListener('change', function () {
+      if (caixa.checked) {
+        var emb = quantas ? Number(quantas.value) : 0;
+        marcarComprado(l, emb, sugestao.granel ? sugestao.gramas : emb * l.produto.qtd);
+      } else {
+        var antes = estado.despensa[l.produto.id];
+        delete estado.despensa[l.produto.id];
+        salvar();
+        desenharCompras();
+        retorno('Desmarcado: ' + minusculo(l.produto.nome) + '.', function () {
+          estado.despensa[l.produto.id] = antes;
+          salvar();
+          desenharCompras();
+        });
+      }
+    });
+
+    var acoes = criar('div', 'alim-despensa-acoes');
+    if (sit.situacao !== 'comprar') {
+      acoes.appendChild(botao('Acabou', 'texto-botao', function () { marcarAcabou(l); }));
+    } else if (sit.motivo === 'deve-ter-acabado') {
+      // A previsão errou para menos: a pessoa ainda tem o produto
+      acoes.appendChild(botao('Ainda tenho', 'texto-botao', function () {
+        var r = estado.despensa[l.produto.id];
+        r.ritmo = Math.max(0.5, (r.ritmo || 1) * 0.8);
+        salvar();
+        desenharCompras();
+        retorno('Certo: a previsão de ' + minusculo(l.produto.nome) + ' ficou mais longa.');
+      }));
+    }
+    if (acoes.children.length) li.appendChild(acoes);
+    return li;
+  }
+
+  function desenharDespensa(doPlano) {
+    var caixa = $('alim-despensa');
+    caixa.textContent = '';
+    var linhas = linhasDaDespensa(doPlano);
+    var grupos = [
+      { id: 'comprar', titulo: 'Para comprar', vazio: 'Nada para comprar agora.' },
+      { id: 'breve', titulo: 'Acaba em breve' },
+      { id: 'ok', titulo: 'Em casa' }
+    ];
+    grupos.forEach(function (g) {
+      var doGrupo = linhas.filter(function (x) { return x.situacao.situacao === g.id; });
+      if (!doGrupo.length && !g.vazio) return;
+      var bloco = criar('section', 'alim-despensa-grupo');
+      bloco.appendChild(criar('h4', 'etiqueta', g.titulo + (doGrupo.length ? ' (' + doGrupo.length + ')' : '')));
+      if (!doGrupo.length) {
+        bloco.appendChild(criar('p', 'alim-suave', g.vazio));
+      } else {
+        doGrupo.sort(function (a, b) { return (a.situacao.faltam || 0) - (b.situacao.faltam || 0); });
+        var ul = criar('ul', 'alim-despensa-lista');
+        doGrupo.forEach(function (x) { ul.appendChild(linhaDaDespensa(x)); });
+        bloco.appendChild(ul);
+      }
+      caixa.appendChild(bloco);
+    });
+  }
+
+  $('alim-copiar-lista').addEventListener('click', function () {
+    var c = contas();
+    var linhas = linhasDaDespensa(c.doPlano).filter(function (x) { return x.situacao.situacao !== 'ok'; });
+    if (!linhas.length) { retorno('Sua lista está vazia: você tem tudo em casa.'); return; }
+    var texto = 'Lista de compras\n' + linhas.map(function (x) {
+      var s = C.sugestaoDeCompra(x.linha, x.situacao.ritmo);
+      return '- ' + x.linha.produto.nome + ': ' + (s.granel ? quantidadeLegivel(s.gramas, x.linha.produto) : s.embalagens + ' × ' + x.linha.produto.embalagem);
+    }).join('\n');
+    function copiado() { retorno('Lista copiada. Cole no WhatsApp ou nas notas do celular.'); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texto).then(copiado, function () { window.prompt('Copie a lista:', texto); });
+    } else {
+      window.prompt('Copie a lista:', texto);
+    }
+  });
+
+  /* --- Acompanhamento: peso e medidas ------------------------------------------------------------ */
+
+  var MEDIDAS_REGISTRO = [
+    { id: 'peso', rotulo: 'Peso', unidade: 'kg', min: 40, max: 250 },
+    { id: 'cintura', rotulo: 'Cintura', unidade: 'cm', min: 40, max: 200 },
+    { id: 'torax', rotulo: 'Tórax', unidade: 'cm', min: 50, max: 200 },
+    { id: 'braco', rotulo: 'Braço', unidade: 'cm', min: 15, max: 70 },
+    { id: 'coxa', rotulo: 'Coxa', unidade: 'cm', min: 30, max: 100 }
+  ];
+
+  function numeroDe(texto) {
+    var n = Number(String(texto || '').replace(',', '.'));
+    return isFinite(n) && n > 0 ? Math.round(n * 10) / 10 : '';
+  }
+
+  function formatarMedida(v, unidade) {
+    return v === '' || v === undefined || v === null ? '—' : String(v).replace('.', ',') + ' ' + unidade;
+  }
+
+  function desenharAcompanhamento() {
+    if (!estado.inicioPlano) {
+      estado.inicioPlano = C.hojeISO();
+      salvar();
+    }
+    $('alim-inicio').value = estado.inicioPlano;
+    if (!$('reg-data').value) $('reg-data').value = C.hojeISO();
+    if (!estado.registros.length && !$('reg-peso').value && estado.perfil.peso) {
+      $('reg-peso').value = String(estado.perfil.peso).replace('.', ',');
+    }
+
+    var corpo = $('alim-registros');
+    corpo.textContent = '';
+    estado.registros.forEach(function (r, i) {
+      var tr = criar('tr');
+      tr.appendChild(criar('td', '', dataCurta(r.data) + '/' + r.data.slice(2, 4)));
+      MEDIDAS_REGISTRO.forEach(function (m) { tr.appendChild(criar('td', '', formatarMedida(r[m.id], m.unidade))); });
+      var td = criar('td');
+      td.appendChild(botao('Apagar', 'texto-botao', function () {
+        var removido = estado.registros.splice(i, 1)[0];
+        salvar();
+        desenharAcompanhamento();
+        retorno('Registro de ' + dataCurta(removido.data) + ' apagado.', function () {
+          estado.registros.splice(i, 0, removido);
+          salvar();
+          desenharAcompanhamento();
+        });
+      }));
+      tr.appendChild(td);
+      corpo.appendChild(tr);
+    });
+    $('alim-tabela').hidden = !estado.registros.length;
+    desenharEvolucao();
+  }
+
+  function variacao(primeiro, ultimo, id) {
+    var lista = estado.registros.filter(function (r) { return r[id] !== '' && r[id] !== undefined; });
+    if (lista.length < 2) return null;
+    return Math.round((lista[lista.length - 1][id] - lista[0][id]) * 10) / 10;
+  }
+
+  // Lê os números como um treinador leria: peso e cintura juntos dizem mais que o peso sozinho
+  function leituraDaEvolucao() {
+    var r = estado.registros;
+    var dPeso = variacao(r[0], r[r.length - 1], 'peso');
+    var dCintura = variacao(r[0], r[r.length - 1], 'cintura');
+    var dBraco = variacao(r[0], r[r.length - 1], 'braco');
+    var dTorax = variacao(r[0], r[r.length - 1], 'torax');
+    var musculo = (dBraco !== null && dBraco > 0.3) || (dTorax !== null && dTorax > 0.5);
+    if (dPeso === null && dCintura === null) return 'Faça um segundo registro para ver a sua evolução.';
+    if (dPeso !== null && dPeso < -0.3 && dCintura !== null && dCintura < -0.3) {
+      return 'Você está emagrecendo: ' + String(-dPeso).replace('.', ',') + ' kg e ' + String(-dCintura).replace('.', ',') + ' cm de cintura a menos.';
+    }
+    if (dPeso !== null && dPeso > 0.3 && dCintura !== null && dCintura <= 0.5 && musculo) {
+      return 'Sinais de ganho de massa muscular: peso e ' + (dBraco > 0.3 ? 'braço' : 'tórax') + ' subindo, com a cintura estável.';
+    }
+    if (dPeso !== null && dPeso > 0.3 && dCintura !== null && dCintura > 0.5) {
+      return 'Peso e cintura subindo juntos: parte do ganho pode ser gordura. Vale rever as porções com o objetivo.';
+    }
+    if (dPeso !== null && Math.abs(dPeso) <= 0.3 && dCintura !== null && dCintura < -0.3) {
+      return 'Peso estável e cintura diminuindo: você está trocando gordura por massa magra.';
+    }
+    if (dPeso !== null && dPeso < -0.3) return 'Você perdeu ' + String(-dPeso).replace('.', ',') + ' kg. Registre a cintura para saber se é gordura que está saindo.';
+    if (dPeso !== null && dPeso > 0.3) return 'Você ganhou ' + String(dPeso).replace('.', ',') + ' kg. Registre cintura e braço para saber se é músculo ou gordura.';
+    return 'Medidas estáveis até aqui. Mudanças aparecem em duas a quatro semanas.';
+  }
+
+  function desenharEvolucao() {
+    var caixa = $('alim-evolucao');
+    caixa.textContent = '';
+    var r = estado.registros;
+    if (!r.length) {
+      caixa.appendChild(criar('p', 'alim-suave', 'Nenhum registro ainda. Comece hoje: é o ponto de partida.'));
+      return;
+    }
+    var dias = C.diasEntre(estado.inicioPlano || r[0].data, C.hojeISO());
+    var numeros = criar('dl', 'alim-numeros');
+    numeros.appendChild(numeroDestaque('Desde o início', Math.max(0, dias) + (dias === 1 ? ' dia' : ' dias'), 'Começou em ' + dataCurta(estado.inicioPlano || r[0].data) + '.'));
+    MEDIDAS_REGISTRO.forEach(function (m) {
+      var d = variacao(null, null, m.id);
+      if (d === null) return;
+      numeros.appendChild(numeroDestaque(m.rotulo, (d > 0 ? '+' : '') + String(d).replace('.', ',') + ' ' + m.unidade, 'Do primeiro ao último registro.'));
+    });
+    caixa.appendChild(numeros);
+    var leitura = criar('p', 'alim-veredito', leituraDaEvolucao());
+    caixa.appendChild(leitura);
+
+    // Perder mais de 1 kg por semana costuma levar músculo junto
+    var comPeso = r.filter(function (x) { return x.peso; });
+    if (comPeso.length >= 2) {
+      var semanas = Math.max(1, C.diasEntre(comPeso[0].data, comPeso[comPeso.length - 1].data) / 7);
+      var porSemana = (comPeso[comPeso.length - 1].peso - comPeso[0].peso) / semanas;
+      if (porSemana < -1) caixa.appendChild(criar('p', 'alim-alerta', 'Você está perdendo mais de 1 kg por semana. É rápido demais: aumente um pouco as porções para não perder músculo.'));
+    }
+  }
+
+  $('alim-inicio').addEventListener('change', function () {
+    if (!$('alim-inicio').value) return;
+    estado.inicioPlano = $('alim-inicio').value;
+    salvar();
+    desenharEvolucao();
+    retorno('Início do plano: ' + dataCurta(estado.inicioPlano) + '.');
+  });
+
+  $('reg-do-cadastro').addEventListener('click', function () {
+    var m = conta.medidas || {};
+    ['peso', 'cintura', 'torax', 'braco', 'coxa'].forEach(function (id) {
+      if (m[id]) $('reg-' + id).value = String(Math.round(Number(m[id]) * 10) / 10).replace('.', ',');
+    });
+    retorno('Trouxemos as medidas do seu cadastro. Confira antes de registrar.');
+  });
+
+  $('alim-registro').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var erro = $('reg-erro');
+    erro.textContent = '';
+    var data = $('reg-data').value;
+    if (!data) { erro.textContent = 'Escolha a data.'; return; }
+    if (data > C.hojeISO()) { erro.textContent = 'A data não pode ser no futuro.'; return; }
+    var registro = { data: data };
+    var algum = false;
+    for (var i = 0; i < MEDIDAS_REGISTRO.length; i += 1) {
+      var m = MEDIDAS_REGISTRO[i];
+      var v = numeroDe($('reg-' + m.id).value);
+      if ($('reg-' + m.id).value.trim() && (v === '' || v < m.min || v > m.max)) {
+        erro.textContent = m.rotulo + ': informe um valor entre ' + m.min + ' e ' + m.max + ' ' + m.unidade + '.';
+        $('reg-' + m.id).focus();
+        return;
+      }
+      registro[m.id] = v;
+      if (v !== '') algum = true;
+    }
+    if (!algum) { erro.textContent = 'Informe pelo menos o peso ou uma medida.'; return; }
+    // Um registro por dia: registrar de novo na mesma data substitui
+    estado.registros = estado.registros.filter(function (r) { return r.data !== data; });
+    estado.registros.push(registro);
+    estado.registros.sort(function (a, b) { return a.data < b.data ? -1 : 1; });
+    if (estado.registros.length > 200) estado.registros = estado.registros.slice(-200);
+    var ultimo = estado.registros[estado.registros.length - 1];
+    var mudouPeso = ultimo === registro && registro.peso && registro.peso !== estado.perfil.peso;
+    if (mudouPeso) {
+      estado.perfil.peso = registro.peso;
+      mostrarPerfil();
+    }
+    salvar();
+    ['peso', 'cintura', 'torax', 'braco', 'coxa'].forEach(function (id) { $('reg-' + id).value = ''; });
+    $('reg-data').value = C.hojeISO();
+    desenharAcompanhamento();
+    retorno('Registrado em ' + dataCurta(data) + '.' + (mudouPeso ? ' Atualizamos seu peso no cálculo do plano.' : ''));
+  });
+
+  $('alim-ir-acompanhamento').addEventListener('click', function () { irPara('acompanhamento'); });
+  $('alim-acomp-resumo').addEventListener('click', function () { irPara('resumo'); });
 
   function escolherLista(qual) {
     if (estado.listaDe === qual) { retorno('Esta lista já está aberta.'); return; }
@@ -848,7 +1303,43 @@
       ['Com o plano', reais(c.doPlano.totalMes) + ' por mês'],
       c.deHoje ? ['Hoje', reais(c.deHoje.totalMes) + ' por mês'] : ['Hoje', 'Marque o que você come para comparar'],
       ['Do salário mínimo', Math.round(c.doPlano.totalMes / D.SALARIO_MINIMO * 100) + '%']
-    ], 'Ver a lista de compras', 'compras'));
+    ], 'Ver os custos', 'compras'));
+
+    var linhas = linhasDaDespensa(c.doPlano);
+    var paraComprar = linhas.filter(function (x) { return x.situacao.situacao === 'comprar'; });
+    var emCasa = linhas.filter(function (x) { return x.situacao.situacao !== 'comprar'; })
+      .sort(function (a, b) { return a.situacao.faltam - b.situacao.faltam; });
+    caixa.appendChild(cartao('Lista de compras', [
+      ['Para comprar', paraComprar.length ? paraComprar.length + (paraComprar.length === 1 ? ' item' : ' itens') : 'Nada agora'],
+      ['Em casa', emCasa.length ? emCasa.length + (emCasa.length === 1 ? ' item' : ' itens') : 'Nada marcado ainda'],
+      ['Próximo a acabar', emCasa.length ? emCasa[0].linha.produto.nome + ', ' + textoFaltam(emCasa[0].situacao.faltam) : '—']
+    ], 'Abrir a lista', 'compras'));
+
+    var r = estado.registros;
+    var dPeso = variacao(null, null, 'peso');
+    var dCintura = variacao(null, null, 'cintura');
+    caixa.appendChild(cartao('Acompanhamento', [
+      ['Início do plano', estado.inicioPlano ? dataCurta(estado.inicioPlano) : 'Ainda não definido'],
+      ['Registros', r.length ? String(r.length) : 'Nenhum ainda'],
+      ['Peso', dPeso === null ? (r.length && r[r.length - 1].peso ? formatarMedida(r[r.length - 1].peso, 'kg') : '—') : (dPeso > 0 ? '+' : '') + String(dPeso).replace('.', ',') + ' kg'],
+      ['Cintura', dCintura === null ? '—' : (dCintura > 0 ? '+' : '') + String(dCintura).replace('.', ',') + ' cm']
+    ], 'Registrar peso e medidas', 'acompanhamento'));
+
+    var avisos = avisosDaDespensa(c.doPlano);
+    if (avisos.length) {
+      var aviso = criar('div', 'alim-avisos');
+      aviso.appendChild(criar('p', 'alim-trocas-titulo', 'Avisos da sua lista'));
+      var ul = criar('ul');
+      avisos.forEach(function (x) {
+        var s = x.situacao;
+        ul.appendChild(criar('li', '', x.linha.produto.nome + ': ' + (s.situacao === 'breve'
+          ? 'acaba ' + textoFaltam(s.faltam) + ' (' + dataCurta(s.acabaEm) + ')'
+          : (s.motivo === 'acabou' ? 'acabou' : 'deve ter acabado em ' + dataCurta(s.acabaEm))) + '.'));
+      });
+      aviso.appendChild(ul);
+      aviso.appendChild(botao('Ver a lista de compras', 'botao', function () { irPara('compras'); }));
+      caixa.insertBefore(aviso, caixa.firstChild);
+    }
     var veredito = criar('p', 'alim-veredito', textoVeredito(c.doPlano, c.deHoje));
     caixa.insertBefore(veredito, caixa.firstChild);
     mostrarSituacao(conta.situacao);
@@ -882,6 +1373,13 @@
     if (estado.concluido && perfilValido()) irPara(aberto && aberto !== 'voce' ? aberto : 'resumo');
   }
 
+  // Ao abrir, avisa se algo da lista acabou ou está acabando
+  function avisarAoAbrir() {
+    if (!estado.concluido || !perfilValido()) return;
+    var n = avisosDaDespensa(contas().doPlano).length;
+    if (n) retorno(n === 1 ? '1 item da sua lista de compras está acabando ou acabou.' : n + ' itens da sua lista de compras estão acabando ou acabaram.');
+  }
+
   preencherOpcoes();
   montarRefeicoes();
   mostrarPerfil();
@@ -889,5 +1387,6 @@
   if (estado.concluido && perfilValido()) irPara('resumo');
   else $('item-resumo').hidden = true;
   mostrarSituacao('');
+  avisarAoAbrir();
   iniciarConta();
 })();

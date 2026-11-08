@@ -231,6 +231,73 @@ window.AR_ALIM_CALC = (function () {
     return ajustarPorcoes(itens, metas.meta).itens;
   }
 
+  /* --- Trocas de quem não gosta de algum alimento ------------------------------------------------ */
+
+  // Não entram como opção de troca: ultraprocessados, frituras, bebidas açucaradas e comida pronta
+  var FORA_DAS_TROCAS = {
+    salsicha: 1, linguica: 1, batata_frita: 1, ovo_frito: 1, refrigerante: 1, suco_caixa: 1, cerveja: 1,
+    achocolatado: 1, biscoito: 1, chocolate: 1, agua: 1, oleo: 1, acucar: 1, adocante: 1, margarina: 1, presunto: 1
+  };
+
+  function kcalDoItem(item) {
+    var a = D.porAlimento[item.alimento];
+    return gramasDoItem(item) * a.kcal / 100;
+  }
+
+  // Mesma energia com outro alimento: a quantidade muda para as calorias ficarem parecidas
+  function itemEquivalente(item, alimentoId) {
+    var destino = D.porAlimento[alimentoId];
+    var kcalPorMedida = destino.medidas[0].g * destino.kcal / 100;
+    var alvo = kcalDoItem(copiar(item, { freq: 'diario' }));
+    var qtd = kcalPorMedida > 0 ? Math.max(0.5, arredondar(alvo / kcalPorMedida)) : item.qtd;
+    return copiar(item, { alimento: alimentoId, qtd: qtd, medida: 0, motivo: '', antes: '', novo: false, porcao: '' });
+  }
+
+  function custoDiaDoItem(item, uf) {
+    var a = D.porAlimento[item.alimento];
+    var gramas = gramasDoItem(item);
+    var partes = D.COMPOSTOS[a.id] || (a.produto ? [[a.produto, a.fator]] : []);
+    return partes.reduce(function (t, parte) {
+      var produto = D.porProduto[parte[0]];
+      return t + gramas * parte[1] / produto.qtd * precoDe(produto, uf).valor;
+    }, 0);
+  }
+
+  // Até cinco alimentos do mesmo grupo, com calorias próximas e o efeito no custo do mês
+  function opcoesDeTroca(item, uf, quantas) {
+    var original = D.porAlimento[item.alimento];
+    var kcalOriginal = kcalDoItem(item);
+    var custoOriginal = custoDiaDoItem(item, uf);
+    return D.ALIMENTOS.filter(function (a) {
+      return a.grupo === original.grupo && a.id !== original.id && !FORA_DAS_TROCAS[a.id] && a.kcal > 0;
+    }).map(function (a) {
+      var novo = itemEquivalente(item, a.id);
+      return {
+        item: novo,
+        kcal: kcalDoItem(novo),
+        diferencaKcal: kcalDoItem(novo) - kcalOriginal,
+        diferencaMes: (custoDiaDoItem(novo, uf) - custoOriginal) * 30
+      };
+    }).filter(function (o) {
+      return o.item.qtd <= 6 && Math.abs(o.diferencaKcal) <= Math.max(60, kcalOriginal * 0.35);
+    }).sort(function (a, b) {
+      return Math.abs(a.diferencaKcal) - Math.abs(b.diferencaKcal) || a.diferencaMes - b.diferencaMes;
+    }).slice(0, quantas || 5);
+  }
+
+  // Aplica as trocas que a pessoa escolheu: { alimento que não gosta: alimento no lugar }
+  function aplicarPreferencias(itens, trocas) {
+    if (!trocas) return itens;
+    return itens.map(function (item) {
+      var para = trocas[item.alimento];
+      if (!para || !D.porAlimento[para]) return item;
+      var novo = itemEquivalente(item, para);
+      novo.preferencia = D.porAlimento[item.alimento].nome;
+      novo.origem = item.alimento;
+      return novo;
+    });
+  }
+
   /* --- Preços ------------------------------------------------------------------------------- */
 
   var COLUNAS_INDICE = ['carne', 'leite', 'feijao', 'arroz', 'tomate', 'pao', 'cafe', 'banana', 'acucar', 'oleo', 'manteiga'];
@@ -323,6 +390,83 @@ window.AR_ALIM_CALC = (function () {
     return 'mes';
   }
 
+  /* --- Despensa: o que comprar e quando ---------------------------------------------------------- */
+
+  function hojeISO() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function paraData(iso) {
+    var p = String(iso).split('-').map(Number);
+    return new Date(p[0], p[1] - 1, p[2]);
+  }
+
+  function diasEntre(deISO, ateISO) {
+    return Math.round((paraData(ateISO) - paraData(deISO)) / 86400000);
+  }
+
+  function somarDias(iso, dias) {
+    var d = paraData(iso);
+    d.setDate(d.getDate() + Math.floor(dias));
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  // Quanto levar: o do mês para o que não estraga, o da semana para fruta, verdura e pão
+  function sugestaoDeCompra(linha, ritmo) {
+    var produto = linha.produto;
+    var porDia = linha.porDia * (ritmo || 1);
+    if (linha.granel || produto.dura < 21) {
+      var dias = linha.granel ? 7 : Math.max(1, Math.min(7, produto.dura));
+      var gramas = porDia * dias;
+      if (linha.granel) return { granel: true, gramas: gramas, embalagens: 0, dias: dias };
+      // Perecível: arredonda para baixo quando sobra pouco, para não comprar o que vai estragar
+      var emb = Math.max(1, Math.round(gramas / produto.qtd));
+      return { granel: false, gramas: emb * produto.qtd, embalagens: emb, dias: Math.min(emb * produto.qtd / porDia, produto.dura * emb) };
+    }
+    // Compra do mês só para o que dura bastante; ovos e laticínios, a cada duas semanas
+    var periodo = produto.dura >= 60 ? 30 : 14;
+    var mes = porDia * 30;
+    var embalagens = Math.max(1, Math.ceil(porDia * periodo / produto.qtd));
+    return { granel: false, gramas: embalagens * produto.qtd, embalagens: embalagens, dias: Math.min(embalagens * produto.qtd / porDia, produto.dura * embalagens), mes: mes };
+  }
+
+  // Quanto ainda deve ter em casa e quando acaba. registro: { compradoEm, gramas, embalagens, ritmo }
+  function situacaoNoEstoque(linha, registro, hojeData) {
+    var hoje = hojeData || hojeISO();
+    var ritmo = registro && registro.ritmo ? registro.ritmo : 1;
+    var porDia = linha.porDia * ritmo;
+    if (!registro || !registro.compradoEm || registro.acabouEm) {
+      return { situacao: 'comprar', motivo: registro && registro.acabouEm ? 'acabou' : 'nunca', ritmo: ritmo };
+    }
+    var embalagens = registro.embalagens || 1;
+    var validade = linha.granel ? linha.produto.dura : linha.produto.dura * embalagens;
+    var duracao = Math.min(registro.gramas / porDia, validade);
+    var acabaEm = somarDias(registro.compradoEm, duracao);
+    var faltam = diasEntre(hoje, acabaEm);
+    var passados = diasEntre(registro.compradoEm, hoje);
+    var resta = Math.max(0, registro.gramas - porDia * passados);
+    return {
+      situacao: faltam <= 0 ? 'comprar' : (faltam <= 3 ? 'breve' : 'ok'),
+      motivo: faltam <= 0 ? 'deve-ter-acabado' : '',
+      acabaEm: acabaEm, faltam: faltam, resta: resta, ritmo: ritmo,
+      estraga: registro.gramas / porDia > validade
+    };
+  }
+
+  // Quando acaba antes ou depois do previsto, aprende o ritmo real da pessoa
+  function novoRitmo(linha, registro, hojeData) {
+    var hoje = hojeData || hojeISO();
+    var antigo = registro.ritmo || 1;
+    var dias = Math.max(1, diasEntre(registro.compradoEm, hoje));
+    var previsto = registro.gramas / (linha.porDia * antigo);
+    // Se estragou antes de acabar, a validade explica, e o ritmo não muda
+    var validade = linha.granel ? linha.produto.dura : linha.produto.dura * (registro.embalagens || 1);
+    if (previsto > validade) return antigo;
+    var medido = antigo * previsto / dias;
+    return Math.max(0.5, Math.min(2, (antigo + medido) / 2));
+  }
+
   /* --- Utilidades ------------------------------------------------------------------------------- */
 
   function arredondar(qtd) {
@@ -363,6 +507,9 @@ window.AR_ALIM_CALC = (function () {
     ATIVIDADES: ATIVIDADES, OBJETIVOS: OBJETIVOS, REFEICOES: REFEICOES, FREQUENCIAS: FREQUENCIAS,
     gasto: gasto, nutrientes: nutrientes, novoItem: novoItem, planoAjustado: planoAjustado, planoNovo: planoNovo,
     compras: compras, frequenciaDeCompra: frequenciaDeCompra, indiceRegional: indiceRegional, precoDe: precoDe,
-    descreverItem: descreverItem, gramasDoItem: gramasDoItem
+    descreverItem: descreverItem, gramasDoItem: gramasDoItem,
+    opcoesDeTroca: opcoesDeTroca, aplicarPreferencias: aplicarPreferencias, kcalDoItem: kcalDoItem,
+    hojeISO: hojeISO, diasEntre: diasEntre, somarDias: somarDias,
+    sugestaoDeCompra: sugestaoDeCompra, situacaoNoEstoque: situacaoNoEstoque, novoRitmo: novoRitmo
   };
 })();

@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261107b">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261108a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -57,6 +57,7 @@
       <li><button type="button" id="ir-comida"><span>2</span> O que você come</button></li>
       <li><button type="button" id="ir-plano"><span>3</span> Seu plano</button></li>
       <li><button type="button" id="ir-compras"><span>4</span> Compras</button></li>
+      <li><button type="button" id="ir-acompanhamento"><span>5</span> Acompanhamento</button></li>
     </ol>
     <p class="alim-retorno" id="alim-retorno" role="status" aria-live="polite"></p>
 
@@ -140,6 +141,8 @@
         <button class="botao" id="alim-modo-novo" type="button" aria-pressed="false">Montar um plano novo</button>
       </div>
       <h3 class="titulo-s alim-plano-titulo" id="alim-plano-titulo"></h3>
+      <p class="alim-suave">Não gosta de algum item? Toque em <strong>Não gosto: trocar</strong> e escolha entre cinco opções com calorias parecidas.</p>
+      <div class="alim-minhas-trocas" id="alim-minhas-trocas" hidden></div>
       <div id="alim-plano"></div>
       <p class="alim-total" id="alim-plano-total"></p>
       <p class="alim-suave">Beba água ao longo do dia, cerca de 35 ml por quilo de peso. Os temperos, como sal, alho e cebola, ficam por sua conta e quase não pesam no orçamento.</p>
@@ -158,15 +161,68 @@
         <ul id="alim-economia"></ul>
       </div>
 
-      <div class="alim-modo" role="group" aria-label="Lista de compras">
-        <button class="botao" id="alim-lista-plano" type="button" aria-pressed="true">Compras do plano</button>
-        <button class="botao" id="alim-lista-hoje" type="button" aria-pressed="false">Compras de hoje</button>
-      </div>
-      <div id="alim-compras"></div>
+      <section class="alim-despensa" aria-labelledby="despensa-titulo">
+        <div class="alim-despensa-cab">
+          <h3 class="titulo-m" id="despensa-titulo">Sua lista de compras</h3>
+          <button class="texto-botao" id="alim-copiar-lista" type="button">Copiar a lista</button>
+        </div>
+        <p class="alim-suave">Marque o que você comprou. A lista calcula até quando cada item dura e avisa a hora de comprar de novo. Se algo acabar antes, toque em Acabou: as próximas previsões se ajustam ao seu ritmo.</p>
+        <div id="alim-despensa"></div>
+      </section>
+
+      <details class="alim-detalhes">
+        <summary>Custo de cada produto por mês</summary>
+        <div class="alim-modo" role="group" aria-label="Custo por produto">
+          <button class="botao" id="alim-lista-plano" type="button" aria-pressed="true">Do plano</button>
+          <button class="botao" id="alim-lista-hoje" type="button" aria-pressed="false">Do que eu como hoje</button>
+        </div>
+        <div id="alim-compras"></div>
+      </details>
       <p class="alim-fontes" id="alim-fontes"></p>
       <div class="alim-botoes">
-        <button class="botao botao-cheio" id="alim-ir-resumo" type="button">Ver meu resumo</button>
+        <button class="botao botao-cheio" id="alim-ir-acompanhamento" type="button">Acompanhar meu peso e medidas</button>
+        <button class="botao" id="alim-ir-resumo" type="button">Ver meu resumo</button>
         <button class="botao" id="alim-voltar-plano" type="button">Voltar ao plano</button>
+      </div>
+    </section>
+
+    <section class="alim-passo" id="passo-acompanhamento" tabindex="-1" hidden>
+      <h2 class="titulo-m">Acompanhamento</h2>
+      <p class="alim-suave">Registre o peso e as medidas a cada uma ou duas semanas, de manhã, em jejum e antes do treino. Medidas mostram o que a balança esconde: cintura caindo é gordura saindo, e braço e tórax subindo com cintura estável indicam ganho de massa.</p>
+
+      <div class="campos alim-campos alim-inicio">
+        <div class="campo">
+          <label for="alim-inicio">Início do plano</label>
+          <div class="campo-entrada"><input id="alim-inicio" type="date"></div>
+        </div>
+      </div>
+
+      <form class="alim-registro" id="alim-registro" novalidate>
+        <h3 class="titulo-s">Novo registro</h3>
+        <div class="alim-registro-campos">
+          <label class="alim-campo"><span>Data</span><input id="reg-data" type="date"></label>
+          <label class="alim-campo"><span>Peso (kg)</span><input id="reg-peso" type="text" inputmode="decimal" placeholder="82,5"></label>
+          <label class="alim-campo"><span>Cintura (cm)</span><input id="reg-cintura" type="text" inputmode="decimal" placeholder="na altura do umbigo"></label>
+          <label class="alim-campo"><span>Tórax (cm)</span><input id="reg-torax" type="text" inputmode="decimal"></label>
+          <label class="alim-campo"><span>Braço (cm)</span><input id="reg-braco" type="text" inputmode="decimal" placeholder="relaxado"></label>
+          <label class="alim-campo"><span>Coxa (cm)</span><input id="reg-coxa" type="text" inputmode="decimal"></label>
+        </div>
+        <p class="erro" id="reg-erro" role="alert"></p>
+        <div class="alim-botoes">
+          <button class="botao botao-cheio" type="submit">Registrar</button>
+          <button class="texto-botao" id="reg-do-cadastro" type="button" hidden>Usar as medidas do meu cadastro</button>
+        </div>
+      </form>
+
+      <div class="alim-evolucao" id="alim-evolucao"></div>
+      <div class="alim-tabela-caixa">
+        <table class="alim-tabela" id="alim-tabela" hidden>
+          <thead><tr><th scope="col">Data</th><th scope="col">Peso</th><th scope="col">Cintura</th><th scope="col">Tórax</th><th scope="col">Braço</th><th scope="col">Coxa</th><th scope="col"><span class="visualmente-oculto">Ações</span></th></tr></thead>
+          <tbody id="alim-registros"></tbody>
+        </table>
+      </div>
+      <div class="alim-botoes">
+        <button class="botao" id="alim-acomp-resumo" type="button">Ver meu resumo</button>
       </div>
     </section>
 
@@ -187,8 +243,8 @@
   <script src="assets/js/config.js?v=20261104a"></script>
   <script src="assets/js/main.js?v=20261107a"></script>
   <script src="assets/js/conta-api.js?v=20261107a"></script>
-  <script src="assets/js/alimentacao-dados.js?v=20261107b"></script>
-  <script src="assets/js/alimentacao-calculo.js?v=20261107b"></script>
-  <script src="assets/js/alimentacao.js?v=20261107b"></script>
+  <script src="assets/js/alimentacao-dados.js?v=20261108a"></script>
+  <script src="assets/js/alimentacao-calculo.js?v=20261108a"></script>
+  <script src="assets/js/alimentacao.js?v=20261108a"></script>
 </body>
 </html>
