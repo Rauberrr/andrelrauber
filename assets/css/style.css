@@ -1113,6 +1113,47 @@ em { font-style: italic; }
 .alim-alerta { font-size: .88rem; color: var(--bordo); }
 .alim-fonte { font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: var(--cinza); }
 .alim-fontes { max-width: 46rem; margin-top: 1.5rem; font-size: .88rem; line-height: 1.55; color: var(--cinza); }
+/* Resposta a cada toque: aviso fixo abaixo do menu, item novo em destaque */
+.alim-retorno { position: sticky; top: calc(var(--topo) + .5rem); z-index: 5; display: flex; flex-wrap: wrap; align-items: baseline; gap: .75rem; min-height: 0; margin-bottom: 1rem; padding: .7rem 1rem; color: var(--bordo); }
+.alim-retorno:empty { padding: 0; pointer-events: none; }
+.alim-retorno:not(:empty) { background: var(--off-2); border-left: 2px solid var(--bordo); animation: alim-surge .35s var(--curva) both; }
+@keyframes alim-surge { from { opacity: 0; transform: translateY(-6px); } }
+.alim-item-destaque { animation: alim-destaque 1.8s ease-out both; }
+@keyframes alim-destaque { from { background: #e2c9cf; box-shadow: inset 2px 0 0 var(--bordo); } }
+.alim .botao, .alim-atalho, .alim-passos button, .alim-passo-qtd { transition: transform .12s ease, background-color .2s, border-color .2s, color .2s; }
+.alim .botao:active, .alim-atalho:active, .alim-passos button:active, .alim-passo-qtd:active { transform: scale(.97); }
+.alim-atalho.ativo { background: var(--preto); border-color: var(--preto); color: var(--off); }
+.alim-atalho-outro { border-style: dashed; }
+.alim-item-acoes { display: flex; flex: none; gap: 1rem; }
+.alim-item-texto { min-width: 0; }
+
+.alim-editor { margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--preto); background: var(--off); }
+.alim-editor-titulo { margin-bottom: .75rem; font-weight: 500; }
+.alim-editor-campos { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(9rem, 1fr) minmax(0, 1.4fr) minmax(0, 1.3fr); gap: .75rem; }
+@media (max-width: 760px) { .alim-editor-campos { grid-template-columns: minmax(0, 1fr); } }
+.alim-qtd { display: flex; align-items: stretch; }
+.alim-qtd input { text-align: center; border-inline: 0; -moz-appearance: textfield; appearance: textfield; }
+.alim-qtd input::-webkit-outer-spin-button, .alim-qtd input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.alim-passo-qtd { flex: none; width: 2.6rem; border: 1px solid var(--linha); background: var(--off-2); color: var(--preto); font: inherit; font-size: 1.2rem; cursor: pointer; }
+.alim-editor-previa { margin-top: .75rem; font-size: .92rem; color: var(--cinza); }
+.alim-editor .erro:empty { display: none; }
+.alim-editor-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.5rem; margin-top: 1rem; }
+
+.alim-guardar { max-width: 46rem; margin-bottom: 2rem; padding: 1rem 1.25rem; background: var(--off-2); }
+.alim-guardar [hidden] { display: none; }
+.alim-guardar a { color: var(--bordo); text-underline-offset: 3px; }
+.alim-guardar #alim-status:not(:empty) { margin-top: .6rem; }
+
+.alim-cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+.alim-cartoes > .alim-veredito { grid-column: 1 / -1; margin-bottom: 0; }
+.alim-cartao { display: grid; gap: 1rem; align-content: start; padding: clamp(1.1rem, 3vw, 1.5rem); border: 1px solid var(--linha); }
+.alim-cartao .botao { justify-self: start; }
+.alim-cartao-lista { display: grid; gap: .5rem; }
+.alim-cartao-linha { display: grid; gap: .1rem; }
+.alim-cartao-linha dt { font-size: .7rem; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--cinza); }
+.alim-cartao-linha dd { margin: 0; overflow-wrap: anywhere; }
+#item-resumo[hidden] { display: none; }
+
 .alim-privacidade { max-width: 46rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--linha); font-size: .9rem; color: var(--cinza); }
 
 .conta-rodape { margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--linha); }

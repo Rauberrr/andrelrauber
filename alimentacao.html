@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261107a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261107b">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -52,11 +52,19 @@
     <p class="alim-aviso">É uma estimativa para adultos saudáveis e não substitui um nutricionista ou médico. Se você tem diabetes, problema nos rins ou no coração, faz tratamento ou toma remédio contínuo, procure um profissional antes de mudar a alimentação.</p>
 
     <ol class="alim-passos" id="alim-topo" aria-label="Passos">
+      <li id="item-resumo" hidden><button type="button" id="ir-resumo"><span>★</span> Resumo</button></li>
       <li><button type="button" id="ir-voce" aria-current="step"><span>1</span> Você</button></li>
       <li><button type="button" id="ir-comida"><span>2</span> O que você come</button></li>
       <li><button type="button" id="ir-plano"><span>3</span> Seu plano</button></li>
       <li><button type="button" id="ir-compras"><span>4</span> Compras</button></li>
     </ol>
+    <p class="alim-retorno" id="alim-retorno" role="status" aria-live="polite"></p>
+
+    <section class="alim-passo" id="passo-resumo" tabindex="-1" hidden>
+      <h2 class="titulo-m">Seu resumo</h2>
+      <p class="alim-suave" id="alim-resumo-status"></p>
+      <div class="alim-cartoes" id="alim-cartoes"></div>
+    </section>
 
     <form class="alim-passo" id="passo-voce" tabindex="-1" novalidate>
       <h2 class="titulo-m">Sobre você</h2>
@@ -101,12 +109,21 @@
           <p class="erro" id="erro-alim-uf" role="alert"></p>
         </div>
       </div>
+
+      <div class="alim-guardar">
+        <div id="alim-guardar-logado" hidden>
+          <label class="campo-marcar"><input id="alim-guardar" type="checkbox"> <span>Guardar estas informações na minha conta, para ver de qualquer aparelho. Inclui dados de saúde, como peso e alimentação, que ficam protegidos e só aparecem para você.</span></label>
+        </div>
+        <p id="alim-guardar-visitante" hidden>Para guardar seu plano e ver de qualquer aparelho, <a href="entrar.html?voltar=alimentacao.html">entre na sua conta</a> ou <a href="criar-conta.html?voltar=alimentacao.html">crie uma</a>. Sem conta, tudo fica só neste aparelho.</p>
+        <p class="alim-suave" id="alim-status" role="status"></p>
+      </div>
+
       <button class="botao botao-cheio" type="submit">Continuar</button>
     </form>
 
     <section class="alim-passo" id="passo-comida" tabindex="-1" hidden>
       <h2 class="titulo-m">O que você come num dia comum</h2>
-      <p class="alim-suave">Não precisa ser exato: marque o de sempre, mais ou menos. Toque nos atalhos ou escolha na lista, com a quantidade e a frequência.</p>
+      <p class="alim-suave">Não precisa ser exato: marque o de sempre, mais ou menos. Toque num alimento, escolha a quantidade e confirme. Para mudar algo depois, use Editar.</p>
       <div id="alim-refeicoes"></div>
       <p class="alim-total" id="alim-total-hoje" role="status"></p>
       <div class="alim-botoes">
@@ -148,12 +165,13 @@
       <div id="alim-compras"></div>
       <p class="alim-fontes" id="alim-fontes"></p>
       <div class="alim-botoes">
+        <button class="botao botao-cheio" id="alim-ir-resumo" type="button">Ver meu resumo</button>
         <button class="botao" id="alim-voltar-plano" type="button">Voltar ao plano</button>
       </div>
     </section>
 
     <aside class="alim-privacidade">
-      <p>Suas respostas ficam guardadas só neste aparelho, no navegador, e não são enviadas para o nosso servidor. <button class="texto-botao" id="alim-apagar" type="button">Apagar meus dados desta página</button></p>
+      <p><span id="alim-privacidade-texto">Suas respostas ficam guardadas neste aparelho, no navegador.</span> <button class="texto-botao" id="alim-apagar" type="button">Apagar meus dados desta página</button></p>
     </aside>
   </main>
 
@@ -168,9 +186,9 @@
 
   <script src="assets/js/config.js?v=20261104a"></script>
   <script src="assets/js/main.js?v=20261107a"></script>
-  <script src="assets/js/conta-api.js?v=20261104c"></script>
-  <script src="assets/js/alimentacao-dados.js?v=20261107a"></script>
-  <script src="assets/js/alimentacao-calculo.js?v=20261107a"></script>
-  <script src="assets/js/alimentacao.js?v=20261107a"></script>
+  <script src="assets/js/conta-api.js?v=20261107a"></script>
+  <script src="assets/js/alimentacao-dados.js?v=20261107b"></script>
+  <script src="assets/js/alimentacao-calculo.js?v=20261107b"></script>
+  <script src="assets/js/alimentacao.js?v=20261107b"></script>
 </body>
 </html>

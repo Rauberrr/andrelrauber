@@ -194,6 +194,17 @@ CREATE TABLE IF NOT EXISTS pedidos (
   CONSTRAINT fk_pedido_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Alimentação: o que a pessoa informou e o plano, guardados só com a autorização dela.
+-- São dados de saúde: não aparecem no painel da marca.
+CREATE TABLE IF NOT EXISTS alimentacao (
+  usuario_id INT UNSIGNED NOT NULL,
+  dados TEXT NOT NULL,
+  consentiu_em DATETIME NOT NULL,
+  atualizado_em DATETIME NOT NULL,
+  PRIMARY KEY (usuario_id),
+  CONSTRAINT fk_alimentacao_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Limite de tentativas de login, registro e recuperação de senha
 CREATE TABLE IF NOT EXISTS tentativas (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,

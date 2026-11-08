@@ -139,7 +139,7 @@ Em `alimentacao.html`, a pessoa informa sexo, idade, altura, peso, rotina, objet
 - um plano, com trocas saudáveis no que ela já come ou montado do zero;
 - a lista de compras, com quanto dura cada embalagem, de quanto em quanto tempo comprar e o custo por mês, comparando o plano com o que ela come hoje.
 
-Os dados ficam só no navegador da pessoa e não vão para o servidor. Os valores nutricionais são aproximados da Tabela Brasileira de Composição de Alimentos (TACO).
+Os dados ficam no navegador da pessoa. Quem tem conta pode autorizar que também fiquem na conta, na tabela `alimentacao`, para abrir em qualquer aparelho. Como são dados de saúde, o servidor só guarda com essa autorização, aceita apenas os campos que a página usa e não mostra nada disso no painel, só o fato de a pessoa ter autorizado. Depois de terminar as perguntas, a pessoa cai num resumo, de onde altera qualquer parte. Os valores nutricionais são aproximados da Tabela Brasileira de Composição de Alimentos (TACO).
 
 ### Atualizar os preços
 

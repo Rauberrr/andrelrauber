@@ -387,6 +387,7 @@ function acao_excluir(): void
     }
     apagar_guarda_roupa($id);
     consultar('DELETE FROM pedidos WHERE usuario_id = ?', [$id]);
+    consultar('DELETE FROM alimentacao WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM eventos WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM redefinicoes_senha WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM confirmacoes_email WHERE usuario_id = ?', [$id]);
