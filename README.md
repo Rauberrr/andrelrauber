@@ -131,6 +131,24 @@ Nunca envie esses valores por mensagem nem os coloque no GitHub.
 - **Exclusão de conta:** quem tem pedido pago, em análise ou em disputa, com movimento nos últimos 90 dias, precisa falar com você para excluir a conta.
 - **Condições:** o texto fica em `condicoes-de-compra.html`. Peça a um advogado para revisar antes de vender.
 
+## Alimentação
+
+Em `alimentacao.html`, a pessoa informa sexo, idade, altura, peso, rotina, objetivo e estado, marca o que come num dia comum e recebe:
+
+- o gasto calórico, pela fórmula de Mifflin-St Jeor, e uma meta com déficit ou superávit moderado;
+- um plano, com trocas saudáveis no que ela já come ou montado do zero;
+- a lista de compras, com quanto dura cada embalagem, de quanto em quanto tempo comprar e o custo por mês, comparando o plano com o que ela come hoje.
+
+Os dados ficam só no navegador da pessoa e não vão para o servidor. Os valores nutricionais são aproximados da Tabela Brasileira de Composição de Alimentos (TACO).
+
+### Atualizar os preços
+
+Os preços ficam em `assets/js/alimentacao-dados.js`.
+
+1. **Cesta básica (13 itens):** em [dieese.org.br/cesta](https://www.dieese.org.br/cesta), aba **Banco de Dados**, escolha a consulta por data, o mês mais recente, **Preço médio** e todos os produtos e cidades. Copie os valores para a tabela `DIEESE` e atualize `DIEESE_DATA`.
+2. **Demais produtos:** cada um tem um preço `base`, que é um preço comum de prateleira, sem promoção. Revise esses valores a cada poucos meses. A página ajusta esses preços pela região, comparando os preços do DIEESE de cada capital com a média.
+3. **Salário mínimo:** atualize `SALARIO_MINIMO` todo começo de ano.
+
 ## E-mail das contas
 
 Ao criar uma conta, o site recusa formato errado, erro comum de digitação, como `gmail.con`, e domínio que não existe. Depois, envia um link de confirmação, válido por 7 dias. Só esse link prova que a caixa de e-mail é real.
