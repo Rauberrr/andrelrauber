@@ -33,6 +33,26 @@
     });
   }
 
+  // Grupo "Apps": abre ao clicar e fecha ao clicar fora, sair com o Tab ou apertar Esc
+  document.querySelectorAll('.nav-grupo').forEach(function (grupo) {
+    var botao = grupo.querySelector('.nav-grupo-botao');
+    if (!botao) return;
+    function definir(aberto) {
+      grupo.classList.toggle('aberto', aberto);
+      botao.setAttribute('aria-expanded', String(aberto));
+    }
+    botao.addEventListener('click', function () { definir(!grupo.classList.contains('aberto')); });
+    document.addEventListener('click', function (e) { if (!grupo.contains(e.target)) definir(false); });
+    grupo.addEventListener('focusout', function (e) { if (!grupo.contains(e.relatedTarget)) definir(false); });
+    grupo.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && grupo.classList.contains('aberto')) {
+        e.stopPropagation();
+        definir(false);
+        botao.focus();
+      }
+    });
+  });
+
   /* --- Abertura da home: o nome entra em câmera lenta --------------------------- */
 
   var hero = document.querySelector('.hero');
