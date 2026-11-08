@@ -20,6 +20,8 @@ const ALIM_ATIVIDADES = ['sedentario', 'leve', 'moderado', 'intenso'];
 const ALIM_OBJETIVOS = ['perder', 'manter', 'ganhar'];
 const ALIM_UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 const ALIM_MAXIMO_ITENS = 150;
+const ALIM_MAXIMO_REGISTROS = 200;
+const ALIM_MEDIDAS = ['peso' => [40, 250], 'cintura' => [40, 200], 'torax' => [50, 200], 'braco' => [15, 70], 'coxa' => [30, 100]];
 
 $usuario = exigir_login();
 $id = (int) $usuario['id'];
@@ -60,6 +62,109 @@ function numero_ou_vazio($valor, float $minimo, float $maximo)
 function opcao($valor, array $permitidos, string $padrao): string
 {
     return is_string($valor) && in_array($valor, $permitidos, true) ? $valor : $padrao;
+}
+
+function eh_codigo($valor): bool
+{
+    return is_string($valor) && preg_match('/^[a-z_]{1,30}$/', $valor) === 1;
+}
+
+// Data no formato AAAA-MM-DD, que existe de verdade, ou vazio
+function data_ou_vazio($valor): ?string
+{
+    if ($valor === '' || $valor === null) {
+        return '';
+    }
+    if (!is_string($valor) || preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $valor, $p) !== 1 || !checkdate((int) $p[2], (int) $p[3], (int) $p[1])) {
+        return null;
+    }
+    return $valor;
+}
+
+function eh_numero($valor): bool
+{
+    return is_int($valor) || is_float($valor);
+}
+
+// { alimento que a pessoa não gosta: alimento no lugar }
+function limpar_trocas($trocas): ?array
+{
+    if ($trocas === null) {
+        return [];
+    }
+    if (!is_array($trocas) || count($trocas) > 40) {
+        return null;
+    }
+    $saida = [];
+    foreach ($trocas as $de => $para) {
+        if (!eh_codigo((string) $de) || !eh_codigo($para)) {
+            return null;
+        }
+        $saida[(string) $de] = $para;
+    }
+    return $saida;
+}
+
+// Lista de compras: { produto: { compradoEm, embalagens, gramas, ritmo, acabouEm } }
+function limpar_despensa($despensa): ?array
+{
+    if ($despensa === null) {
+        return [];
+    }
+    if (!is_array($despensa) || count($despensa) > 80) {
+        return null;
+    }
+    $saida = [];
+    foreach ($despensa as $produto => $r) {
+        if (!eh_codigo((string) $produto) || !is_array($r)) {
+            return null;
+        }
+        $comprado = data_ou_vazio($r['compradoEm'] ?? '');
+        $acabou = data_ou_vazio($r['acabouEm'] ?? '');
+        $embalagens = $r['embalagens'] ?? 0;
+        $gramas = $r['gramas'] ?? 0;
+        $ritmo = $r['ritmo'] ?? 1;
+        if ($comprado === null || $acabou === null || !is_int($embalagens) || $embalagens < 0 || $embalagens > 30
+            || !eh_numero($gramas) || $gramas < 0 || $gramas > 200000 || !eh_numero($ritmo) || $ritmo < 0.5 || $ritmo > 2) {
+            return null;
+        }
+        $saida[(string) $produto] = [
+            'compradoEm' => $comprado, 'embalagens' => $embalagens, 'gramas' => (float) $gramas,
+            'ritmo' => round((float) $ritmo, 3), 'acabouEm' => $acabou,
+        ];
+    }
+    return $saida;
+}
+
+// Peso e medidas ao longo do tempo
+function limpar_registros($registros): ?array
+{
+    if ($registros === null) {
+        return [];
+    }
+    if (!is_array($registros) || count($registros) > ALIM_MAXIMO_REGISTROS) {
+        return null;
+    }
+    $saida = [];
+    foreach ($registros as $r) {
+        if (!is_array($r)) {
+            return null;
+        }
+        $data = data_ou_vazio($r['data'] ?? '');
+        if ($data === null || $data === '' || $data > date('Y-m-d', time() + 86400)) {
+            return null;
+        }
+        $limpo = ['data' => $data];
+        foreach (ALIM_MEDIDAS as $medida => $faixa) {
+            $valor = numero_ou_vazio($r[$medida] ?? '', $faixa[0], $faixa[1]);
+            if ($valor === null) {
+                return null;
+            }
+            $limpo[$medida] = $valor;
+        }
+        $saida[] = $limpo;
+    }
+    return $saida;
 }
 
 // Monta uma cópia só com o que a página usa. Devolve null se algo vier fora do formato.
@@ -106,6 +211,14 @@ function limpar_dados($d): ?array
         ];
     }
 
+    $trocas = limpar_trocas($d['trocas'] ?? null);
+    $despensa = limpar_despensa($d['despensa'] ?? null);
+    $registros = limpar_registros($d['registros'] ?? null);
+    $inicio = data_ou_vazio($d['inicioPlano'] ?? '');
+    if ($trocas === null || $despensa === null || $registros === null || $inicio === null) {
+        return null;
+    }
+
     $alterado = $d['alteradoEm'] ?? 0;
     return [
         'perfil' => [
@@ -123,6 +236,11 @@ function limpar_dados($d): ?array
         'concluido' => ($d['concluido'] ?? false) === true,
         'guardarNaConta' => true,
         'alteradoEm' => is_int($alterado) || is_float($alterado) ? (float) $alterado : 0,
+        // JSON vazio precisa sair como objeto, e não como lista, para a página ler certo
+        'trocas' => (object) $trocas,
+        'despensa' => (object) $despensa,
+        'inicioPlano' => $inicio,
+        'registros' => $registros,
     ];
 }
 
