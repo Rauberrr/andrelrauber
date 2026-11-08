@@ -72,7 +72,7 @@ window.AR_API = (function () {
   }
 
   // Só volta para páginas do próprio site, para o link não levar a outro lugar
-  var DESTINOS = ['medidas.html', 'minha-conta.html', 'painel.html', 'guarda-roupa.html'];
+  var DESTINOS = ['medidas.html', 'minha-conta.html', 'painel.html', 'guarda-roupa.html', 'alimentacao.html'];
   function destino(padrao) {
     var pedido = new URLSearchParams(location.search).get('voltar');
     return DESTINOS.indexOf(pedido) !== -1 ? pedido : padrao;

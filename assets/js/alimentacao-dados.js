@@ -114,6 +114,8 @@ window.AR_ALIM = (function () {
     ['margarina', 'Margarina', 'pote de 500 g', 500, 60, { base: 9.49 }],
     ['acucar', 'Açúcar', 'pacote de 1 kg', 1000, 365, { dieese: 'acucar', mult: 1 }],
     ['cafe', 'Café em pó', 'pacote de 500 g', 500, 150, { dieese: 'cafe', mult: 0.5 }],
+    ['cafe_soluvel', 'Café solúvel', 'pote de 100 g', 100, 120, { base: 19.9 }],
+    ['adocante', 'Adoçante', 'frasco de 100 ml', 100, 180, { base: 6.99 }],
     ['refrigerante', 'Refrigerante', 'garrafa de 2 litros', 2000, 3, { base: 9.99 }],
     ['suco_caixa', 'Suco de caixinha', 'caixa de 1 litro', 1000, 4, { base: 7.99 }],
     ['cerveja', 'Cerveja', 'lata de 350 ml', 350, 365, { base: 4.29 }],
@@ -180,7 +182,8 @@ window.AR_ALIM = (function () {
     ['queijo', 'Queijo muçarela', 'leite', 330, 22.6, 3, 25.2, [['fatia', 15]], 'mucarela', 1],
     ['requeijao', 'Requeijão', 'leite', 257, 9.6, 2.4, 23.4, [['colher de sopa', 30]], 'requeijao', 1],
     ['iogurte', 'Iogurte natural', 'leite', 51, 4.1, 1.9, 3, [['pote', 170]], 'iogurte', 1],
-    ['leite', 'Leite', 'leite', 61, 3.2, 4.6, 3.3, [['copo (200 ml)', 200], ['xícara (100 ml)', 100]], 'leite', 1],
+    ['leite', 'Leite integral', 'leite', 61, 3.2, 4.6, 3.3, [['copo (200 ml)', 200], ['xícara (100 ml)', 100]], 'leite', 1],
+    ['leite_desnatado', 'Leite desnatado', 'leite', 35, 3.4, 5, 0.2, [['copo (200 ml)', 200], ['xícara (100 ml)', 100]], 'leite', 1],
     ['banana', 'Banana', 'frutas', 98, 1.3, 26, 0.1, [['unidade', 70]], 'banana', 1],
     ['maca', 'Maçã', 'frutas', 56, 0.3, 15.2, 0, [['unidade', 130]], 'maca', 1.1],
     ['laranja', 'Laranja', 'frutas', 37, 1, 8.9, 0.1, [['unidade', 140]], 'laranja', 1.4],
@@ -197,9 +200,13 @@ window.AR_ALIM = (function () {
     ['manteiga', 'Manteiga', 'gorduras', 726, 0.4, 0.1, 82.4, [['ponta de faca', 5], ['colher de chá', 5]], 'manteiga', 1],
     ['margarina', 'Margarina', 'gorduras', 596, 0, 0, 67.4, [['ponta de faca', 5]], 'margarina', 1],
     ['acucar', 'Açúcar', 'gorduras', 387, 0, 99.5, 0, [['colher de chá', 5], ['colher de sopa', 12]], 'acucar', 1],
+    ['adocante', 'Adoçante', 'gorduras', 0, 0, 0, 0, [['gotas (uma dose)', 0.3]], 'adocante', 1],
     ['amendoim', 'Pasta de amendoim', 'gorduras', 589, 25, 20, 49, [['colher de sopa', 15]], 'amendoim', 1],
-    ['cafe', 'Café', 'bebidas', 9, 0.7, 1.5, 0.1, [['xícara (50 ml)', 50], ['copo americano (150 ml)', 150]], 'cafe', 0.08],
-    ['refrigerante', 'Refrigerante', 'bebidas', 39, 0, 10, 0, [['copo (250 ml)', 250], ['lata (350 ml)', 350]], 'refrigerante', 1],
+    ['cafe', 'Café coado', 'bebidas', 9, 0.7, 1.5, 0.1, [['xícara (50 ml)', 50], ['copo americano (150 ml)', 150]], 'cafe', 0.08],
+    ['cafe_soluvel', 'Café solúvel', 'bebidas', 4, 0.3, 0.7, 0, [['xícara (50 ml)', 50], ['copo americano (150 ml)', 150]], 'cafe_soluvel', 0.014],
+    ['cafe_leite', 'Café com leite', 'bebidas', 35, 1.9, 3, 1.7, [['xícara (100 ml)', 100], ['copo americano (150 ml)', 150]], null, 0],
+    ['refrigerante', 'Refrigerante comum', 'bebidas', 39, 0, 10, 0, [['copo (250 ml)', 250], ['lata (350 ml)', 350]], 'refrigerante', 1],
+    ['refrigerante_zero', 'Refrigerante zero', 'bebidas', 1, 0, 0, 0, [['copo (250 ml)', 250], ['lata (350 ml)', 350]], 'refrigerante', 1],
     ['suco_caixa', 'Suco de caixinha', 'bebidas', 55, 0.2, 13.5, 0, [['copo (250 ml)', 250]], 'suco_caixa', 1],
     ['suco_laranja', 'Suco de laranja natural', 'bebidas', 45, 0.7, 10.4, 0.1, [['copo (250 ml)', 250]], 'laranja', 2.4],
     ['cerveja', 'Cerveja', 'bebidas', 41, 0.3, 3.3, 0, [['lata (350 ml)', 350]], 'cerveja', 1],
@@ -221,7 +228,32 @@ window.AR_ALIM = (function () {
   });
 
   // A salada se compra em duas partes: alface e tomate
-  var COMPOSTOS = { salada: [['alface', 0.5], ['tomate', 0.55]] };
+  var COMPOSTOS = {
+    salada: [['alface', 0.5], ['tomate', 0.55]],
+    // Metade café coado, metade leite
+    cafe_leite: [['leite', 0.5], ['cafe', 0.04]]
+  };
+
+  // Alimentos da mesma família: a pessoa troca o tipo depois, sem apagar e incluir de novo
+  var FAMILIAS = [
+    ['cafe', 'cafe_soluvel', 'cafe_leite'],
+    ['leite', 'leite_desnatado'],
+    ['acucar', 'adocante'],
+    ['refrigerante', 'refrigerante_zero'],
+    ['suco_caixa', 'suco_laranja'],
+    ['pao_frances', 'pao_forma', 'pao_integral'],
+    ['arroz', 'arroz_integral'],
+    ['batata', 'batata_frita', 'batata_doce', 'mandioca'],
+    ['frango', 'coxa'],
+    ['carne', 'carne_moida', 'porco'],
+    ['peixe', 'atum', 'sardinha'],
+    ['ovo', 'ovo_frito'],
+    ['manteiga', 'margarina', 'requeijao'],
+    ['oleo', 'azeite'],
+    ['biscoito', 'cracker']
+  ];
+  var familiaDe = {};
+  FAMILIAS.forEach(function (lista) { lista.forEach(function (id) { familiaDe[id] = lista; }); });
 
   function indice(lista) {
     var mapa = {};
@@ -232,7 +264,7 @@ window.AR_ALIM = (function () {
   return {
     DIEESE: DIEESE, DIEESE_COLUNAS: DIEESE_COLUNAS, DIEESE_DATA: DIEESE_DATA,
     ESTADOS: ESTADOS, SALARIO_MINIMO: SALARIO_MINIMO,
-    PRODUTOS: PRODUTOS, ALIMENTOS: ALIMENTOS, GRUPOS: GRUPOS, COMPOSTOS: COMPOSTOS,
+    PRODUTOS: PRODUTOS, ALIMENTOS: ALIMENTOS, GRUPOS: GRUPOS, COMPOSTOS: COMPOSTOS, familiaDe: familiaDe,
     porProduto: indice(PRODUTOS), porAlimento: indice(ALIMENTOS), porEstado: indice(ESTADOS.map(function (e) { return { id: e.uf, uf: e.uf, nome: e.nome, capital: e.capital }; }))
   };
 })();
