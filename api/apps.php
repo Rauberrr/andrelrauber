@@ -33,6 +33,9 @@ const TR_LOCAIS = ['academia', 'halteres', 'casa'];
 const TR_TEMPOS = [30, 45, 60];
 const TR_CUIDADOS = ['joelho', 'ombro', 'lombar'];
 const TR_ESFORCOS = ['leve', 'ok', 'pesado'];
+const TR_FOCOS = ['peito', 'costas', 'ombros', 'bracos', 'pernas', 'gluteos', 'abdomen'];
+const TR_MAXIMO_FOCOS = 2;
+const TR_VARIACOES = 3;
 const TR_MAXIMO_SESSOES = 500;
 
 $app = $_GET['app'] ?? '';
@@ -179,6 +182,36 @@ function limpar_treino($d): ?array
             $cuidados[] = $c;
         }
     }
+    $foco = [];
+    foreach ((is_array($p['foco'] ?? null) ? $p['foco'] : []) as $f) {
+        if (in_array($f, TR_FOCOS, true) && !in_array($f, $foco, true) && count($foco) < TR_MAXIMO_FOCOS) {
+            $foco[] = $f;
+        }
+    }
+
+    // Medidas opcionais, nas mesmas faixas da Alimentação
+    $m = is_array($p['medidas'] ?? null) ? $p['medidas'] : [];
+    $medidas = [];
+    if (in_array($m['sexo'] ?? '', ['m', 'f'], true)) {
+        $medidas['sexo'] = $m['sexo'];
+    }
+    if (is_int($m['idade'] ?? null) && $m['idade'] >= 18 && $m['idade'] <= 80) {
+        $medidas['idade'] = $m['idade'];
+    }
+    if (is_int($m['altura'] ?? null) && $m['altura'] >= 140 && $m['altura'] <= 220) {
+        $medidas['altura'] = $m['altura'];
+    }
+    $peso = $m['peso'] ?? null;
+    if ((is_int($peso) || is_float($peso)) && $peso >= 40 && $peso <= 250) {
+        $medidas['peso'] = round((float) $peso, 1);
+    }
+
+    $variacoes = [];
+    foreach ((is_array($d['variacoes'] ?? null) ? $d['variacoes'] : []) as $letra => $v) {
+        if (preg_match('/^[A-F]$/', (string) $letra) === 1 && is_int($v) && $v >= 0 && $v < TR_VARIACOES) {
+            $variacoes[(string) $letra] = $v;
+        }
+    }
 
     $sessoes = [];
     $lista = is_array($d['sessoes'] ?? null) ? $d['sessoes'] : [];
@@ -200,18 +233,24 @@ function limpar_treino($d): ?array
             }
         }
         $feitos = $s['feitos'] ?? 0;
-        $sessoes[] = [
+        $sessao = [
             'data' => $data,
             'treino' => is_string($s['treino'] ?? null) && preg_match('/^[A-F]$/', $s['treino']) === 1 ? $s['treino'] : 'A',
             'esforco' => uma_de($s['esforco'] ?? '', TR_ESFORCOS, 'ok'),
             'feitos' => is_int($feitos) && $feitos >= 0 && $feitos <= 15 ? $feitos : 0,
             'cargas' => (object) $cargas,
         ];
+        $variacao = $s['variacao'] ?? null;
+        if (is_int($variacao) && $variacao >= 0 && $variacao < TR_VARIACOES) {
+            $sessao['variacao'] = $variacao;
+        }
+        $sessoes[] = $sessao;
     }
 
+    // Trocas de exercício: treino, opção e movimento, como a0-peito
     $trocas = [];
-    foreach ((is_array($d['trocas'] ?? null) ? array_slice($d['trocas'], 0, 30, true) : []) as $de => $para) {
-        if (codigo_valido((string) $de) && codigo_valido($para)) {
+    foreach ((is_array($d['trocas'] ?? null) ? array_slice($d['trocas'], 0, 120, true) : []) as $de => $para) {
+        if (preg_match('/^[a-f][0-2]-[a-z_]{1,30}$/', (string) $de) === 1 && codigo_valido($para)) {
             $trocas[(string) $de] = $para;
         }
     }
@@ -225,9 +264,13 @@ function limpar_treino($d): ?array
             'local' => uma_de($p['local'] ?? '', TR_LOCAIS, 'academia'),
             'tempo' => uma_de($p['tempo'] ?? 45, TR_TEMPOS, 45),
             'cuidados' => $cuidados,
+            'foco' => $foco,
+            'medidas' => (object) $medidas,
         ],
         'sessoes' => $sessoes,
         'trocas' => (object) $trocas,
+        'variacoes' => (object) $variacoes,
+        'alternar' => ($d['alternar'] ?? false) === true,
         'resumo' => ['proximo' => linha_de_texto($resumo, 'proximo', 60)],
         'guardarNaConta' => true,
         'alteradoEm' => momento($d['alteradoEm'] ?? 0),
@@ -238,7 +281,7 @@ function limpar_treino($d): ?array
 
 function salvar_app(int $id, string $app): void
 {
-    $entrada = exigir_post();
+    $entrada = exigir_post(600000);
     $limite = chave_limite('apps-' . $app, (string) $id);
     exigir_limite($limite, 300, 3600);
     contar_tentativa($limite);

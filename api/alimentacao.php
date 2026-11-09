@@ -272,7 +272,7 @@ function limpar_dados($d): ?array
 
 function salvar(int $id): void
 {
-    $entrada = exigir_post();
+    $entrada = exigir_post(600000);
     $limite = chave_limite('alimentacao', (string) $id);
     exigir_limite($limite, 300, 3600);
     contar_tentativa($limite);

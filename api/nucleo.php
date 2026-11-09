@@ -86,13 +86,17 @@ function agora(): string
 
 // Só aceita POST em JSON vindo do próprio site. Outro site não consegue enviar
 // esse formato sem permissão do navegador, o que bloqueia ações forjadas.
-function exigir_post(): array
+// $limite: o tamanho máximo do pedido. Os apps, que guardam históricos, pedem mais.
+function exigir_post(int $limite = 64000): array
 {
     conferir_post_do_site();
     if (stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== 0) {
         falhar(415, 'Formato não aceito.');
     }
-    $bruto = file_get_contents('php://input', false, null, 0, 64000);
+    $bruto = file_get_contents('php://input', false, null, 0, $limite + 1);
+    if ($bruto !== false && strlen($bruto) > $limite) {
+        falhar(413, 'Informações demais para guardar. Apague registros antigos e tente de novo.');
+    }
     $dados = json_decode($bruto === false ? '' : $bruto, true);
     if (!is_array($dados)) {
         falhar(400, 'Dados inválidos.');

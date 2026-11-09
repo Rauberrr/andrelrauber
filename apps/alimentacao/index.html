@@ -16,8 +16,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261109a">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261109a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261109b">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261109b">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -83,6 +83,7 @@
         <fieldset class="campo campo-inteiro alim-grupo-radio">
           <legend>Como é a sua rotina</legend>
           <div id="alim-atividade" class="alim-coluna-radio"></div>
+          <p class="alim-suave alim-do-treino" id="alim-do-treino" hidden></p>
         </fieldset>
         <fieldset class="campo campo-inteiro alim-grupo-radio">
           <legend>Seu objetivo</legend>
@@ -134,6 +135,7 @@
       <p class="alim-suave">Beba água ao longo do dia, cerca de 35 ml por quilo de peso. Os temperos, como sal, alho e cebola, ficam por sua conta e quase não pesam no orçamento.</p>
       <div class="alim-botoes">
         <button class="botao botao-cheio" id="alim-ir-compras" type="button">Ver quanto custa</button>
+        <a class="botao" id="alim-plano-treino" href="apps/treino/">Montar meu treino</a>
       </div>
     </section>
 
@@ -174,6 +176,14 @@
         <button class="botao" id="alim-ir-resumo" type="button">Ver meu resumo</button>
         <button class="botao" id="alim-voltar-plano" type="button">Voltar ao plano</button>
       </div>
+      <section class="app-cartao tr-ponte" aria-labelledby="alim-ponte-titulo">
+        <span class="tr-ponte-icone app-icone-treino" aria-hidden="true"><svg data-icone="haltere"></svg></span>
+        <div>
+          <h3 class="app-cartao-titulo" id="alim-ponte-titulo">Próximo passo: o treino</h3>
+          <p class="app-suave" id="alim-ponte-texto"></p>
+          <a class="botao botao-cheio" id="alim-ponte-ir" href="apps/treino/">Montar meu treino</a>
+        </div>
+      </section>
     </section>
 
     <section class="alim-passo" id="passo-acompanhamento" tabindex="-1" hidden>
@@ -230,10 +240,10 @@
   </nav>
 
   <script src="assets/js/config.js?v=20261104a"></script>
-  <script src="assets/js/conta-api.js?v=20261109a"></script>
-  <script src="assets/js/apps.js?v=20261109a"></script>
+  <script src="assets/js/conta-api.js?v=20261109b"></script>
+  <script src="assets/js/apps.js?v=20261109b"></script>
   <script src="assets/js/alimentacao-dados.js?v=20261108a"></script>
-  <script src="assets/js/alimentacao-calculo.js?v=20261109a"></script>
-  <script src="assets/js/alimentacao.js?v=20261109a"></script>
+  <script src="assets/js/alimentacao-calculo.js?v=20261109b"></script>
+  <script src="assets/js/alimentacao.js?v=20261109b"></script>
 </body>
 </html>

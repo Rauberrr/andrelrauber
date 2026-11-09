@@ -135,6 +135,34 @@ window.AR_APP = (function () {
     try { localStorage.setItem(chave, JSON.stringify(valor)); return true; } catch (e) { return false; }
   }
 
+  /* --- Medidas em comum entre a Alimentação e o Treino ------------------------------ */
+
+  // Quem preenche as medidas num app não precisa digitar de novo no outro.
+  // medidas: sexo, idade, altura e peso. resumo: o que um app mostra do outro.
+  var COMUM = 'ar-medidas-v1';
+  var CAMPOS_MEDIDAS = ['sexo', 'idade', 'altura', 'peso'];
+
+  function comum() {
+    var c = lerLocal(COMUM);
+    if (!c || typeof c !== 'object' || Array.isArray(c)) c = {};
+    if (!c.medidas || typeof c.medidas !== 'object') c.medidas = {};
+    return c;
+  }
+
+  function guardarComum(origem, medidas, resumo) {
+    var c = comum();
+    var mudou = false;
+    CAMPOS_MEDIDAS.forEach(function (k) {
+      var v = medidas ? medidas[k] : undefined;
+      if (v === undefined || v === '' || v === null) return;
+      if (c.medidas[k] !== v) { c.medidas[k] = v; mudou = true; }
+    });
+    if (mudou) { c.medidasEm = Date.now(); c.medidasDe = origem; }
+    if (resumo) c[origem] = resumo;
+    gravarLocal(COMUM, c);
+    return c;
+  }
+
   /* --- Aviso na parte de baixo ----------------------------------------------------- */
 
   var temporizador = null;
@@ -201,6 +229,7 @@ window.AR_APP = (function () {
     paginaAtual: paginaAtual, iniciais: iniciais,
     hojeISO: hojeISO, paraData: paraData, diasAte: diasAte, somarDias: somarDias,
     dataCurta: dataCurta, dataLonga: dataLonga, textoDias: textoDias,
-    lerLocal: lerLocal, gravarLocal: gravarLocal, avisar: avisar, linkWhatsapp: linkWhatsapp
+    lerLocal: lerLocal, gravarLocal: gravarLocal, avisar: avisar, linkWhatsapp: linkWhatsapp,
+    comum: comum, guardarComum: guardarComum
   };
 })();
