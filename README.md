@@ -188,6 +188,11 @@ Os prazos de confecção são estimativas, em `SOB_MEDIDA` e `FOLGA`, no começo
 
 Em `/apps/treino/`, a pessoa escolhe o objetivo, a experiência, o local (academia, casa com halteres ou casa sem equipamento), os dias por semana e o tempo, e marca se sente dor no joelho, no ombro ou na lombar. O app monta a divisão (corpo inteiro, parte de cima e pernas, ou empurrar, puxar e pernas), guia o treino com as séries e o descanso, guarda as cargas e mostra a semana. Os exercícios e as alternativas ficam em `assets/js/treino-dados.js`.
 
+- **Foco:** a pessoa pode escolher até dois grupos, como peito e braços. Os treinos que trabalham esses grupos ganham até dois exercícios a mais, e cada exercício do foco ganha uma série a mais. Eles aparecem com o selo **Foco**.
+- **3 opções por treino:** cada treino (A, B, C...) tem 3 opções, com exercícios diferentes para os mesmos músculos. A pessoa escolhe a opção no cartão do treino, ou liga **Alternar as opções a cada treino**.
+- **Trocar um exercício:** o botão de troca mostra até 3 exercícios do mesmo grupo muscular que servem para o local e os cuidados da pessoa. Com restrições fortes, como em casa e com dor no joelho, podem sobrar menos de 3. A troca vale para aquele treino e aquela opção.
+- **Ligação com a Alimentação:** os dois apps usam as mesmas medidas (sexo, idade, altura e peso), guardadas no navegador em `ar-medidas-v1`. Quem preenche num, não digita de novo no outro. Ao terminar o plano alimentar, a Alimentação convida a montar o treino; depois de montar o treino, o Treino mostra a meta de calorias e de proteína do plano, ou convida a montá-lo. Os dias de treino sugerem a rotina na Alimentação, e o objetivo passa de um app para o outro.
+
 O treino fica no navegador e só vai para a conta, na tabela `apps_dados`, se a pessoa autorizar. A página avisa que é uma sugestão geral e recomenda um médico e um profissional de educação física.
 
 ## Alimentação

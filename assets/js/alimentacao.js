@@ -6,6 +6,7 @@
   var D = window.AR_ALIM;
   var C = window.AR_ALIM_CALC;
   var api = window.AR_API;
+  var app = window.AR_APP;
   var CHAVE = 'ar-alimentacao-v1';
   var ENDERECO = 'api/alimentacao.php';
   var PASSOS = ['resumo', 'voce', 'comida', 'plano', 'compras', 'acompanhamento'];
@@ -98,6 +99,7 @@
     estado.alteradoEm = Date.now();
     estado.resumoLista = resumirLista();
     try { localStorage.setItem(CHAVE, JSON.stringify(estado)); } catch (e) { /* segue sem guardar */ }
+    compartilhar();
     if (conta.logado && estado.guardarNaConta) {
       window.clearTimeout(agendado);
       mostrarSituacao('salvando');
@@ -229,6 +231,105 @@
     });
   }
 
+  /* --- Ligação com o Treino ---------------------------------------------------------------------- */
+
+  var OBJETIVO_DO_TREINO = { emagrecer: 'perder', massa: 'ganhar', saude: 'manter' };
+  var ROTULO_DO_TREINO = { emagrecer: 'emagrecer', massa: 'ganhar massa muscular', saude: 'saúde e disposição' };
+
+  // Quem treina tantos dias por semana tem esta rotina
+  function atividadeDoTreino(dias) {
+    if (dias >= 6) return 'intenso';
+    if (dias >= 3) return 'moderado';
+    return 'leve';
+  }
+
+  // As medidas e o plano ficam disponíveis para o Treino, neste aparelho
+  function compartilhar() {
+    if (!app) return;
+    var p = estado.perfil;
+    var medidas = {};
+    if (p.idade >= 18 && p.idade <= 80) { medidas.idade = p.idade; medidas.sexo = p.sexo; }
+    if (p.altura >= 140 && p.altura <= 220) medidas.altura = p.altura;
+    if (p.peso >= 40 && p.peso <= 250) medidas.peso = p.peso;
+    var resumo = { objetivo: p.objetivo, atividade: p.atividade, concluido: Boolean(estado.concluido), em: Date.now() };
+    if (perfilValido()) {
+      var metas = C.gasto(p);
+      resumo.meta = metas.meta;
+      resumo.proteina = metas.proteina;
+    }
+    app.guardarComum('alimentacao', medidas, resumo);
+  }
+
+  // Quem começou pelo Treino não precisa digitar as medidas de novo
+  function trazerDoTreino() {
+    if (!app) return false;
+    var c = app.comum();
+    var p = estado.perfil;
+    var novo = !p.idade && !estado.concluido;
+    var maisNovas = c.medidasDe === 'treino' && c.medidasEm > (estado.alteradoEm || 0);
+    var usou = false;
+    ['sexo', 'idade', 'altura', 'peso'].forEach(function (k) {
+      var v = c.medidas[k];
+      if (!v || p[k] === v) return;
+      if (maisNovas || (k === 'sexo' ? novo : !p[k])) { p[k] = v; usou = true; }
+    });
+    if (novo && c.treino && OBJETIVO_DO_TREINO[c.treino.objetivo]) {
+      p.objetivo = OBJETIVO_DO_TREINO[c.treino.objetivo];
+      p.atividade = atividadeDoTreino(c.treino.dias);
+      usou = true;
+    }
+    if (usou) {
+      $('alim-da-conta').textContent = 'Trouxemos o que você informou no Treino. Confira se continua certo.';
+      $('alim-da-conta').hidden = false;
+    }
+    return usou;
+  }
+
+  // Sugere a rotina que combina com os dias de treino
+  function mostrarRotinaDoTreino() {
+    var caixa = $('alim-do-treino');
+    var t = app && app.comum().treino;
+    caixa.textContent = '';
+    caixa.hidden = true;
+    if (!t || !t.dias) return;
+    var sugerida = atividadeDoTreino(t.dias);
+    if (sugerida === estado.perfil.atividade) return;
+    var rotulo = C.ATIVIDADES.filter(function (a) { return a.id === sugerida; })[0].rotulo;
+    caixa.appendChild(document.createTextNode('No Treino, você marcou ' + t.dias + ' dias por semana. A rotina “' + rotulo + '” combina mais com isso. '));
+    caixa.appendChild(botao('Usar essa', 'texto-botao', function () {
+      $('passo-voce').elements.atividade.value = sugerida;
+      lerPerfil();
+      mostrarRotinaDoTreino();
+      retorno('Rotina ajustada. O gasto do dia foi recalculado.');
+    }));
+    caixa.hidden = false;
+  }
+
+  function treinoGuardado() {
+    var t = app && app.lerLocal('ar-treino-v1');
+    return t && t.perfil && t.perfil.dias ? t : null;
+  }
+
+  // Ao terminar o plano, o convite para o treino
+  function desenharPonteTreino() {
+    var t = treinoGuardado();
+    var texto;
+    if (t) {
+      var p = t.perfil;
+      texto = p.dias + ' dias por semana, para ' + (ROTULO_DO_TREINO[p.objetivo] || 'saúde') + '.' +
+        (t.resumo && t.resumo.proximo ? ' Próximo: ' + t.resumo.proximo + '.' : '');
+      if (OBJETIVO_DO_TREINO[p.objetivo] && OBJETIVO_DO_TREINO[p.objetivo] !== estado.perfil.objetivo) {
+        texto += ' O objetivo do treino é diferente do plano alimentar: vale deixar os dois iguais.';
+      }
+    } else {
+      texto = 'Com o plano alimentar pronto, monte um treino para o mesmo objetivo, na academia ou em casa. Suas medidas e o objetivo já vão preenchidos.';
+    }
+    $('alim-ponte-titulo').textContent = t ? 'Seu treino' : 'Próximo passo: o treino';
+    $('alim-ponte-texto').textContent = texto;
+    $('alim-ponte-ir').textContent = t ? 'Abrir meu treino' : 'Montar meu treino';
+    $('alim-plano-treino').textContent = t ? 'Abrir meu treino' : 'Montar meu treino';
+  }
+
   /* --- Passos --------------------------------------------------------------------------------- */
 
   function irPara(passo) {
@@ -246,6 +347,7 @@
     if (passo === 'resumo') desenharResumo();
     if (passo === 'plano') desenharPlano();
     if (passo === 'compras') desenharCompras();
+    if (passo === 'compras' || passo === 'plano') desenharPonteTreino();
     if (passo === 'acompanhamento') desenharAcompanhamento();
     $('passo-' + passo).focus({ preventScroll: true });
     window.scrollTo({ top: $('alim-topo').getBoundingClientRect().top + window.scrollY - 90 });
@@ -288,6 +390,7 @@
     form.elements.atividade.value = p.atividade;
     form.elements.objetivo.value = p.objetivo;
     $('alim-uf').value = p.uf;
+    mostrarRotinaDoTreino();
   }
 
   function lerPerfil() {
@@ -326,7 +429,7 @@
     $(id).addEventListener('change', lerPerfil);
   });
   $('passo-voce').addEventListener('change', function (e) {
-    if (e.target.type === 'radio') lerPerfil();
+    if (e.target.type === 'radio') { lerPerfil(); mostrarRotinaDoTreino(); }
   });
   $('passo-voce').addEventListener('submit', function (e) {
     e.preventDefault();
@@ -1400,6 +1503,18 @@
       ['Cintura', dCintura === null ? '—' : (dCintura > 0 ? '+' : '') + String(dCintura).replace('.', ',') + ' cm']
     ], 'Registrar peso e medidas', 'acompanhamento'));
 
+    var t = treinoGuardado();
+    var objetivoTreino = t && ROTULO_DO_TREINO[t.perfil.objetivo];
+    var cartaoTreino = cartao('Treino', t ? [
+      ['Plano', t.perfil.dias + ' dias por semana'],
+      ['Objetivo', objetivoTreino ? objetivoTreino.charAt(0).toUpperCase() + objetivoTreino.slice(1) : '—'],
+      ['Próximo', t.resumo && t.resumo.proximo ? t.resumo.proximo : '—']
+    ] : [['Treino', 'Ainda não montado'], ['Medidas', 'Vão preenchidas']], 'Treino', 'resumo');
+    var link = criar('a', 'botao', t ? 'Abrir meu treino' : 'Montar meu treino');
+    link.href = 'apps/treino/';
+    cartaoTreino.replaceChild(link, cartaoTreino.querySelector('.botao'));
+    caixa.appendChild(cartaoTreino);
+
     var avisos = avisosDaDespensa(c.doPlano);
     if (avisos.length) {
       var aviso = criar('div', 'alim-avisos');
@@ -1457,6 +1572,7 @@
 
   preencherOpcoes();
   montarRefeicoes();
+  if (trazerDoTreino()) salvar();
   mostrarPerfil();
   desenharItens();
   if (estado.concluido && perfilValido()) irPara('resumo');

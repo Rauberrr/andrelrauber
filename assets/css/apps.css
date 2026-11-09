@@ -510,6 +510,35 @@
 .tr-exercicios li:last-child { border-bottom: 0; }
 .tr-exercicios small { grid-column: 1 / -1; color: var(--app-texto-2); font-size: .82rem; line-height: 1.35; }
 .tr-series { color: var(--app-texto-2); font-size: .9rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tr-exercicios li:not(.tr-trocas) { grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; }
+.tr-exercicios .tr-trocar { width: 34px; height: 34px; margin: -.3rem -.4rem -.3rem 0; }
+.tr-exercicios .tr-trocar svg { width: 18px; height: 18px; }
+.tr-ex-nome { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .2rem .45rem; }
+.tr-foco { display: inline-flex; align-items: center; padding: .12rem .5rem; border-radius: 999px; background: rgba(192, 138, 72, .16); color: #7a4c1b; font-family: var(--fonte-texto, inherit); font-size: .7rem; font-weight: 650; letter-spacing: .02em; text-transform: uppercase; vertical-align: middle; }
+.app-cartao-titulo .tr-foco { margin-left: .45rem; }
+.tr-com-foco { box-shadow: inset 3px 0 0 #c08a48, var(--app-sombra, 0 1px 2px rgba(0, 0, 0, .06)); }
+.tr-opcoes { margin-bottom: .4rem; }
+.tr-trocas { display: grid; gap: .45rem; padding: .8rem .85rem; margin: .2rem 0 .5rem; border-radius: 14px; background: var(--app-cartao-2); }
+.tr-exercicios li.tr-trocas { grid-template-columns: minmax(0, 1fr); border-bottom: 0; }
+.tr-trocas-titulo { font-size: .86rem; font-weight: 600; }
+.tr-trocas .app-botoes { margin-top: .1rem; }
+.tr-troca-opcao { display: grid; gap: .15rem; width: 100%; padding: .65rem .8rem; border: 0; border-radius: 12px; background: var(--app-cartao); box-shadow: inset 0 0 0 1px var(--app-linha); color: var(--preto); font: inherit; text-align: left; cursor: pointer; transition: transform .12s ease, box-shadow .2s ease; }
+.tr-troca-opcao:hover { box-shadow: inset 0 0 0 1px #c08a48; }
+.tr-troca-opcao:active { transform: scale(.99); }
+.tr-troca-opcao strong { font-size: .95rem; font-weight: 600; }
+.tr-troca-opcao span { color: var(--app-texto-2); font-size: .82rem; line-height: 1.35; }
+.tr-sessao-acoes { margin-top: .5rem; }
+.tr-sessao-acoes .texto-botao { display: inline-flex; align-items: center; gap: .35rem; }
+.tr-sessao-acoes .texto-botao svg { display: block; flex: none; width: 16px; height: 16px; }
+.tr-icone-texto { width: 16px; height: 16px; vertical-align: -3px; }
+.tr-medidas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem .75rem; }
+.tr-medida-inteira { grid-column: 1 / -1; }
+.tr-medida-rotulo { display: block; margin-bottom: .35rem; font-size: .84rem; color: var(--app-texto-2); }
+.tr-medidas .campo-entrada input { width: 100%; }
+.tr-ponte { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .9rem; align-items: start; margin-top: 1rem; }
+.tr-ponte-icone { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 12px; color: #fff; }
+.tr-ponte-icone svg { width: 24px; height: 24px; }
+.tr-ponte .botao { margin-top: .6rem; }
 .tr-sessao-ex { padding: 1rem 1.1rem; }
 .tr-sessao-ex + .tr-sessao-ex { margin-top: .75rem; }
 .tr-marcas { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .7rem; }
@@ -535,3 +564,4 @@
 @media print {
   .app-barra, .app-abas, .app-fab { display: none; }
 }
+.alim-do-treino { margin-top: .6rem; }

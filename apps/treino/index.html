@@ -5,7 +5,7 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Treino | Andre Rauber</title>
-  <meta name="description" content="Um treino simples para academia ou para casa, no tempo que você tem, com registro de cargas e da sua semana.">
+  <meta name="description" content="Um treino simples para academia ou para casa, no tempo que você tem, com foco no grupo muscular que você escolher, 3 opções por treino e registro de cargas.">
   <link rel="canonical" href="https://andrerauber.com/apps/treino/">
   <meta name="theme-color" content="#f4f1ea">
   <link rel="manifest" href="assets/apps.webmanifest">
@@ -16,8 +16,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261109a">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261109a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261109b">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261109b">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -63,6 +63,40 @@
         <div class="app-escolhas" id="tr-tempo"></div>
       </fieldset>
       <fieldset class="app-grupo">
+        <legend>Quer dar mais atenção a algum grupo muscular? Escolha até dois</legend>
+        <div class="app-escolhas" id="tr-foco"></div>
+        <p class="app-suave" id="tr-foco-texto" style="margin-top:.4rem"></p>
+      </fieldset>
+      <fieldset class="app-grupo">
+        <legend>Suas medidas (opcional)</legend>
+        <p class="app-suave" id="tr-medidas-de" hidden></p>
+        <div class="tr-medidas">
+          <div class="campo tr-medida-inteira">
+            <span class="tr-medida-rotulo" id="tr-sexo-rotulo">Sexo</span>
+            <div class="app-escolhas" role="radiogroup" aria-labelledby="tr-sexo-rotulo">
+              <label><input type="radio" name="tr-sexo" value="m"><span>Masculino</span></label>
+              <label><input type="radio" name="tr-sexo" value="f"><span>Feminino</span></label>
+            </div>
+          </div>
+          <div class="campo">
+            <label for="tr-idade">Idade</label>
+            <div class="campo-entrada"><input id="tr-idade" type="number" inputmode="numeric" min="18" max="80" placeholder="35"></div>
+            <p class="erro" id="erro-tr-idade" role="alert"></p>
+          </div>
+          <div class="campo">
+            <label for="tr-altura">Altura (cm)</label>
+            <div class="campo-entrada"><input id="tr-altura" type="number" inputmode="numeric" min="140" max="220" placeholder="178"></div>
+            <p class="erro" id="erro-tr-altura" role="alert"></p>
+          </div>
+          <div class="campo">
+            <label for="tr-peso">Peso (kg)</label>
+            <div class="campo-entrada"><input id="tr-peso" type="text" inputmode="decimal" placeholder="82"></div>
+            <p class="erro" id="erro-tr-peso" role="alert"></p>
+          </div>
+        </div>
+        <p class="app-suave" style="margin-top:.4rem">São as mesmas da Alimentação: preenchendo aqui, você não precisa digitar de novo lá. Com o peso, estimamos quanto cada treino gasta.</p>
+      </fieldset>
+      <fieldset class="app-grupo">
         <legend>Sente dor ou tem cuidado com algum lugar? (opcional)</legend>
         <div class="app-escolhas" id="tr-cuidados"></div>
         <p class="app-suave" style="margin-top:.4rem">Os exercícios que pesam nesse lugar saem do treino. Mesmo assim, converse com um profissional.</p>
@@ -90,7 +124,21 @@
       <section class="app-secao" aria-labelledby="tr-plano-titulo">
         <h2 class="app-secao-titulo" id="tr-plano-titulo">Seu plano</h2>
         <p class="app-secao-texto" id="tr-plano-texto"></p>
+        <p class="app-secao-texto">Cada treino tem 3 opções com exercícios diferentes para os mesmos músculos. Escolha a opção no cartão do treino, ou toque em <svg data-icone="girar" class="tr-icone-texto" aria-hidden="true"></svg> para trocar um exercício por outro do mesmo grupo.</p>
+        <div class="app-cartao" style="margin-bottom:.85rem">
+          <label class="app-interruptor"><span><strong>Alternar as opções a cada treino</strong></span><input id="tr-alternar" type="checkbox"><span class="app-interruptor-trilho" aria-hidden="true"></span></label>
+          <p class="app-suave" style="margin-top:.4rem">Depois de feito, cada treino passa para a próxima opção. Para ver a carga subir, repita a mesma opção por 4 a 6 semanas antes de mudar.</p>
+        </div>
         <div class="tr-treinos" id="tr-treinos"></div>
+      </section>
+
+      <section class="app-cartao tr-ponte" aria-labelledby="tr-alim-titulo">
+        <span class="tr-ponte-icone app-icone-alimentacao" aria-hidden="true"><svg data-icone="folha"></svg></span>
+        <div>
+          <h2 class="app-cartao-titulo" id="tr-alim-titulo">Próximo passo: a alimentação</h2>
+          <p class="app-suave" id="tr-alim-texto"></p>
+          <a class="botao" id="tr-alim-ir" href="apps/alimentacao/">Montar meu plano alimentar</a>
+        </div>
       </section>
 
       <section class="app-secao" aria-labelledby="tr-historico-titulo">
@@ -110,7 +158,7 @@
           <p class="app-suave" id="tr-guardar-texto" style="margin-top:.4rem"></p>
         </div>
         <div class="app-botoes">
-          <button class="botao" type="button" id="tr-editar"><svg data-icone="lapis"></svg>Mudar objetivo, dias ou local</button>
+          <button class="botao" type="button" id="tr-editar"><svg data-icone="lapis"></svg>Mudar objetivo, foco, dias ou local</button>
           <button class="texto-botao" type="button" id="tr-apagar" style="color:var(--erro)">Apagar meus dados do treino</button>
         </div>
       </section>
@@ -149,9 +197,9 @@
   <p class="app-aviso" id="app-aviso" role="status" aria-live="polite"></p>
 
   <script src="assets/js/config.js?v=20261104a"></script>
-  <script src="assets/js/conta-api.js?v=20261109a"></script>
-  <script src="assets/js/apps.js?v=20261109a"></script>
-  <script src="assets/js/treino-dados.js?v=20261109a"></script>
-  <script src="assets/js/treino.js?v=20261109a"></script>
+  <script src="assets/js/conta-api.js?v=20261109b"></script>
+  <script src="assets/js/apps.js?v=20261109b"></script>
+  <script src="assets/js/treino-dados.js?v=20261109b"></script>
+  <script src="assets/js/treino.js?v=20261109b"></script>
 </body>
 </html>
