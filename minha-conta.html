@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261108a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261109a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -28,14 +28,7 @@
           <li><a href="index.html">Início</a></li>
           <li><a href="a-marca.html">A Marca</a></li>
           <li><a href="medidas.html">Tabela de Medidas</a></li>
-          <li class="nav-grupo">
-            <span class="nav-grupo-rotulo">Apps</span>
-            <button class="nav-grupo-botao" type="button" aria-expanded="false" aria-controls="nav-apps">Apps</button>
-            <ul class="nav-sub" id="nav-apps">
-              <li><a href="guarda-roupa.html">Guarda-roupa</a></li>
-              <li><a href="alimentacao.html">Alimentação</a></li>
-            </ul>
-          </li>
+          <li><a href="apps/">Apps</a></li>
           <li><a href="contato.html">Contato</a></li>
           <li><a href="minha-conta.html" aria-current="page">Minha conta</a></li>
         </ul>
@@ -50,6 +43,17 @@
     <div id="conta-conteudo" hidden>
       <span class="etiqueta">Minha conta</span>
       <h1 class="titulo-l" id="conta-ola"></h1>
+
+      <a class="conta-apps" href="apps/">
+        <span class="conta-apps-icones" aria-hidden="true">
+          <span class="conta-apps-icone conta-apps-guarda-roupa"><svg viewBox="0 0 24 24"><path d="M12 7.2a2.2 2.2 0 1 1 2.2 2.2c-.9.4-2.2 1-2.2 2.1v.5"/><path d="M12 12 3.4 17.6c-.8.5-.4 1.7.5 1.7h16.2c.9 0 1.3-1.2.5-1.7Z"/></svg></span>
+          <span class="conta-apps-icone conta-apps-alimentacao"><svg viewBox="0 0 24 24"><path d="M5 19.5c0-8.5 5-14.5 15-14.5 0 10.5-6 15.5-14.5 15"/><path d="M5 19.5c3-4.5 6.5-7.5 10.5-9.5"/></svg></span>
+          <span class="conta-apps-icone conta-apps-ocasioes"><svg viewBox="0 0 24 24"><path d="M6.5 4h11A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5v-11A2.5 2.5 0 0 1 6.5 4Z"/><path d="M4 9.5h16"/><path d="M8.5 2.5v3"/><path d="M15.5 2.5v3"/></svg></span>
+          <span class="conta-apps-icone conta-apps-treino"><svg viewBox="0 0 24 24"><path d="M6.5 7v10"/><path d="M17.5 7v10"/><path d="M3.5 9.5v5"/><path d="M20.5 9.5v5"/><path d="M6.5 12h11"/></svg></span>
+        </span>
+        <span class="conta-apps-texto"><strong>Seus apps</strong><span>Guarda-roupa, Alimentação, Ocasiões e Treino</span></span>
+        <span class="conta-apps-abrir">Abrir</span>
+      </a>
 
       <section class="conta-email" id="conta-email" aria-labelledby="conta-email-titulo" hidden>
         <h2 class="titulo-s" id="conta-email-titulo">Confirme seu e-mail</h2>
@@ -75,8 +79,7 @@
 
       <section class="conta-rodape">
         <div class="conta-botoes">
-          <a class="botao" href="guarda-roupa.html">Meu guarda-roupa</a>
-          <a class="botao" href="alimentacao.html">Alimentação</a>
+          <a class="botao" href="apps/">Apps</a>
           <button class="botao" type="button" id="conta-sair">Sair</button>
           <a class="botao" id="conta-painel" href="painel.html" hidden>Painel de clientes</a>
           <a class="botao" id="conta-senha" href="esqueci-senha.html" hidden>Trocar senha</a>
@@ -109,7 +112,7 @@
   <script src="assets/js/config.js?v=20261104a"></script>
   <script src="assets/js/medidas-dados.js?v=20261104a"></script>
   <script src="assets/js/main.js?v=20261107a"></script>
-  <script src="assets/js/conta-api.js?v=20261107a"></script>
+  <script src="assets/js/conta-api.js?v=20261109a"></script>
   <script src="assets/js/minha-conta.js?v=20261105a"></script>
   <script src="assets/js/pedidos.js?v=20261104e"></script>
 </body>

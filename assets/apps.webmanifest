@@ -1,0 +1,15 @@
+{
+  "name": "Andre Rauber Apps",
+  "short_name": "AR Apps",
+  "description": "Guarda-roupa, Alimentação, Ocasiões e Treino da Andre Rauber.",
+  "lang": "pt-BR",
+  "start_url": "/apps/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f1ea",
+  "theme_color": "#f4f1ea",
+  "icons": [
+    { "src": "/assets/img/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/img/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

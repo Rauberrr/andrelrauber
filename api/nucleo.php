@@ -338,6 +338,8 @@ function apagar_guarda_roupa(int $usuarioId): void
     foreach ($arquivos as $arquivo) {
         apagar_foto((string) $arquivo);
     }
+    consultar('DELETE FROM usos_pecas WHERE usuario_id = ?', [$usuarioId]);
+    consultar('DELETE FROM pecas_valores WHERE usuario_id = ?', [$usuarioId]);
     consultar('DELETE FROM looks_notas WHERE usuario_id = ?', [$usuarioId]);
     consultar('DELETE FROM looks WHERE usuario_id = ?', [$usuarioId]);
     consultar('DELETE FROM pecas_excluidas WHERE usuario_id = ?', [$usuarioId]);
@@ -382,4 +384,66 @@ function enviar_email(string $para, string $assunto, string $corpo): bool
         error_log('Andre Rauber: falha ao enviar e-mail.');
     }
     return $enviado;
+}
+
+/* --- Dados públicos de outros serviços ---------------------------------------------- */
+
+// Pasta para guardar respostas de outros serviços por um tempo. Fica bloqueada ao acesso direto.
+function pasta_cache(): string
+{
+    $pasta = (string) (config()['pasta_cache'] ?? (__DIR__ . '/cache'));
+    if (!is_dir($pasta) && !mkdir($pasta, 0755, true) && !is_dir($pasta)) {
+        throw new RuntimeException('Não foi possível criar a pasta de cache.');
+    }
+    $bloqueio = $pasta . '/.htaccess';
+    if (!is_file($bloqueio)) {
+        file_put_contents($bloqueio, "Require all denied\n");
+    }
+    return $pasta;
+}
+
+function ler_cache(string $nome, int $validadeSegundos): ?array
+{
+    $caminho = pasta_cache() . '/' . $nome . '.json';
+    if (!is_file($caminho) || filemtime($caminho) < time() - $validadeSegundos) {
+        return null;
+    }
+    $dados = json_decode((string) file_get_contents($caminho), true);
+    return is_array($dados) ? $dados : null;
+}
+
+function gravar_cache(string $nome, array $dados): void
+{
+    $caminho = pasta_cache() . '/' . $nome . '.json';
+    file_put_contents($caminho . '.tmp', json_encode($dados, JSON_UNESCAPED_UNICODE));
+    rename($caminho . '.tmp', $caminho);
+}
+
+// Busca um endereço que responde em JSON. Os serviços pedem que o site se identifique.
+function buscar_json(string $url, int $limiteSegundos = 8): ?array
+{
+    $agente = 'AndreRauber/1.0 (+' . (string) (config()['site_url'] ?? 'https://andrerauber.com') . ')';
+    if (function_exists('curl_init')) {
+        $c = curl_init($url);
+        curl_setopt_array($c, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => $limiteSegundos,
+            CURLOPT_CONNECTTIMEOUT => 4,
+            CURLOPT_USERAGENT => $agente,
+            CURLOPT_HTTPHEADER => ['Accept: application/json'],
+            CURLOPT_FOLLOWLOCATION => false,
+        ]);
+        $corpo = curl_exec($c);
+        $status = (int) curl_getinfo($c, CURLINFO_HTTP_CODE);
+        curl_close($c);
+    } else {
+        $contexto = stream_context_create(['http' => ['timeout' => $limiteSegundos, 'header' => "User-Agent: $agente\r\nAccept: application/json\r\n"]]);
+        $corpo = @file_get_contents($url, false, $contexto);
+        $status = $corpo === false ? 0 : 200;
+    }
+    if (!is_string($corpo) || $status < 200 || $status >= 300) {
+        return null;
+    }
+    $dados = json_decode($corpo, true);
+    return is_array($dados) ? $dados : null;
 }

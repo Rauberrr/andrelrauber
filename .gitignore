@@ -8,3 +8,6 @@ api/fotos-pecas/*
 
 # Fotos originais das peças sugeridas. O site usa as versões sem fundo, em assets/img/sugeridas.
 imagens-guarda-roupa/
+
+# Respostas guardadas do clima e dos preços: o servidor refaz sozinho
+api/cache/

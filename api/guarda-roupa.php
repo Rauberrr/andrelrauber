@@ -11,6 +11,10 @@
  * POST ?acao=apagar        apaga de vez uma peça excluída e a foto dela
  * POST ?acao=look          salva ou descarta um look
  * POST ?acao=look-nota     guarda o nome e a observação de um look
+ * POST ?acao=trocar-foto   troca a foto de uma peça (multipart)
+ * POST ?acao=preco         guarda quanto a pessoa pagou na peça
+ * POST ?acao=uso           anota no diário o que a pessoa usou
+ * POST ?acao=apagar-uso    tira uma anotação do diário
  */
 declare(strict_types=1);
 
@@ -66,6 +70,9 @@ const GR_MAXIMO_BYTES = 5242880;
 const GR_MAIOR_LADO = 2400;
 const GR_MENOR_LADO = 100;
 const GR_MAXIMO_NOTAS = 300;
+const GR_MAXIMO_USOS = 3000;
+// Até R$ 50.000,00, em centavos
+const GR_MAIOR_PRECO = 5000000;
 
 $metodo = $_SERVER['REQUEST_METHOD'] ?? '';
 if ($metodo === 'GET') {
@@ -96,6 +103,18 @@ switch ($_GET['acao'] ?? '') {
         break;
     case 'look-nota':
         guardar_nota_do_look();
+        break;
+    case 'trocar-foto':
+        trocar_foto();
+        break;
+    case 'preco':
+        guardar_preco();
+        break;
+    case 'uso':
+        anotar_uso();
+        break;
+    case 'apagar-uso':
+        apagar_uso();
         break;
     default:
         falhar(404, 'Ação desconhecida.');
@@ -144,7 +163,7 @@ function entregar_sugeridas(int $id): void
     }
 }
 
-function peca_publica(array $p): array
+function peca_publica(array $p, ?int $preco = null): array
 {
     return [
         'id' => (int) $p['id'],
@@ -158,6 +177,34 @@ function peca_publica(array $p): array
         'fundoRemovido' => (int) $p['fundo_removido'] === 1,
         'sugerida' => eh_sugerida($p),
         'foto' => foto_da_peca($p),
+        'criadoEm' => substr((string) $p['criado_em'], 0, 10),
+        'preco' => $preco,
+    ];
+}
+
+function precos_da_pessoa(int $id): array
+{
+    $mapa = [];
+    foreach (consultar('SELECT peca_id, preco_centavos FROM pecas_valores WHERE usuario_id = ?', [$id])->fetchAll() as $linha) {
+        $mapa[(int) $linha['peca_id']] = (int) $linha['preco_centavos'];
+    }
+    return $mapa;
+}
+
+function peca_com_preco(array $p): array
+{
+    $preco = consultar('SELECT preco_centavos FROM pecas_valores WHERE peca_id = ?', [(int) $p['id']])->fetchColumn();
+    return peca_publica($p, $preco === false ? null : (int) $preco);
+}
+
+function uso_publico(array $u): array
+{
+    return [
+        'id' => (int) $u['id'],
+        'data' => (string) $u['dia'],
+        'pecas' => array_map('intval', explode('-', (string) $u['chave'])),
+        'ocasiao' => $u['ocasiao'],
+        'observacao' => $u['observacao'],
     ];
 }
 
@@ -176,9 +223,15 @@ function listar(): void
     )->fetchAll();
     $looks = consultar('SELECT chave, situacao FROM looks WHERE usuario_id = ? ORDER BY id DESC', [$id])->fetchAll();
     $notas = consultar('SELECT chave, nome, observacao FROM looks_notas WHERE usuario_id = ?', [$id])->fetchAll();
+    $usos = consultar('SELECT * FROM usos_pecas WHERE usuario_id = ? ORDER BY dia DESC, id DESC', [$id])->fetchAll();
+    $precos = precos_da_pessoa($id);
+    $comPreco = function (array $p) use ($precos): array {
+        return peca_publica($p, $precos[(int) $p['id']] ?? null);
+    };
     responder(200, [
-        'pecas' => array_map('peca_publica', $pecas),
-        'excluidas' => array_map('peca_publica', $excluidas),
+        'pecas' => array_map($comPreco, $pecas),
+        'excluidas' => array_map($comPreco, $excluidas),
+        'usos' => array_map('uso_publico', $usos),
         'looks' => $looks,
         'notas' => $notas,
         'maximoPecas' => GR_MAXIMO_PECAS,
@@ -339,9 +392,13 @@ function adicionar(): void
     );
     $novoId = (int) banco()->lastInsertId();
     registrar_evento($id, 'peca_adicionada', null, $descricao['tipo']);
+    $preco = preco_valido($_POST['preco'] ?? null);
+    if ($preco !== null && $preco > 0) {
+        definir_preco($novoId, $id, $preco);
+    }
 
     $peca = consultar('SELECT * FROM pecas WHERE id = ?', [$novoId])->fetch();
-    responder(201, ['peca' => peca_publica($peca)]);
+    responder(201, ['peca' => peca_com_preco($peca)]);
 }
 
 // As peças sugeridas não ocupam o limite, porque a foto delas é da marca
@@ -385,7 +442,14 @@ function editar(): void
         'UPDATE pecas SET tipo = ?, cor = ?, corte = ?, tecido = ?, formalidade = ?, clima = ?, apelido = ?, atualizado_em = ? WHERE id = ?',
         [$d['tipo'], $d['cor'], $d['corte'], $d['tecido'], $d['formalidade'], $d['clima'], $d['apelido'], agora(), $pecaId]
     );
-    responder(200, ['peca' => peca_publica(peca_da_pessoa($pecaId, $id))]);
+    if (array_key_exists('preco', $dados)) {
+        $preco = preco_valido($dados['preco']);
+        if ($preco === null) {
+            falhar(422, 'Confira os campos marcados.', ['campos' => ['preco' => 'Informe o valor em reais, como 189,90.']]);
+        }
+        definir_preco($pecaId, $id, $preco);
+    }
+    responder(200, ['peca' => peca_com_preco(peca_da_pessoa($pecaId, $id))]);
 }
 
 function excluir(): void
@@ -436,7 +500,7 @@ function restaurar(): void
     }
     consultar('DELETE FROM pecas_excluidas WHERE peca_id = ? AND usuario_id = ?', [$pecaId, $id]);
     registrar_evento($id, 'peca_restaurada', null, (string) $peca['tipo']);
-    responder(200, ['peca' => peca_publica($peca)]);
+    responder(200, ['peca' => peca_com_preco($peca)]);
 }
 
 function apagar(): void
@@ -463,6 +527,21 @@ function apagar(): void
             }
         }
     }
+    // No diário, a anotação fica com as outras peças; sem nenhuma, sai
+    $usos = consultar('SELECT id, chave FROM usos_pecas WHERE usuario_id = ?', [$id])->fetchAll();
+    foreach ($usos as $uso) {
+        $ids = explode('-', (string) $uso['chave']);
+        if (!in_array((string) $pecaId, $ids, true)) {
+            continue;
+        }
+        $resto = array_values(array_diff($ids, [(string) $pecaId]));
+        if ($resto) {
+            consultar('UPDATE usos_pecas SET chave = ? WHERE id = ?', [implode('-', $resto), $uso['id']]);
+        } else {
+            consultar('DELETE FROM usos_pecas WHERE id = ?', [$uso['id']]);
+        }
+    }
+    consultar('DELETE FROM pecas_valores WHERE peca_id = ?', [$pecaId]);
     consultar('DELETE FROM pecas_excluidas WHERE peca_id = ?', [$pecaId]);
     consultar('DELETE FROM pecas WHERE id = ?', [$pecaId]);
     apagar_foto((string) $peca['arquivo']);
@@ -555,4 +634,158 @@ function guardar_nota_do_look(): void
         'observacao' => $observacao,
         'situacao' => $situacao === false ? 'nenhum' : $situacao,
     ]);
+}
+
+/* --- Foto nova para uma peça que já existe ------------------------------------------------ */
+
+function foto_enviada(): string
+{
+    $foto = $_FILES['foto'] ?? null;
+    $erro = is_array($foto) && is_int($foto['error'] ?? null) ? $foto['error'] : UPLOAD_ERR_NO_FILE;
+    if ($erro === UPLOAD_ERR_INI_SIZE || $erro === UPLOAD_ERR_FORM_SIZE) {
+        falhar(413, 'A foto é grande demais para enviar.');
+    }
+    if ($erro !== UPLOAD_ERR_OK || !is_uploaded_file((string) $foto['tmp_name'])) {
+        falhar(422, 'Tire ou escolha uma foto da peça.', ['campos' => ['foto' => 'Tire ou escolha uma foto da peça.']]);
+    }
+    if ((int) $foto['size'] > GR_MAXIMO_BYTES) {
+        falhar(413, 'A foto é grande demais para enviar.');
+    }
+    return (string) $foto['tmp_name'];
+}
+
+// A peça sugerida que ganha uma foto da pessoa passa a ser dela e conta no limite
+function trocar_foto(): void
+{
+    conferir_post_do_site();
+    $usuario = exigir_login();
+    $id = (int) $usuario['id'];
+    if (empty($_POST) && empty($_FILES) && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+        falhar(413, 'A foto é grande demais para enviar.');
+    }
+    $pecaId = (int) ($_POST['id'] ?? 0);
+    $peca = peca_da_pessoa($pecaId, $id);
+    if ($usuario['consentiu_em'] === null) {
+        if (($_POST['consentimento'] ?? '') !== '1') {
+            falhar(403, 'Para continuar, é preciso concordar com a política de privacidade.');
+        }
+        consultar('UPDATE usuarios SET consentiu_em = ? WHERE id = ?', [agora(), $id]);
+    }
+    $eraSugerida = eh_sugerida($peca);
+    if ($eraSugerida) {
+        exigir_vaga_para_peca($id);
+        if (total_pecas_proprias($id, true) >= GR_MAXIMO_COM_EXCLUIDAS) {
+            falhar(422, 'Seu guarda-roupa está cheio. Apague de vez algumas peças em Excluídas para adicionar outras.');
+        }
+    }
+    $limite = chave_limite('peca', (string) $id);
+    exigir_limite($limite, 80, 3600);
+    contar_tentativa($limite);
+
+    $arquivo = guardar_foto(foto_enviada());
+    $fundoRemovido = ($_POST['fundo_removido'] ?? '') === '1' ? 1 : 0;
+    consultar('UPDATE pecas SET arquivo = ?, fundo_removido = ?, atualizado_em = ? WHERE id = ?', [$arquivo, $fundoRemovido, agora(), $pecaId]);
+    if (!$eraSugerida) {
+        apagar_foto((string) $peca['arquivo']);
+    }
+    registrar_evento($id, 'peca_foto_trocada', null, (string) $peca['tipo']);
+    responder(200, ['peca' => peca_com_preco(peca_da_pessoa($pecaId, $id))]);
+}
+
+/* --- Preço pago -------------------------------------------------------------------------- */
+
+// Centavos, até R$ 50.000. Zero ou vazio apaga o preço. Devolve null se for inválido.
+function preco_valido($valor): ?int
+{
+    if ($valor === '' || $valor === null) {
+        return 0;
+    }
+    if (is_string($valor) && preg_match('/^\d{1,7}$/', $valor) === 1) {
+        $valor = (int) $valor;
+    }
+    if (!is_int($valor) || $valor < 0 || $valor > GR_MAIOR_PRECO) {
+        return null;
+    }
+    return $valor;
+}
+
+function definir_preco(int $pecaId, int $usuarioId, int $centavos): void
+{
+    consultar('DELETE FROM pecas_valores WHERE peca_id = ?', [$pecaId]);
+    if ($centavos > 0) {
+        consultar('INSERT INTO pecas_valores (peca_id, usuario_id, preco_centavos) VALUES (?, ?, ?)', [$pecaId, $usuarioId, $centavos]);
+    }
+}
+
+function guardar_preco(): void
+{
+    $dados = exigir_post();
+    $usuario = exigir_login();
+    $id = (int) $usuario['id'];
+    $pecaId = (int) ($dados['id'] ?? 0);
+    $peca = peca_da_pessoa($pecaId, $id);
+    $preco = preco_valido($dados['preco'] ?? null);
+    if ($preco === null) {
+        falhar(422, 'Informe o valor em reais, como 189,90.', ['campos' => ['preco' => 'Informe o valor em reais, como 189,90.']]);
+    }
+    definir_preco($pecaId, $id, $preco);
+    responder(200, ['peca' => peca_com_preco($peca)]);
+}
+
+/* --- Diário: o que a pessoa usou ------------------------------------------------------------ */
+
+function anotar_uso(): void
+{
+    $dados = exigir_post();
+    $usuario = exigir_login();
+    $id = (int) $usuario['id'];
+
+    $pecas = is_array($dados['pecas'] ?? null) ? $dados['pecas'] : [];
+    $ids = array_values(array_unique(array_map('intval', array_filter($pecas, 'is_int'))));
+    sort($ids);
+    if (count($ids) < 1 || count($ids) > 8 || count($ids) !== count($pecas)) {
+        falhar(422, 'Escolha de 1 a 8 peças.', ['campos' => ['pecas' => 'Escolha de 1 a 8 peças.']]);
+    }
+    $marcas = implode(',', array_fill(0, count($ids), '?'));
+    $encontradas = (int) consultar("SELECT COUNT(*) FROM pecas WHERE usuario_id = ? AND id IN ($marcas)", array_merge([$id], $ids))->fetchColumn();
+    if ($encontradas !== count($ids)) {
+        falhar(404, 'Peça não encontrada.');
+    }
+
+    $dia = texto($dados, 'data', 10);
+    $partes = explode('-', $dia);
+    $valida = preg_match('/^\d{4}-\d{2}-\d{2}$/', $dia) === 1 && checkdate((int) $partes[1], (int) $partes[2], (int) $partes[0]);
+    if (!$valida || $dia > date('Y-m-d', time() + 86400) || $dia < date('Y-m-d', time() - 5 * 365 * 86400)) {
+        falhar(422, 'Confira a data.', ['campos' => ['data' => 'Escolha uma data até hoje.']]);
+    }
+
+    $total = (int) consultar('SELECT COUNT(*) FROM usos_pecas WHERE usuario_id = ?', [$id])->fetchColumn();
+    if ($total >= GR_MAXIMO_USOS) {
+        falhar(422, 'Seu diário chegou ao limite de ' . GR_MAXIMO_USOS . ' anotações. Apague as mais antigas para continuar.');
+    }
+    $limite = chave_limite('uso', (string) $id);
+    exigir_limite($limite, 120, 3600);
+    contar_tentativa($limite);
+
+    consultar(
+        'INSERT INTO usos_pecas (usuario_id, dia, chave, ocasiao, observacao, criado_em) VALUES (?, ?, ?, ?, ?, ?)',
+        [$id, $dia, implode('-', $ids), str_replace("\n", ' ', texto($dados, 'ocasiao', 60)), str_replace("\n", ' ', texto($dados, 'observacao', 200)), agora()]
+    );
+    $novo = consultar('SELECT * FROM usos_pecas WHERE id = ?', [(int) banco()->lastInsertId()])->fetch();
+    registrar_evento($id, 'look_usado');
+    responder(201, ['uso' => uso_publico($novo)]);
+}
+
+function apagar_uso(): void
+{
+    $dados = exigir_post();
+    $usuario = exigir_login();
+    $id = (int) $usuario['id'];
+    $usoId = (int) ($dados['id'] ?? 0);
+    $existe = consultar('SELECT id FROM usos_pecas WHERE id = ? AND usuario_id = ?', [$usoId, $id])->fetchColumn();
+    if ($existe === false) {
+        falhar(404, 'Anotação não encontrada.');
+    }
+    consultar('DELETE FROM usos_pecas WHERE id = ?', [$usoId]);
+    responder(200);
 }

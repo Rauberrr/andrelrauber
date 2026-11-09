@@ -17,7 +17,7 @@
     concluido: 'Concluiu o cadastro', atualizado: 'Alterou o cadastro concluído', senha_pedida: 'Pediu para redefinir a senha',
     senha_redefinida: 'Redefiniu a senha', google_vinculado: 'Vinculou a conta ao Google',
     peca_adicionada: 'Adicionou peça ao guarda-roupa', peca_excluida: 'Excluiu peça do guarda-roupa',
-    alimentacao_autorizada: 'Autorizou guardar os dados de alimentação', peca_restaurada: 'Adicionou de novo uma peça excluída', peca_apagada: 'Apagou de vez uma peça', email_confirmado: 'Confirmou o e-mail',
+    alimentacao_autorizada: 'Autorizou guardar os dados de alimentação', treino_autorizado: 'Autorizou guardar o treino', ocasioes_comecou: 'Começou a usar Ocasiões', peca_foto_trocada: 'Trocou a foto de uma peça', look_usado: 'Anotou um look no diário', peca_restaurada: 'Adicionou de novo uma peça excluída', peca_apagada: 'Apagou de vez uma peça', email_confirmado: 'Confirmou o e-mail',
     pedido_criado: 'Pedido criado', pedido_cancelado: 'Pedido cancelado', pagamento_aberto: 'Abriu a tela de pagamento',
     pagamento_iniciado: 'Pagamento em análise', pagamento_aprovado: 'Pagamento aprovado', pagamento_estornado: 'Pagamento devolvido',
     pagamento_contestado: 'Pagamento em disputa', pagamento_duplicado: 'Pagamento em duplicidade',

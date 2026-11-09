@@ -167,6 +167,30 @@ function limpar_registros($registros): ?array
     return $saida;
 }
 
+// Resumo da lista de compras, usado nos avisos por e-mail: { itens: [{ id, nome, acabaEm }] }
+function limpar_resumo_lista($resumo): ?array
+{
+    if ($resumo === null) {
+        return null;
+    }
+    if (!is_array($resumo) || !is_array($resumo['itens'] ?? null) || count($resumo['itens']) > 80) {
+        return [];
+    }
+    $itens = [];
+    foreach ($resumo['itens'] as $item) {
+        if (!is_array($item) || !eh_codigo($item['id'] ?? null)) {
+            continue;
+        }
+        $acaba = data_ou_vazio($item['acabaEm'] ?? '');
+        $nome = str_replace(["\r", "\n"], ' ', texto($item, 'nome', 60));
+        if ($acaba === null || $nome === '') {
+            continue;
+        }
+        $itens[] = ['id' => $item['id'], 'nome' => $nome, 'acabaEm' => $acaba];
+    }
+    return ['itens' => $itens];
+}
+
 // Monta uma cópia só com o que a página usa. Devolve null se algo vier fora do formato.
 function limpar_dados($d): ?array
 {
@@ -241,6 +265,8 @@ function limpar_dados($d): ?array
         'despensa' => (object) $despensa,
         'inicioPlano' => $inicio,
         'registros' => $registros,
+        'lembretes' => ($d['lembretes'] ?? false) === true,
+        'resumoLista' => limpar_resumo_lista($d['resumoLista'] ?? null),
     ];
 }
 

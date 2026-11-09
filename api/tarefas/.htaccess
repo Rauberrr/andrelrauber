@@ -1,0 +1,2 @@
+# Tarefas que rodam só pelo agendador do cPanel, nunca pelo navegador
+Require all denied

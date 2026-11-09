@@ -490,7 +490,7 @@
       $('lote-progresso-texto').textContent = 'Guardando ' + (guardadas + 1) + ' de ' + total + '...';
       $('lote-progresso-barra').style.setProperty('--p', Math.max(0.03, guardadas / total));
       enviarUma(item).then(function (r) {
-        if (r.status === 401) { api.irParaLogin('guarda-roupa.html'); return; }
+        if (r.status === 401) { api.irParaLogin('apps/guarda-roupa/'); return; }
         if (r.ok) {
           item.erro = '';
           guardadas += 1;

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Ocasiões | Andre Rauber</title>
+  <meta name="description" content="Casamento, formatura, entrevista ou viagem: entenda o traje, monte o look com o que você tem e saiba até quando encomendar a peça sob medida.">
+  <link rel="canonical" href="https://andrerauber.com/apps/ocasioes/">
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="manifest" href="assets/apps.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="AR Apps">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png?v=20261104d">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20261104d">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261109a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261109a">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body class="app">
+  <a class="pular" href="apps/ocasioes/#principal">Pular para o conteúdo</a>
+
+  <header class="app-barra">
+    <a class="app-voltar" id="oc-voltar" href="apps/"><svg data-icone="voltar"></svg><span id="oc-voltar-texto">Apps</span></a>
+    <p class="app-barra-titulo" aria-hidden="true" id="oc-barra-titulo">Ocasiões</p>
+    <a class="app-conta app-conta-visitante" id="app-conta" href="entrar.html?voltar=apps%2Focasioes%2F" aria-label="Entrar na minha conta"></a>
+  </header>
+
+  <main id="principal" class="app-conteudo">
+    <!-- Lista de eventos -->
+    <div id="oc-lista-tela">
+      <div class="app-cabeca">
+        <h1 class="app-titulo">Ocasiões</h1>
+        <p class="app-beta-aviso">Versão beta</p>
+        <p class="app-subtitulo">Casamento, formatura, entrevista ou viagem: entenda o traje, monte o look com o que você já tem e saiba até quando encomendar uma peça sob medida.</p>
+      </div>
+
+      <div class="app-vazio" id="oc-vazio" hidden>
+        <strong>Nenhum evento ainda</strong>
+        <p>Toque no + para adicionar o próximo compromisso.</p>
+        <div class="app-botoes" style="justify-content:center">
+          <button class="botao botao-cheio" id="oc-primeiro" type="button"><svg data-icone="mais"></svg>Adicionar evento</button>
+        </div>
+      </div>
+
+      <section class="app-secao" id="oc-proximos-secao" aria-labelledby="oc-proximos-titulo" hidden>
+        <h2 class="app-secao-titulo" id="oc-proximos-titulo">Próximos</h2>
+        <div class="oc-eventos" id="oc-proximos"></div>
+      </section>
+
+      <section class="app-secao" aria-labelledby="oc-lembrete-titulo">
+        <h2 class="app-secao-titulo" id="oc-lembrete-titulo">Lembretes</h2>
+        <div class="app-cartao">
+          <label class="app-interruptor"><span><strong>Me avise por e-mail</strong></span><input id="oc-lembretes" type="checkbox"><span class="app-interruptor-trilho" aria-hidden="true"></span></label>
+          <p class="app-suave" id="oc-lembretes-texto" style="margin-top:.4rem"></p>
+        </div>
+        <p class="app-suave" id="oc-situacao" role="status" style="margin-top:.75rem"></p>
+      </section>
+
+      <details class="app-secao" id="oc-passados-secao" hidden>
+        <summary class="app-secao-titulo" style="cursor:pointer">Eventos que já passaram</summary>
+        <div class="oc-eventos" id="oc-passados"></div>
+      </details>
+    </div>
+
+    <!-- Um evento -->
+    <div id="oc-detalhe-tela" hidden>
+      <div class="app-cabeca">
+        <p class="app-data" id="oc-d-data"></p>
+        <h1 class="app-titulo" id="oc-d-nome" tabindex="-1"></h1>
+        <div class="app-chips" id="oc-d-chips" style="margin-top:.75rem"></div>
+      </div>
+      <div id="oc-d-conteudo"></div>
+      <div class="app-botoes" style="margin-top:1.5rem">
+        <button class="botao" id="oc-d-editar" type="button"><svg data-icone="lapis"></svg>Editar</button>
+        <button class="texto-botao" id="oc-d-apagar" type="button" style="color:var(--erro)">Apagar evento</button>
+      </div>
+    </div>
+  </main>
+
+  <button class="app-fab" id="oc-fab" type="button" aria-label="Adicionar evento"><svg data-icone="mais"></svg></button>
+
+  <dialog class="modal-figura gr-modal" id="oc-modal" aria-labelledby="oc-form-titulo">
+    <button class="modal-fechar" id="oc-fechar" type="button" aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+    <form class="gr-modal-corpo app-formulario" id="oc-form" novalidate>
+      <h2 class="titulo-m" id="oc-form-titulo">Novo evento</h2>
+      <div class="campos">
+        <div class="campo">
+          <label for="oc-tipo">O que é</label>
+          <div class="campo-entrada"><select id="oc-tipo"></select></div>
+        </div>
+        <div class="campo">
+          <label for="oc-nome">Nome (opcional)</label>
+          <div class="campo-entrada"><input id="oc-nome" type="text" maxlength="60" placeholder="Ex.: Casamento da Ana" autocomplete="off"></div>
+        </div>
+        <div class="campo">
+          <label for="oc-data" id="oc-data-rotulo">Data</label>
+          <div class="campo-entrada"><input id="oc-data" type="date" required></div>
+          <p class="erro" id="oc-erro-data" role="alert"></p>
+        </div>
+        <div class="campo" id="oc-campo-volta" hidden>
+          <label for="oc-volta">Volta</label>
+          <div class="campo-entrada"><input id="oc-volta" type="date"></div>
+          <p class="erro" id="oc-erro-volta" role="alert"></p>
+        </div>
+        <div class="campo" id="oc-campo-periodo">
+          <label for="oc-periodo">Quando</label>
+          <div class="campo-entrada">
+            <select id="oc-periodo">
+              <option value="noite">À noite</option>
+              <option value="dia">De dia</option>
+            </select>
+          </div>
+        </div>
+        <div class="campo" id="oc-campo-traje">
+          <label for="oc-traje">Traje do convite</label>
+          <div class="campo-entrada"><select id="oc-traje"></select></div>
+        </div>
+        <div class="campo" id="oc-campo-papel">
+          <label for="oc-papel">Você vai como</label>
+          <div class="campo-entrada"><select id="oc-papel"></select></div>
+        </div>
+        <div class="campo" id="oc-campo-clima" hidden>
+          <label for="oc-clima-viagem">Clima no destino</label>
+          <div class="campo-entrada"><select id="oc-clima-viagem"></select></div>
+        </div>
+        <div class="campo">
+          <label for="oc-cidade">Cidade (opcional)</label>
+          <div class="campo-entrada"><input id="oc-cidade" type="text" maxlength="80" placeholder="Para ver a previsão do tempo" autocomplete="address-level2"></div>
+        </div>
+        <div class="campo">
+          <label for="oc-uf">Estado</label>
+          <div class="campo-entrada"><select id="oc-uf"></select></div>
+        </div>
+      </div>
+      <fieldset class="app-grupo" id="oc-campo-atividades" hidden>
+        <legend>O que você vai fazer</legend>
+        <div class="app-escolhas" id="oc-atividades"></div>
+      </fieldset>
+      <p class="erro" id="oc-form-erro" role="alert"></p>
+      <div class="gr-botoes-empilhados">
+        <button class="botao botao-cheio" type="submit" id="oc-salvar">Salvar evento</button>
+      </div>
+    </form>
+  </dialog>
+
+  <nav class="app-abas" aria-label="Apps">
+    <a href="apps/"><svg data-icone="apps"></svg>Apps</a>
+    <a href="apps/guarda-roupa/"><svg data-icone="cabide"></svg>Guarda-roupa</a>
+    <a href="apps/alimentacao/"><svg data-icone="folha"></svg>Alimentação</a>
+    <a href="apps/ocasioes/" aria-current="page"><svg data-icone="calendario"></svg>Ocasiões</a>
+    <a href="apps/treino/"><svg data-icone="haltere"></svg>Treino</a>
+  </nav>
+  <p class="app-aviso" id="app-aviso" role="status" aria-live="polite"></p>
+
+  <script src="assets/js/config.js?v=20261104a"></script>
+  <script src="assets/js/conta-api.js?v=20261109a"></script>
+  <script src="assets/js/apps.js?v=20261109a"></script>
+  <script src="assets/js/guarda-roupa-dados.js?v=20261105a"></script>
+  <script src="assets/js/guarda-roupa-looks.js?v=20261109a"></script>
+  <script src="assets/js/ocasioes-dados.js?v=20261109a"></script>
+  <script src="assets/js/ocasioes.js?v=20261109a"></script>
+</body>
+</html>
