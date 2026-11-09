@@ -11,13 +11,14 @@
   var PASSOS = ['resumo', 'voce', 'comida', 'plano', 'compras', 'acompanhamento'];
 
   var estado = completar(carregar() || novoEstado());
-  var conta = { logado: false, temNaConta: false, salvoEm: null, situacao: '', medidas: null };
+  var conta = { logado: false, temNaConta: false, salvoEm: null, situacao: '', medidas: null, emailVerificado: false };
+  var precos = null;
 
   function novoEstado() {
     return {
       perfil: { sexo: 'm', idade: '', altura: '', peso: '', atividade: 'leve', objetivo: 'manter', uf: '' },
       itens: [], modo: 'ajustar', listaDe: 'plano', concluido: false, guardarNaConta: false, alteradoEm: 0,
-      trocas: {}, despensa: {}, inicioPlano: '', registros: []
+      trocas: {}, despensa: {}, inicioPlano: '', registros: [], lembretes: false, resumoLista: null
     };
   }
 
@@ -28,6 +29,7 @@
     if (!e.despensa || typeof e.despensa !== 'object' || Array.isArray(e.despensa)) e.despensa = {};
     if (!Array.isArray(e.registros)) e.registros = [];
     if (typeof e.inicioPlano !== 'string') e.inicioPlano = '';
+    if (typeof e.lembretes !== 'boolean') e.lembretes = false;
     return e;
   }
 
@@ -74,8 +76,27 @@
 
   var agendado = null;
 
+  // Resumo da lista para os avisos por e-mail e para o início dos apps: o que tem em casa
+  // e quando acaba. Itens que a pessoa nunca marcou como comprados ficam sem data.
+  function resumirLista() {
+    if (!estado.concluido || !perfilValido()) return null;
+    try {
+      return {
+        itens: linhasDaDespensa(contas().doPlano).slice(0, 80).map(function (x) {
+          var r = x.registro;
+          var acabaEm = '';
+          if (r && r.compradoEm) acabaEm = r.acabouEm || x.situacao.acabaEm || '';
+          return { id: x.linha.produto.id, nome: x.linha.produto.nome.slice(0, 60), acabaEm: acabaEm };
+        })
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
   function salvar() {
     estado.alteradoEm = Date.now();
+    estado.resumoLista = resumirLista();
     try { localStorage.setItem(CHAVE, JSON.stringify(estado)); } catch (e) { /* segue sem guardar */ }
     if (conta.logado && estado.guardarNaConta) {
       window.clearTimeout(agendado);
@@ -127,6 +148,7 @@
     if (caixa.checked) {
       estado.guardarNaConta = true;
       salvar();
+      mostrarLembrete();
       retorno('Pronto: suas informações vão ficar salvas na sua conta.');
       return;
     }
@@ -135,7 +157,9 @@
       return;
     }
     estado.guardarNaConta = false;
+    estado.lembretes = false;
     salvar();
+    mostrarLembrete();
     if (!conta.temNaConta) { mostrarSituacao(''); return; }
     api.post(ENDERECO + '?acao=apagar').then(function (r) {
       if (r.ok) {
@@ -153,6 +177,8 @@
     if (!api) return Promise.resolve();
     return api.get('api/auth.php?acao=sessao').then(function (r) {
       conta.logado = Boolean(r.ok && r.dados.logado);
+      conta.emailVerificado = Boolean(conta.logado && r.dados.usuario && r.dados.usuario.emailVerificado);
+      mostrarLembrete();
       $('alim-guardar-logado').hidden = !conta.logado;
       $('alim-guardar-visitante').hidden = conta.logado;
       if (!conta.logado) { mostrarSituacao(''); return null; }
@@ -173,6 +199,7 @@
         }
         $('alim-guardar').checked = Boolean(estado.guardarNaConta);
         mostrarSituacao(conta.temNaConta ? 'salvo' : '');
+        mostrarLembrete();
         return puxarDaConta();
       });
     });
@@ -878,8 +905,56 @@
     $('alim-fontes').textContent = 'Preços de ' + estadoNome.capital + '. Arroz, feijão, carne, leite, tomate, batata, pão francês, café, banana, açúcar, óleo e manteiga usam o preço médio do DIEESE de ' +
       D.DIEESE_DATA + ', coletado em supermercados, sem promoções. Os demais usam um preço comum de prateleira, ajustado para ' + estadoNome.capital +
       (diferenca === 0 ? ', que está na média das capitais.' : ', onde a comida custa cerca de ' + Math.abs(diferenca) + '% ' + (diferenca > 0 ? 'a mais' : 'a menos') + ' que a média das capitais.') +
-      ' No interior, os preços podem ser diferentes. Tudo é estimativa para uma pessoa.';
+      textoDaCorrecao() + ' No interior, os preços podem ser diferentes. Tudo é estimativa para uma pessoa.';
   }
+
+  // Todo mês o IBGE divulga quanto a comida subiu ou caiu, e os preços acompanham
+  function textoDaCorrecao() {
+    if (!precos || !precos.ate) return '';
+    var variacao = Math.round((precos.fator - 1) * 1000) / 10;
+    return ' Os preços foram corrigidos pela inflação dos alimentos do IBGE até ' + precos.ateTexto +
+      (variacao === 0 ? ', sem variação no período' : ' (' + (variacao > 0 ? '+' : '') + String(variacao).replace('.', ',') + '%)') + '.';
+  }
+
+  function carregarPrecos() {
+    if (!api) return;
+    api.get('api/precos.php').then(function (r) {
+      if (!r.ok || !r.dados.fator) return;
+      precos = r.dados;
+      D.CORRECAO = precos.fator;
+      if (!$('passo-compras').hidden) desenharCompras();
+      if (!$('passo-plano').hidden) desenharPlano();
+      if (!$('passo-resumo').hidden) desenharResumo();
+    });
+  }
+
+  /* --- Avisos por e-mail ---------------------------------------------------------------------------- */
+
+  function mostrarLembrete() {
+    var caixa = $('alim-lembrete-email');
+    var texto = $('alim-lembrete-texto');
+    var pode = conta.logado && estado.guardarNaConta && conta.emailVerificado;
+    caixa.disabled = !pode;
+    caixa.checked = Boolean(pode && estado.lembretes);
+    if (!conta.logado) {
+      texto.textContent = 'Para receber um e-mail quando algo estiver para acabar, entre na sua conta e marque, no passo 1, a opção de guardar na conta.';
+    } else if (!estado.guardarNaConta) {
+      texto.textContent = 'Para receber os avisos, marque no passo 1 a opção de guardar suas informações na conta.';
+    } else if (!conta.emailVerificado) {
+      texto.textContent = 'Confirme seu e-mail em Minha conta para receber os avisos.';
+    } else {
+      texto.textContent = estado.lembretes
+        ? 'Ligado. Quando um item que você comprou estiver para acabar, mandamos um e-mail dois dias antes.'
+        : 'Quando um item que você comprou estiver para acabar, mandamos um e-mail dois dias antes.';
+    }
+  }
+
+  $('alim-lembrete-email').addEventListener('change', function () {
+    estado.lembretes = $('alim-lembrete-email').checked;
+    salvar();
+    mostrarLembrete();
+    retorno(estado.lembretes ? 'Pronto: avisamos por e-mail quando algo estiver para acabar.' : 'Avisos por e-mail desligados.');
+  });
 
   /* --- Lista de compras: o que tem em casa e quando comprar ------------------------------------- */
 
@@ -1387,6 +1462,8 @@
   if (estado.concluido && perfilValido()) irPara('resumo');
   else $('item-resumo').hidden = true;
   mostrarSituacao('');
+  mostrarLembrete();
   avisarAoAbrir();
   iniciarConta();
+  carregarPrecos();
 })();

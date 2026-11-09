@@ -72,13 +72,50 @@ Sem isso, o botão do Google fica escondido e o resto funciona normalmente.
 - [ ] Ver a pessoa e o histórico em `painel.html`
 - [ ] Usar "Esqueci minha senha" e ver se o e-mail chega (confira o spam)
 - [ ] Entrar com o Google
-- [ ] No celular, cadastrar peças em `guarda-roupa.html` e ver os looks
+- [ ] No celular, cadastrar peças em `/apps/guarda-roupa/` e ver os looks
 - [ ] Tentar abrir `api/fotos-pecas/.htaccess` no navegador: deve dar erro 403
 - [ ] Excluir a conta de teste em "Minha conta"
 
+## Apps
+
+Os apps ficam em `/apps/`, com cara de aplicativo: barra translúcida, título grande, cartões arredondados e abas embaixo. A pessoa entra pelo link **Apps** do menu ou pelo cartão **Seus apps** em Minha conta.
+
+| Endereço | O que é |
+| --- | --- |
+| `/apps/` | Início, com a saudação e um resumo de cada app para o dia |
+| `/apps/guarda-roupa/` | Guarda-roupa |
+| `/apps/alimentacao/` | Alimentação |
+| `/apps/ocasioes/` | Ocasiões (beta) |
+| `/apps/treino/` | Treino (beta) |
+
+- Os endereços antigos, `guarda-roupa.html` e `alimentacao.html`, levam para os novos.
+- Cada página dos apps tem `<base href="/">`, então todos os caminhos partem da raiz do site.
+- O visual dos apps fica em `assets/css/apps.css`. A barra, os ícones e as utilidades comuns ficam em `assets/js/apps.js`, e o início, em `assets/js/apps-inicio.js`.
+- No celular, a pessoa pode adicionar os apps à tela inicial. Eles abrem como um aplicativo, pelo `assets/apps.webmanifest`.
+
+### Lembretes por e-mail
+
+A Alimentação avisa quando um item da lista de compras vai acabar, e Ocasiões avisa do prazo para encomendar e da semana do evento. Só recebe quem ligou a opção e confirmou o e-mail. Para os e-mails saírem, crie a tarefa diária no cPanel:
+
+1. No cPanel, abra **Cron Jobs**.
+2. Em **Configurações comuns**, escolha **Uma vez por dia**. Se quiser outro horário, mude a hora para 9.
+3. Em **Comando**, cole:
+
+```
+/usr/local/bin/php /home2/and63667/public_html/api/tarefas/lembretes.php
+```
+
+4. Clique em **Adicionar novo trabalho Cron**.
+
+O cPanel manda para o e-mail da conta o que a tarefa escrever, como `Lembretes enviados: 2`. Para não receber essas mensagens, apague o e-mail no campo **E-mail do Cron** no alto da página. A pasta `api/tarefas` é bloqueada ao acesso pelo navegador.
+
+### Clima
+
+O Guarda-roupa e Ocasiões mostram a previsão do tempo, por `api/clima.php`. A localização da cidade vem do OpenStreetMap e a previsão, do MET Norway. Os dois são gratuitos, permitem uso comercial e pedem poucas consultas, por isso as respostas ficam guardadas em `api/cache`: a cidade por um ano e a previsão por uma hora. Essa pasta é criada sozinha e não vai para o GitHub.
+
 ## Guarda-roupa
 
-Em `guarda-roupa.html`, cada cliente fotografa as próprias peças, descreve cada uma e recebe sugestões de looks.
+Em `/apps/guarda-roupa/`, cada cliente fotografa as próprias peças, descreve cada uma e recebe sugestões de looks.
 
 ### Atualizar um site que já está no ar
 
@@ -101,6 +138,11 @@ Ao atualizar o site depois, nunca apague a pasta `api/fotos-pecas`: é nela que 
 - **Looks:** as regras de cor, ocasião, clima e caimento estão em `assets/js/guarda-roupa-looks.js`. As listas de tipos, cores e cortes estão em `assets/js/guarda-roupa-dados.js` e `api/guarda-roupa.php`, que precisam ficar iguais.
 - **Limites:** 60 peças próprias por pessoa, 120 somando as excluídas, 80 envios por hora e 300 looks com nome ou observação, definidos em `api/guarda-roupa.php`. As sugeridas não contam.
 - **Nome e observação dos looks:** ficam na tabela `looks_notas`. Dar nome a uma sugestão também a guarda em Salvos.
+- **Ícones nas peças:** editar, trocar a foto e excluir. Na janela da peça, dá para trocar a foto, girar e tirar o fundo de uma foto já guardada. Quem troca a foto de uma peça sugerida passa a ter a peça como sua, e ela conta no limite.
+- **Diário:** a pessoa anota o que usou, em que dia e onde, pelo botão **Usei hoje** nos looks ou pelo **+**. Fica na tabela `usos_pecas`, com até 3.000 anotações por pessoa. Ao anotar, o app avisa se um look parecido já foi usado no mesmo lugar nos últimos 60 dias.
+- **Peças paradas:** as peças próprias que passam 6 meses sem aparecer no diário, com um convite para um ajuste sob medida.
+- **Custo por uso:** a pessoa informa quanto pagou na peça, guardado em `pecas_valores`, e o app divide pelas vezes que ela usou.
+- **Clima do dia:** a aba Looks já abre com o clima de hoje na cidade da pessoa, ou de amanhã, depois das 19h.
 
 ## Pedidos e pagamento
 
@@ -131,9 +173,26 @@ Nunca envie esses valores por mensagem nem os coloque no GitHub.
 - **Exclusão de conta:** quem tem pedido pago, em análise ou em disputa, com movimento nos últimos 90 dias, precisa falar com você para excluir a conta.
 - **Condições:** o texto fica em `condicoes-de-compra.html`. Peça a um advogado para revisar antes de vender.
 
+## Ocasiões (beta)
+
+Em `/apps/ocasioes/`, a pessoa anota um evento, como casamento, formatura, entrevista ou viagem, e recebe:
+
+- o traje explicado, com o que usar e o que evitar. Se o convite não diz o traje, o app sugere o mais comum para o tipo de evento e o horário;
+- o look montado com as peças do Guarda-roupa. O look escolhido também fica salvo no Guarda-roupa, com o nome do evento;
+- o que falta e até quando encomendar a peça sob medida, com o botão para pedir pelo WhatsApp. Padrinhos e noivos recebem essa sugestão mesmo com o look pronto;
+- nas viagens, a mala com poucas peças que combinam entre si e uma lista do que não esquecer.
+
+Os prazos de confecção são estimativas, em `SOB_MEDIDA` e `FOLGA`, no começo de `assets/js/ocasioes-dados.js`. Mude os dias para os seus prazos reais. Os eventos ficam no navegador e, para quem tem conta, na tabela `apps_dados`.
+
+## Treino (beta)
+
+Em `/apps/treino/`, a pessoa escolhe o objetivo, a experiência, o local (academia, casa com halteres ou casa sem equipamento), os dias por semana e o tempo, e marca se sente dor no joelho, no ombro ou na lombar. O app monta a divisão (corpo inteiro, parte de cima e pernas, ou empurrar, puxar e pernas), guia o treino com as séries e o descanso, guarda as cargas e mostra a semana. Os exercícios e as alternativas ficam em `assets/js/treino-dados.js`.
+
+O treino fica no navegador e só vai para a conta, na tabela `apps_dados`, se a pessoa autorizar. A página avisa que é uma sugestão geral e recomenda um médico e um profissional de educação física.
+
 ## Alimentação
 
-Em `alimentacao.html`, a pessoa informa sexo, idade, altura, peso, rotina, objetivo e estado, marca o que come num dia comum e recebe:
+Em `/apps/alimentacao/`, a pessoa informa sexo, idade, altura, peso, rotina, objetivo e estado, marca o que come num dia comum e recebe:
 
 - o gasto calórico, pela fórmula de Mifflin-St Jeor, e uma meta com déficit ou superávit moderado;
 - um plano, com trocas saudáveis no que ela já come ou montado do zero;
@@ -148,6 +207,8 @@ Os preços ficam em `assets/js/alimentacao-dados.js`.
 1. **Cesta básica (13 itens):** em [dieese.org.br/cesta](https://www.dieese.org.br/cesta), aba **Banco de Dados**, escolha a consulta por data, o mês mais recente, **Preço médio** e todos os produtos e cidades. Copie os valores para a tabela `DIEESE` e atualize `DIEESE_DATA`.
 2. **Demais produtos:** cada um tem um preço `base`, que é um preço comum de prateleira, sem promoção. Revise esses valores a cada poucos meses. A página ajusta esses preços pela região, comparando os preços do DIEESE de cada capital com a média.
 3. **Salário mínimo:** atualize `SALARIO_MINIMO` todo começo de ano.
+
+Entre uma atualização e outra, os preços são corrigidos sozinhos pela inflação dos alimentos. Todo mês, `api/precos.php` consulta no IBGE o IPCA da alimentação no domicílio e multiplica os preços pela variação desde o mês dos preços. Ao trocar os preços do DIEESE, mude também `PRECOS_BASE`, no começo de `api/precos.php`, para o mesmo mês, no formato `202609`.
 
 ## E-mail das contas
 
@@ -166,6 +227,9 @@ Os mesmos dados ficam no phpMyAdmin, nas tabelas `usuarios`, `cadastros` e `even
 | O que mudar | Arquivo |
 | --- | --- |
 | Número do WhatsApp dos links de contato | `assets/js/config.js` |
+| Prazos de confecção usados em Ocasiões | `assets/js/ocasioes-dados.js` |
+| Exercícios do Treino | `assets/js/treino-dados.js` |
+| Visual dos apps | `assets/css/apps.css` |
 | Medidas, faixas de valores e textos do guia | `assets/js/medidas-dados.js` |
 | Perguntas e ordem da tabela | `assets/js/medidas-form.js` |
 | Cores e fontes | início de `assets/css/style.css` |

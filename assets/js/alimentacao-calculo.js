@@ -323,9 +323,9 @@ window.AR_ALIM_CALC = (function () {
     var p = produto.preco;
     if (p.dieese && (!p.so || p.so.indexOf(uf) !== -1)) {
       var valor = D.DIEESE[uf] && D.DIEESE[uf][D.DIEESE_COLUNAS.indexOf(p.dieese)];
-      if (valor) return { valor: valor * p.mult, fonte: 'dieese' };
+      if (valor) return { valor: valor * p.mult * (D.CORRECAO || 1), fonte: 'dieese' };
     }
-    return { valor: (p.base || 0) * indiceRegional(uf), fonte: 'estimado' };
+    return { valor: (p.base || 0) * indiceRegional(uf) * (D.CORRECAO || 1), fonte: 'estimado' };
   }
 
   /* --- Compras ------------------------------------------------------------------------------- */

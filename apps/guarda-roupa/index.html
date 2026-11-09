@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Guarda-roupa | Andre Rauber</title>
+  <meta name="description" content="Cadastre suas roupas com uma foto e receba sugestões de looks com o que você já tem.">
+  <link rel="canonical" href="https://andrerauber.com/apps/guarda-roupa/">
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="manifest" href="assets/apps.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="AR Apps">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png?v=20261104d">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20261104d">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261109a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261109a">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body class="app">
+  <a class="pular" href="apps/guarda-roupa/#principal">Pular para o conteúdo</a>
+
+  <header class="app-barra">
+    <a class="app-voltar" href="apps/"><svg data-icone="voltar"></svg>Apps</a>
+    <p class="app-barra-titulo" aria-hidden="true">Guarda-roupa</p>
+    <a class="app-conta app-conta-visitante" id="app-conta" href="entrar.html?voltar=apps%2Fguarda-roupa%2F" aria-label="Entrar na minha conta"></a>
+  </header>
+
+  <main id="principal" class="app-conteudo guarda-roupa">
+    <div class="app-cabeca">
+      <h1 class="app-titulo">Guarda-roupa</h1>
+    </div>
+    <p class="carregando" id="carregando">Carregando seu guarda-roupa...</p>
+
+    <section id="gr-fora" hidden>
+      <p class="app-subtitulo">Fotografe suas roupas com o celular, descreva cada peça e receba sugestões de looks com o que você já tem.</p>
+      <ul class="app-lista gr-fora-lista" style="margin-block:1.5rem">
+        <li><svg data-icone="camera"></svg><span class="app-lista-texto"><strong>Fotografe.</strong> O fundo sai da foto e a peça fica centralizada.</span></li>
+        <li><svg data-icone="lapis"></svg><span class="app-lista-texto"><strong>Descreva.</strong> Tipo, cor e corte, como "Camiseta; cor preta; corte relaxed".</span></li>
+        <li><svg data-icone="cabide"></svg><span class="app-lista-texto"><strong>Combine.</strong> Veja looks para o clima do dia e anote o que usou.</span></li>
+      </ul>
+      <div class="app-botoes">
+        <a class="botao botao-cheio" href="criar-conta.html?voltar=apps%2Fguarda-roupa%2F">Criar conta</a>
+        <a class="botao" href="entrar.html?voltar=apps%2Fguarda-roupa%2F">Já tenho conta</a>
+      </div>
+    </section>
+
+    <div id="gr-dentro" hidden>
+      <div class="gr-abas" role="tablist" aria-label="Guarda-roupa">
+        <button class="gr-aba" id="aba-pecas" type="button" role="tab" aria-controls="painel-pecas" aria-selected="true">Peças</button>
+        <button class="gr-aba" id="aba-looks" type="button" role="tab" aria-controls="painel-looks" aria-selected="false" tabindex="-1">Looks</button>
+        <button class="gr-aba" id="aba-diario" type="button" role="tab" aria-controls="painel-diario" aria-selected="false" tabindex="-1">Diário</button>
+        <button class="gr-aba" id="aba-excluidas" type="button" role="tab" aria-controls="painel-excluidas" aria-selected="false" tabindex="-1">Excluídas</button>
+      </div>
+
+      <p class="gr-aviso" id="gr-aviso" role="status" aria-live="polite"></p>
+
+      <section id="painel-pecas" role="tabpanel" aria-labelledby="aba-pecas" tabindex="0">
+        <div class="gr-barra">
+          <p class="gr-contagem" id="gr-contagem"></p>
+          <div class="campo" id="gr-pecas-filtro">
+            <label for="gr-filtro-grupo">Mostrar</label>
+            <div class="campo-entrada"><select id="gr-filtro-grupo"></select></div>
+          </div>
+        </div>
+        <p class="gr-suave" id="gr-limite" hidden>Você chegou ao limite de <span id="gr-maximo">60</span> peças suas. Exclua uma para adicionar outra.</p>
+        <p class="gr-ajuda-sugeridas">As peças com a marca <strong>Sugerida</strong> já vêm no seu guarda-roupa para ajudar a montar os looks. Fique com as que você tem e exclua as outras. <button class="texto-botao" id="gr-sem-sugeridas" type="button" hidden>Tirar todas as sugeridas</button></p>
+
+        <div class="gr-vazio" id="gr-vazio" hidden>
+          <h2 class="titulo-m">Comece pela peça que você mais usa.</h2>
+          <p>Com uma peça de cima e uma de baixo, os primeiros looks já aparecem.</p>
+          <button class="botao botao-cheio" id="gr-primeira" type="button">Adicionar a primeira peça</button>
+        </div>
+        <p class="gr-suave" id="gr-filtro-vazio" hidden>Nenhuma peça deste tipo.</p>
+        <ul class="gr-grade" id="gr-pecas"></ul>
+      </section>
+
+      <section id="painel-looks" role="tabpanel" aria-labelledby="aba-looks" tabindex="0" hidden>
+        <div class="gr-clima" id="gr-tempo" hidden>
+          <span class="gr-clima-icone" id="gr-tempo-icone"></span>
+          <p class="gr-clima-texto" id="gr-tempo-texto"></p>
+          <button class="texto-botao" id="gr-tempo-cidade" type="button">Trocar cidade</button>
+        </div>
+        <form class="gr-clima" id="gr-tempo-form" hidden>
+          <div class="campo" style="flex:1">
+            <label for="gr-tempo-nome">Sua cidade, para ver o clima de hoje</label>
+            <div class="campo-entrada"><input id="gr-tempo-nome" type="text" maxlength="80" placeholder="Ex.: Passo Fundo" autocomplete="address-level2"></div>
+          </div>
+          <div class="campo" style="width:6.5rem">
+            <label for="gr-tempo-uf">Estado</label>
+            <div class="campo-entrada"><select id="gr-tempo-uf"></select></div>
+          </div>
+          <button class="botao botao-cheio" type="submit">Ver</button>
+        </form>
+        <p class="erro" id="gr-tempo-erro" role="alert"></p>
+
+        <div class="gr-filtros" id="gr-looks-filtros">
+          <div class="campo">
+            <label for="gr-filtro-mostrar">Mostrar</label>
+            <div class="campo-entrada">
+              <select id="gr-filtro-mostrar">
+                <option value="sugeridos">Sugeridos</option>
+                <option value="salvos">Salvos</option>
+                <option value="rejeitados">Rejeitados</option>
+              </select>
+            </div>
+          </div>
+          <div class="campo">
+            <label for="gr-filtro-nivel">Ocasião</label>
+            <div class="campo-entrada">
+              <select id="gr-filtro-nivel"></select>
+            </div>
+          </div>
+          <div class="campo">
+            <label for="gr-filtro-clima">Clima</label>
+            <div class="campo-entrada">
+              <select id="gr-filtro-clima"></select>
+            </div>
+          </div>
+        </div>
+        <label class="campo-marcar" id="gr-filtro-recentes-campo" style="margin:-.5rem 0 1.25rem"><input id="gr-filtro-recentes" type="checkbox"> <span>Esconder looks que usei nos últimos 14 dias</span></label>
+
+        <p class="gr-suave" id="gr-looks-vazio" hidden></p>
+        <div class="gr-looks" id="gr-looks"></div>
+        <button class="botao gr-mais" id="gr-looks-mais" type="button" hidden>Ver mais looks</button>
+
+        <aside class="gr-convite" id="gr-convite" hidden>
+          <p id="gr-convite-texto"></p>
+          <a class="texto-botao" href="medidas.html">Preencher minhas medidas</a>
+        </aside>
+      </section>
+
+      <section id="painel-diario" role="tabpanel" aria-labelledby="aba-diario" tabindex="0" hidden>
+        <div class="gr-diario-numeros" id="gr-diario-numeros"></div>
+        <div class="app-botoes" style="margin:0 0 1.25rem">
+          <button class="botao botao-cheio" id="gr-registrar-uso" type="button"><svg data-icone="mais"></svg>Registrar o que usei</button>
+        </div>
+        <p class="app-suave" id="gr-diario-vazio">Anote o que você vestiu e onde foi. Assim você não repete o mesmo look com as mesmas pessoas, vê as peças que ficam paradas e quanto cada uma custa por uso.</p>
+        <div class="gr-diario-lista" id="gr-diario-lista"></div>
+        <button class="botao gr-mais" id="gr-diario-mais" type="button" hidden>Ver mais registros</button>
+
+        <section class="app-secao" aria-labelledby="gr-paradas-titulo">
+          <h2 class="app-secao-titulo" id="gr-paradas-titulo">Peças paradas</h2>
+          <p class="app-secao-texto" id="gr-paradas-texto"></p>
+          <ul class="gr-mini" id="gr-paradas"></ul>
+        </section>
+
+        <section class="app-secao" aria-labelledby="gr-custo-titulo">
+          <h2 class="app-secao-titulo" id="gr-custo-titulo">Custo por uso</h2>
+          <p class="app-secao-texto" id="gr-custo-texto"></p>
+          <ul class="app-lista" id="gr-custo"></ul>
+        </section>
+      </section>
+
+      <section id="painel-excluidas" role="tabpanel" aria-labelledby="aba-excluidas" tabindex="0" hidden>
+        <p class="gr-suave" id="gr-excluidas-texto" hidden>Estas peças não aparecem nos looks. Adicione de novo quando quiser, e os looks salvos com elas voltam junto. As fotos que você enviou continuam guardadas até você apagar de vez.</p>
+        <p class="gr-suave" id="gr-excluidas-vazio">Nenhuma peça excluída. As peças que você excluir ficam aqui, caso queira adicioná-las de novo.</p>
+        <ul class="gr-grade" id="gr-excluidas"></ul>
+      </section>
+    </div>
+  </main>
+
+  <button class="app-fab" id="gr-fab" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="gr-fab-menu" aria-label="Adicionar peças" hidden><svg data-icone="mais"></svg></button>
+  <div class="app-fab-menu" id="gr-fab-menu" hidden>
+    <button id="gr-adicionar" type="button">Uma peça <svg data-icone="camera"></svg></button>
+    <button id="gr-adicionar-varias" type="button">Várias de uma vez <svg data-icone="apps"></svg></button>
+    <button id="gr-fab-uso" type="button">Registrar o que usei <svg data-icone="diario"></svg></button>
+  </div>
+
+  <dialog class="modal-figura gr-modal" id="gr-modal" aria-label="Peça do guarda-roupa">
+    <button class="modal-fechar" id="gr-fechar" type="button" aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+
+    <div class="gr-modal-corpo">
+      <section id="gr-passo-foto">
+        <h2 class="titulo-m" id="gr-foto-titulo">Fotografe a peça</h2>
+        <ul class="gr-dicas">
+          <li>Estenda a peça ou pendure em um cabide.</li>
+          <li>Prefira um fundo liso e boa luz.</li>
+          <li>Deixe a peça inteira na foto, sem pessoas por perto.</li>
+        </ul>
+        <div class="gr-botoes-empilhados">
+          <button class="botao botao-cheio" id="gr-tirar" type="button">Tirar foto</button>
+          <button class="botao" id="gr-escolher" type="button">Escolher da galeria</button>
+          <button class="texto-botao" id="gr-foto-voltar" type="button" hidden>Voltar para a peça</button>
+        </div>
+        <input class="gr-arquivo" id="gr-camera" type="file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+        <input class="gr-arquivo" id="gr-galeria" type="file" accept="image/*" tabindex="-1" aria-hidden="true">
+        <p class="erro" id="gr-foto-erro" role="alert"></p>
+      </section>
+
+      <section id="gr-passo-fundo" hidden>
+        <h2 class="titulo-m" id="gr-fundo-titulo"></h2>
+        <div class="gr-foto gr-previa" id="gr-previa"><img id="gr-previa-img" alt="Prévia da foto da peça"></div>
+        <p class="gr-fundo-texto" id="gr-fundo-texto" role="status"></p>
+        <div class="progresso gr-progresso" id="gr-fundo-progresso" hidden><span id="gr-fundo-barra"></span></div>
+        <p class="erro" id="gr-fundo-erro" role="alert"></p>
+        <div class="gr-botoes-empilhados">
+          <button class="botao botao-cheio" id="gr-fundo-iniciar" type="button" hidden>Tirar o fundo</button>
+          <button class="botao botao-cheio" id="gr-fundo-aceitar" type="button" hidden>Ficou bom, continuar</button>
+          <button class="botao" id="gr-fundo-original" type="button">Usar a foto como está</button>
+          <button class="texto-botao" id="gr-fundo-outra" type="button">Tirar outra foto</button>
+        </div>
+      </section>
+
+      <form id="gr-passo-descricao" novalidate hidden>
+        <h2 class="titulo-m" id="gr-descricao-titulo">Descreva a peça</h2>
+        <div id="gr-edicao" hidden>
+          <div class="gr-edicao-foto" id="gr-edicao-foto"></div>
+          <div class="gr-edicao-icones">
+            <button type="button" id="gr-trocar-foto"><span><svg data-icone="camera"></svg></span>Trocar foto</button>
+            <button type="button" id="gr-girar-foto"><span><svg data-icone="girar"></svg></span>Girar</button>
+            <button type="button" id="gr-fundo-foto"><span><svg data-icone="varinha"></svg></span>Tirar o fundo</button>
+            <button type="button" id="gr-excluir" class="perigo"><span><svg data-icone="lixeira"></svg></span>Excluir</button>
+          </div>
+          <p class="gr-fundo-texto" id="gr-edicao-estado" role="status"></p>
+        </div>
+        <p class="gr-resumo" id="gr-resumo" aria-live="polite"></p>
+        <p class="erro" id="erro-foto" role="alert"></p>
+
+        <div class="campos gr-campos">
+          <div class="campo">
+            <label for="gr-tipo">Tipo</label>
+            <div class="campo-entrada"><select id="gr-tipo" required></select></div>
+            <p class="erro" id="erro-tipo" role="alert"></p>
+          </div>
+          <div class="campo">
+            <label for="gr-cor">Cor</label>
+            <div class="campo-entrada"><select id="gr-cor" required></select></div>
+            <p class="gr-suave gr-dica" id="gr-cor-dica" hidden>Sugerida pela foto. Confira se está certa.</p>
+            <p class="erro" id="erro-cor" role="alert"></p>
+          </div>
+          <div class="campo" id="gr-campo-corte">
+            <label for="gr-corte">Corte</label>
+            <div class="campo-entrada"><select id="gr-corte"></select></div>
+            <p class="erro" id="erro-corte" role="alert"></p>
+          </div>
+          <div class="campo">
+            <label for="gr-tecido">Tecido (opcional)</label>
+            <div class="campo-entrada"><select id="gr-tecido"></select></div>
+            <p class="erro" id="erro-tecido" role="alert"></p>
+          </div>
+          <div class="campo">
+            <label for="gr-formalidade">Ocasião</label>
+            <div class="campo-entrada"><select id="gr-formalidade"></select></div>
+            <p class="erro" id="erro-formalidade" role="alert"></p>
+          </div>
+          <div class="campo">
+            <label for="gr-clima">Clima</label>
+            <div class="campo-entrada"><select id="gr-clima"></select></div>
+            <p class="erro" id="erro-clima" role="alert"></p>
+          </div>
+          <div class="campo">
+            <label for="gr-apelido">Apelido (opcional)</label>
+            <div class="campo-entrada"><input id="gr-apelido" type="text" maxlength="60" placeholder="Ex.: blazer da formatura" autocomplete="off"></div>
+          </div>
+          <div class="campo">
+            <label for="gr-preco">Quanto pagou (opcional)</label>
+            <div class="campo-entrada"><span class="unidade" style="padding:0 .4rem 0 0">R$</span><input id="gr-preco" type="text" inputmode="decimal" maxlength="10" placeholder="Ex.: 189,90" autocomplete="off"></div>
+            <p class="erro" id="erro-preco" role="alert"></p>
+          </div>
+        </div>
+
+        <div id="gr-campo-consentimento" hidden>
+          <label class="campo-marcar"><input id="gr-consentimento" type="checkbox"> <span>Li e concordo com a <a href="privacidade.html">política de privacidade</a>, que explica como as fotos ficam guardadas.</span></label>
+          <p class="erro" id="erro-consentimento" role="alert"></p>
+        </div>
+
+        <p class="erro" id="gr-form-erro" role="alert"></p>
+        <div class="gr-botoes-empilhados">
+          <button class="botao botao-cheio" id="gr-salvar" type="submit">Guardar peça</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <dialog class="modal-figura gr-modal" id="uso-modal" aria-labelledby="uso-titulo">
+    <button class="modal-fechar" id="uso-fechar" type="button" aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+    <form class="gr-modal-corpo app-formulario" id="uso-form" novalidate>
+      <h2 class="titulo-m" id="uso-titulo">O que você usou?</h2>
+      <div id="uso-look" class="oc-look-pecas" hidden></div>
+      <fieldset class="app-grupo" id="uso-escolha" hidden>
+        <legend>Toque nas peças que você vestiu</legend>
+        <div class="gr-escolher" id="uso-pecas"></div>
+      </fieldset>
+      <p class="erro" id="uso-erro-pecas" role="alert"></p>
+      <div class="campos">
+        <div class="campo">
+          <label for="uso-data">Quando</label>
+          <div class="campo-entrada"><input id="uso-data" type="date" required></div>
+          <p class="erro" id="uso-erro-data" role="alert"></p>
+        </div>
+        <div class="campo">
+          <label for="uso-ocasiao">Onde ou com quem (opcional)</label>
+          <div class="campo-entrada"><input id="uso-ocasiao" type="text" maxlength="60" list="uso-ocasioes" placeholder="Ex.: Trabalho, jantar com amigos" autocomplete="off"></div>
+          <datalist id="uso-ocasioes"></datalist>
+        </div>
+        <div class="campo campo-inteiro">
+          <label for="uso-observacao">Observação (opcional)</label>
+          <div class="campo-entrada"><input id="uso-observacao" type="text" maxlength="200" placeholder="Ex.: Recebi elogios" autocomplete="off"></div>
+        </div>
+      </div>
+      <p class="gr-alerta" id="uso-repetido" role="status" hidden></p>
+      <p class="erro" id="uso-erro" role="alert"></p>
+      <div class="gr-botoes-empilhados">
+        <button class="botao botao-cheio" id="uso-salvar" type="submit">Anotar no diário</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal-figura gr-modal" id="lote-modal" aria-label="Adicionar várias peças">
+    <button class="modal-fechar" id="lote-fechar" type="button" aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+
+    <div class="gr-modal-corpo">
+      <section id="lote-passo-fotos">
+        <h2 class="titulo-m">Fotografe todas as peças</h2>
+        <p class="gr-suave">Primeiro as fotos, uma atrás da outra. Depois você descreve cada peça e guarda todas de uma vez.</p>
+        <ul class="lote-miniaturas" id="lote-miniaturas"></ul>
+        <div class="gr-botoes-empilhados">
+          <button class="botao botao-cheio" id="lote-tirar" type="button">Tirar foto</button>
+          <button class="botao" id="lote-escolher" type="button">Escolher da galeria</button>
+        </div>
+        <input class="gr-arquivo" id="lote-camera" type="file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+        <input class="gr-arquivo" id="lote-galeria" type="file" accept="image/*" multiple tabindex="-1" aria-hidden="true">
+        <label class="campo-marcar lote-fundo" id="lote-campo-fundo"><input id="lote-tirar-fundo" type="checkbox" checked> <span id="lote-fundo-texto">Tirar o fundo das fotos enquanto eu descrevo</span></label>
+        <p class="erro" id="lote-fotos-erro" role="alert"></p>
+        <div class="gr-botoes-empilhados">
+          <button class="botao botao-cheio" id="lote-continuar" type="button" hidden>Continuar</button>
+        </div>
+      </section>
+
+      <form id="lote-passo-descricao" novalidate hidden>
+        <p class="etiqueta" id="lote-posicao"></p>
+        <div class="gr-foto gr-previa" id="lote-previa"><img id="lote-previa-img" alt="Foto da peça que você está descrevendo"></div>
+        <p class="gr-fundo-texto" id="lote-estado" role="status"></p>
+        <p class="gr-resumo" id="lote-resumo" aria-live="polite"></p>
+
+        <div class="campos gr-campos">
+          <div class="campo">
+            <label for="lote-tipo">Tipo</label>
+            <div class="campo-entrada"><select id="lote-tipo" required></select></div>
+            <p class="erro" id="lote-erro-tipo" role="alert"></p>
+          </div>
+          <div class="campo">
+            <label for="lote-cor">Cor</label>
+            <div class="campo-entrada"><select id="lote-cor" required></select></div>
+            <p class="gr-suave gr-dica" id="lote-cor-dica" hidden>Sugerida pela foto. Confira se está certa.</p>
+            <p class="erro" id="lote-erro-cor" role="alert"></p>
+          </div>
+          <div class="campo" id="lote-campo-corte">
+            <label for="lote-corte">Corte</label>
+            <div class="campo-entrada"><select id="lote-corte"></select></div>
+            <p class="erro" id="lote-erro-corte" role="alert"></p>
+          </div>
+          <div class="campo">
+            <label for="lote-tecido">Tecido (opcional)</label>
+            <div class="campo-entrada"><select id="lote-tecido"></select></div>
+          </div>
+          <div class="campo">
+            <label for="lote-formalidade">Ocasião</label>
+            <div class="campo-entrada"><select id="lote-formalidade"></select></div>
+          </div>
+          <div class="campo">
+            <label for="lote-clima">Clima</label>
+            <div class="campo-entrada"><select id="lote-clima"></select></div>
+          </div>
+        </div>
+
+        <div class="gr-botoes-empilhados">
+          <button class="botao botao-cheio" id="lote-proxima" type="submit">Próxima</button>
+          <button class="botao" id="lote-anterior" type="button">Voltar para a anterior</button>
+          <button class="texto-botao" id="lote-usar-original" type="button" hidden>Usar a foto original</button>
+          <button class="texto-botao gr-excluir" id="lote-tirar-esta" type="button">Tirar esta foto da lista</button>
+        </div>
+      </form>
+
+      <section id="lote-passo-revisao" hidden>
+        <h2 class="titulo-m" id="lote-revisao-titulo">Confira e guarde</h2>
+        <ul class="lote-revisao" id="lote-revisao"></ul>
+        <p class="gr-fundo-texto" id="lote-progresso-texto" role="status"></p>
+        <div class="progresso gr-progresso" id="lote-progresso" hidden><span id="lote-progresso-barra"></span></div>
+        <div id="lote-campo-consentimento" hidden>
+          <label class="campo-marcar"><input id="lote-consentimento" type="checkbox"> <span>Li e concordo com a <a href="privacidade.html" target="_blank" rel="noopener">política de privacidade</a>, que explica como as fotos ficam guardadas.</span></label>
+          <p class="erro" id="lote-erro-consentimento" role="alert"></p>
+        </div>
+        <p class="erro" id="lote-erro" role="alert"></p>
+        <div class="gr-botoes-empilhados">
+          <button class="botao botao-cheio" id="lote-guardar" type="button">Guardar todas</button>
+          <button class="botao" id="lote-sem-esperar" type="button" hidden>Guardar sem esperar o fundo</button>
+          <button class="texto-botao" id="lote-mais-fotos" type="button">Adicionar mais fotos</button>
+        </div>
+      </section>
+    </div>
+  </dialog>
+
+  <nav class="app-abas" aria-label="Apps">
+    <a href="apps/"><svg data-icone="apps"></svg>Apps</a>
+    <a href="apps/guarda-roupa/" aria-current="page"><svg data-icone="cabide"></svg>Guarda-roupa</a>
+    <a href="apps/alimentacao/"><svg data-icone="folha"></svg>Alimentação</a>
+    <a href="apps/ocasioes/"><svg data-icone="calendario"></svg>Ocasiões</a>
+    <a href="apps/treino/"><svg data-icone="haltere"></svg>Treino</a>
+  </nav>
+
+  <script src="assets/js/config.js?v=20261104a"></script>
+  <script src="assets/js/conta-api.js?v=20261109a"></script>
+  <script src="assets/js/apps.js?v=20261109a"></script>
+  <script src="assets/js/guarda-roupa-dados.js?v=20261105a"></script>
+  <script src="assets/js/guarda-roupa-foto.js?v=20261104c"></script>
+  <script src="assets/js/guarda-roupa-looks.js?v=20261109a"></script>
+  <script src="assets/js/guarda-roupa.js?v=20261109a"></script>
+  <script src="assets/js/guarda-roupa-lote.js?v=20261109a"></script>
+</body>
+</html>

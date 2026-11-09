@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Treino | Andre Rauber</title>
+  <meta name="description" content="Um treino simples para academia ou para casa, no tempo que você tem, com registro de cargas e da sua semana.">
+  <link rel="canonical" href="https://andrerauber.com/apps/treino/">
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="manifest" href="assets/apps.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="AR Apps">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png?v=20261104d">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20261104d">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261109a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261109a">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body class="app">
+  <a class="pular" href="apps/treino/#principal">Pular para o conteúdo</a>
+
+  <header class="app-barra">
+    <a class="app-voltar" href="apps/"><svg data-icone="voltar"></svg>Apps</a>
+    <p class="app-barra-titulo" aria-hidden="true">Treino</p>
+    <a class="app-conta app-conta-visitante" id="app-conta" href="entrar.html?voltar=apps%2Ftreino%2F" aria-label="Entrar na minha conta"></a>
+  </header>
+
+  <main id="principal" class="app-conteudo">
+    <div class="app-cabeca">
+      <h1 class="app-titulo">Treino</h1>
+      <p class="app-beta-aviso">Versão beta</p>
+      <p class="app-subtitulo">Um treino simples, na academia ou em casa, no tempo que você tem. Anote as cargas e acompanhe a semana.</p>
+    </div>
+
+    <p class="alim-aviso" style="margin-bottom:1.25rem"><strong>Antes de começar.</strong> Este treino é uma sugestão geral, não uma prescrição. Se você tem alguma doença, dor, lesão ou está parado há muito tempo, consulte um médico antes. Se puder, peça a um profissional de educação física (registrado no CREF) para conferir os movimentos. Sentiu dor, pare.</p>
+
+    <!-- Configuração -->
+    <form class="app-formulario" id="tr-config" novalidate hidden>
+      <h2 class="app-secao-titulo" id="tr-config-titulo">Monte seu treino</h2>
+      <p class="app-suave" id="tr-da-alimentacao" hidden></p>
+      <fieldset class="app-grupo">
+        <legend>Seu objetivo</legend>
+        <div class="app-escolhas" id="tr-objetivo"></div>
+      </fieldset>
+      <fieldset class="app-grupo">
+        <legend>Sua experiência</legend>
+        <div class="app-escolhas" id="tr-nivel"></div>
+      </fieldset>
+      <fieldset class="app-grupo">
+        <legend>Onde você vai treinar</legend>
+        <div class="app-escolhas" id="tr-local"></div>
+      </fieldset>
+      <fieldset class="app-grupo">
+        <legend>Quantos dias por semana</legend>
+        <div class="app-escolhas" id="tr-dias"></div>
+      </fieldset>
+      <fieldset class="app-grupo">
+        <legend>Tempo por treino</legend>
+        <div class="app-escolhas" id="tr-tempo"></div>
+      </fieldset>
+      <fieldset class="app-grupo">
+        <legend>Sente dor ou tem cuidado com algum lugar? (opcional)</legend>
+        <div class="app-escolhas" id="tr-cuidados"></div>
+        <p class="app-suave" style="margin-top:.4rem">Os exercícios que pesam nesse lugar saem do treino. Mesmo assim, converse com um profissional.</p>
+      </fieldset>
+      <p class="erro" id="tr-config-erro" role="alert"></p>
+      <div class="app-botoes">
+        <button class="botao botao-cheio" type="submit" id="tr-config-salvar">Montar meu treino</button>
+        <button class="texto-botao" type="button" id="tr-config-cancelar" hidden>Cancelar</button>
+      </div>
+    </form>
+
+    <!-- Painel -->
+    <div id="tr-painel" hidden>
+      <section class="app-cartao" aria-labelledby="tr-hoje-titulo">
+        <p class="oc-subtitulo" id="tr-hoje-rotulo">Treino de hoje</p>
+        <h2 class="app-titulo" style="font-size:1.7rem" id="tr-hoje-titulo"></h2>
+        <p class="app-suave" id="tr-hoje-detalhe"></p>
+        <div class="tr-semana" id="tr-semana" aria-label="Sua semana"></div>
+        <div class="app-botoes">
+          <button class="botao botao-cheio" type="button" id="tr-comecar">Começar treino</button>
+          <button class="texto-botao" type="button" id="tr-escolher-outro">Fazer outro treino</button>
+        </div>
+      </section>
+
+      <section class="app-secao" aria-labelledby="tr-plano-titulo">
+        <h2 class="app-secao-titulo" id="tr-plano-titulo">Seu plano</h2>
+        <p class="app-secao-texto" id="tr-plano-texto"></p>
+        <div class="tr-treinos" id="tr-treinos"></div>
+      </section>
+
+      <section class="app-secao" aria-labelledby="tr-historico-titulo">
+        <h2 class="app-secao-titulo" id="tr-historico-titulo">Histórico</h2>
+        <div class="app-cartao" id="tr-historico-caixa">
+          <p class="oc-subtitulo">Treinos por semana</p>
+          <div class="tr-barras" id="tr-barras" aria-hidden="true"></div>
+          <p class="app-suave" id="tr-historico-resumo" style="margin-top:.5rem"></p>
+        </div>
+        <ul class="app-lista" id="tr-historico" style="margin-top:.85rem"></ul>
+      </section>
+
+      <section class="app-secao" aria-labelledby="tr-ajustes-titulo">
+        <h2 class="app-secao-titulo" id="tr-ajustes-titulo">Ajustes</h2>
+        <div class="app-cartao">
+          <label class="app-interruptor"><span><strong>Guardar na minha conta</strong></span><input id="tr-guardar" type="checkbox"><span class="app-interruptor-trilho" aria-hidden="true"></span></label>
+          <p class="app-suave" id="tr-guardar-texto" style="margin-top:.4rem"></p>
+        </div>
+        <div class="app-botoes">
+          <button class="botao" type="button" id="tr-editar"><svg data-icone="lapis"></svg>Mudar objetivo, dias ou local</button>
+          <button class="texto-botao" type="button" id="tr-apagar" style="color:var(--erro)">Apagar meus dados do treino</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Sessão de treino -->
+    <div id="tr-sessao" hidden>
+      <p class="oc-subtitulo" id="tr-sessao-rotulo"></p>
+      <h2 class="app-titulo" style="font-size:1.8rem" id="tr-sessao-titulo" tabindex="-1"></h2>
+      <p class="app-suave" id="tr-sessao-texto" style="margin-bottom:1rem"></p>
+      <div id="tr-sessao-exercicios"></div>
+      <section class="app-cartao" style="margin-top:1rem">
+        <p class="oc-subtitulo">Como foi?</p>
+        <div class="app-segmentos" id="tr-esforco" role="group" aria-label="Como foi o treino"></div>
+        <p class="app-suave" id="tr-cardio" style="margin-top:.75rem"></p>
+        <div class="app-botoes">
+          <button class="botao botao-cheio" type="button" id="tr-concluir">Concluir treino</button>
+          <button class="texto-botao" type="button" id="tr-sair">Sair sem salvar</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="tr-cronometro" id="tr-cronometro" role="timer" aria-live="off" hidden>
+    <span>Descanso</span><b id="tr-cronometro-tempo">0:60</b>
+    <button type="button" id="tr-cronometro-parar">Pular</button>
+  </div>
+
+  <nav class="app-abas" aria-label="Apps">
+    <a href="apps/"><svg data-icone="apps"></svg>Apps</a>
+    <a href="apps/guarda-roupa/"><svg data-icone="cabide"></svg>Guarda-roupa</a>
+    <a href="apps/alimentacao/"><svg data-icone="folha"></svg>Alimentação</a>
+    <a href="apps/ocasioes/"><svg data-icone="calendario"></svg>Ocasiões</a>
+    <a href="apps/treino/" aria-current="page"><svg data-icone="haltere"></svg>Treino</a>
+  </nav>
+  <p class="app-aviso" id="app-aviso" role="status" aria-live="polite"></p>
+
+  <script src="assets/js/config.js?v=20261104a"></script>
+  <script src="assets/js/conta-api.js?v=20261109a"></script>
+  <script src="assets/js/apps.js?v=20261109a"></script>
+  <script src="assets/js/treino-dados.js?v=20261109a"></script>
+  <script src="assets/js/treino.js?v=20261109a"></script>
+</body>
+</html>

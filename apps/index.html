@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Apps | Andre Rauber</title>
+  <meta name="description" content="Guarda-roupa, Alimentação, Ocasiões e Treino: os apps da Andre Rauber para o seu dia a dia.">
+  <link rel="canonical" href="https://andrerauber.com/apps/">
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="manifest" href="assets/apps.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="AR Apps">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png?v=20261104d">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20261104d">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261109a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261109a">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body class="app app-inicio">
+  <a class="pular" href="apps/#principal">Pular para o conteúdo</a>
+
+  <header class="app-barra">
+    <a class="app-marca" href="index.html" aria-label="Andre Rauber, voltar ao site">
+      <img src="assets/img/logo-preta.png" alt="" width="888" height="91">
+    </a>
+    <p class="app-barra-titulo" aria-hidden="true">Apps</p>
+    <a class="app-conta app-conta-visitante" id="app-conta" href="entrar.html?voltar=apps%2F" aria-label="Entrar na minha conta"></a>
+  </header>
+
+  <main id="principal" class="app-conteudo">
+    <div class="app-cabeca">
+      <p class="app-data" id="inicio-data"></p>
+      <h1 class="app-titulo" id="inicio-ola">Apps</h1>
+      <p class="app-subtitulo">O que vestir, o que comer, como se preparar para cada ocasião. Tudo ligado à sua conta da Andre Rauber.</p>
+    </div>
+
+    <nav aria-label="Escolha um app">
+      <ul class="app-icones">
+        <li><a class="app-icone" href="apps/guarda-roupa/"><span class="app-icone-fundo app-icone-guarda-roupa"><svg data-icone="cabide"></svg></span>Guarda-roupa</a></li>
+        <li><a class="app-icone" href="apps/alimentacao/"><span class="app-icone-fundo app-icone-alimentacao"><svg data-icone="folha"></svg></span>Alimentação</a></li>
+        <li><a class="app-icone" href="apps/ocasioes/"><span class="app-icone-fundo app-icone-ocasioes"><svg data-icone="calendario"></svg></span><span class="app-icone-beta" aria-hidden="true">BETA</span>Ocasiões<span class="visualmente-oculto"> (versão beta)</span></a></li>
+        <li><a class="app-icone" href="apps/treino/"><span class="app-icone-fundo app-icone-treino"><svg data-icone="haltere"></svg></span><span class="app-icone-beta" aria-hidden="true">BETA</span>Treino<span class="visualmente-oculto"> (versão beta)</span></a></li>
+      </ul>
+    </nav>
+
+    <section class="app-secao" aria-labelledby="hoje-titulo">
+      <h2 class="app-secao-titulo" id="hoje-titulo">Hoje</h2>
+      <div class="app-widgets" id="inicio-widgets" aria-live="polite"></div>
+    </section>
+
+    <section class="app-secao" id="inicio-convite" hidden>
+      <div class="app-convite">
+        <h2 class="app-cartao-titulo">Guarde tudo na sua conta</h2>
+        <p>Com a conta, o guarda-roupa fica com as suas fotos e o que você anotar abre em qualquer aparelho. É grátis.</p>
+        <div class="app-convite-botoes">
+          <a class="botao botao-cheio" href="criar-conta.html?voltar=apps%2F">Criar conta</a>
+          <a class="botao" href="entrar.html?voltar=apps%2F">Já tenho conta</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="app-secao" aria-labelledby="tela-titulo">
+      <h2 class="app-secao-titulo" id="tela-titulo">Na tela do celular</h2>
+      <p class="app-secao-texto">No iPhone, toque em Compartilhar e depois em Adicionar à Tela de Início. No Android, abra o menu do navegador e toque em Instalar app ou Adicionar à tela inicial. Os apps abrem como um aplicativo.</p>
+    </section>
+
+    <footer class="app-rodape">
+      <a href="index.html">Voltar ao site</a>
+      <a href="minha-conta.html">Minha conta</a>
+      <a href="privacidade.html">Política de privacidade</a>
+    </footer>
+  </main>
+
+  <nav class="app-abas" aria-label="Apps">
+    <a href="apps/" aria-current="page"><svg data-icone="apps"></svg>Apps</a>
+    <a href="apps/guarda-roupa/"><svg data-icone="cabide"></svg>Guarda-roupa</a>
+    <a href="apps/alimentacao/"><svg data-icone="folha"></svg>Alimentação</a>
+    <a href="apps/ocasioes/"><svg data-icone="calendario"></svg>Ocasiões</a>
+    <a href="apps/treino/"><svg data-icone="haltere"></svg>Treino</a>
+  </nav>
+  <p class="app-aviso" id="app-aviso" role="status" aria-live="polite"></p>
+
+  <script src="assets/js/config.js?v=20261104a"></script>
+  <script src="assets/js/conta-api.js?v=20261109a"></script>
+  <script src="assets/js/apps.js?v=20261109a"></script>
+  <script src="assets/js/apps-inicio.js?v=20261109a"></script>
+</body>
+</html>

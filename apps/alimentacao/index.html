@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Alimentação | Andre Rauber</title>
+  <meta name="description" content="Descubra seu gasto calórico, monte um plano alimentar com o que você já come e veja quanto ele custa no mercado da sua região.">
+  <link rel="canonical" href="https://andrerauber.com/apps/alimentacao/">
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="manifest" href="assets/apps.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="AR Apps">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png?v=20261104d">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20261104d">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261109a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261109a">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body class="app">
+  <a class="pular" href="apps/alimentacao/#principal">Pular para o conteúdo</a>
+
+  <header class="app-barra">
+    <a class="app-voltar" href="apps/"><svg data-icone="voltar"></svg>Apps</a>
+    <p class="app-barra-titulo" aria-hidden="true">Alimentação</p>
+    <a class="app-conta app-conta-visitante" id="app-conta" href="entrar.html?voltar=apps%2Falimentacao%2F" aria-label="Entrar na minha conta"></a>
+  </header>
+
+  <main id="principal" class="app-conteudo alim">
+    <div class="app-cabeca">
+      <h1 class="app-titulo">Alimentação</h1>
+      <p class="app-subtitulo">Comer melhor, sabendo quanto custa: seu gasto de energia, um plano a partir do que você já come e a conta do mercado da sua região.</p>
+    </div>
+    <p class="alim-aviso"><strong>Estimativa educativa, não uma dieta prescrita.</strong> No Brasil, quem prescreve dieta é o nutricionista. Use estes números para entender sua alimentação e conversar com um profissional. Se você tem diabetes, problema nos rins ou no coração, está grávida ou amamentando, faz tratamento ou toma remédio contínuo, procure um nutricionista ou médico antes de mudar a alimentação.</p>
+
+    <ol class="alim-passos" id="alim-topo" aria-label="Passos">
+      <li id="item-resumo" hidden><button type="button" id="ir-resumo"><span>★</span> Resumo</button></li>
+      <li><button type="button" id="ir-voce" aria-current="step"><span>1</span> Você</button></li>
+      <li><button type="button" id="ir-comida"><span>2</span> O que você come</button></li>
+      <li><button type="button" id="ir-plano"><span>3</span> Seu plano</button></li>
+      <li><button type="button" id="ir-compras"><span>4</span> Compras</button></li>
+      <li><button type="button" id="ir-acompanhamento"><span>5</span> Acompanhamento</button></li>
+    </ol>
+    <p class="alim-retorno" id="alim-retorno" role="status" aria-live="polite"></p>
+
+    <section class="alim-passo" id="passo-resumo" tabindex="-1" hidden>
+      <h2 class="titulo-m">Seu resumo</h2>
+      <p class="alim-suave" id="alim-resumo-status"></p>
+      <div class="alim-cartoes" id="alim-cartoes"></div>
+    </section>
+
+    <form class="alim-passo" id="passo-voce" tabindex="-1" novalidate>
+      <h2 class="titulo-m">Sobre você</h2>
+      <p class="alim-suave">Só o necessário para calcular seu gasto de energia.</p>
+      <p class="alim-da-conta" id="alim-da-conta" hidden>Trouxemos altura, peso e estado da sua conta. Confira se continuam certos.</p>
+
+      <div class="campos alim-campos">
+        <fieldset class="campo alim-grupo-radio">
+          <legend>Sexo</legend>
+          <div class="alim-linha-radio">
+            <label class="campo-marcar"><input type="radio" name="sexo" value="m"> <span>Masculino</span></label>
+            <label class="campo-marcar"><input type="radio" name="sexo" value="f"> <span>Feminino</span></label>
+          </div>
+        </fieldset>
+        <div class="campo">
+          <label for="alim-idade">Idade</label>
+          <div class="campo-entrada"><input id="alim-idade" type="number" inputmode="numeric" min="18" max="80" placeholder="35"></div>
+          <p class="erro" id="erro-alim-idade" role="alert"></p>
+        </div>
+        <div class="campo">
+          <label for="alim-altura">Altura (cm)</label>
+          <div class="campo-entrada"><input id="alim-altura" type="number" inputmode="numeric" min="140" max="220" placeholder="178"></div>
+          <p class="erro" id="erro-alim-altura" role="alert"></p>
+        </div>
+        <div class="campo">
+          <label for="alim-peso">Peso (kg)</label>
+          <div class="campo-entrada"><input id="alim-peso" type="text" inputmode="decimal" placeholder="82"></div>
+          <p class="erro" id="erro-alim-peso" role="alert"></p>
+        </div>
+        <fieldset class="campo campo-inteiro alim-grupo-radio">
+          <legend>Como é a sua rotina</legend>
+          <div id="alim-atividade" class="alim-coluna-radio"></div>
+        </fieldset>
+        <fieldset class="campo campo-inteiro alim-grupo-radio">
+          <legend>Seu objetivo</legend>
+          <div id="alim-objetivo" class="alim-coluna-radio"></div>
+        </fieldset>
+        <div class="campo">
+          <label for="alim-uf">Estado onde você mora</label>
+          <div class="campo-entrada"><select id="alim-uf"></select></div>
+          <p class="ajuda">Usamos os preços do mercado da sua região.</p>
+          <p class="erro" id="erro-alim-uf" role="alert"></p>
+        </div>
+      </div>
+
+      <div class="alim-guardar">
+        <div id="alim-guardar-logado" hidden>
+          <label class="campo-marcar"><input id="alim-guardar" type="checkbox"> <span>Guardar estas informações na minha conta, para ver de qualquer aparelho. Inclui dados de saúde, como peso e alimentação, que ficam protegidos e só aparecem para você.</span></label>
+        </div>
+        <p id="alim-guardar-visitante" hidden>Para guardar seu plano e ver de qualquer aparelho, <a href="entrar.html?voltar=apps%2Falimentacao%2F">entre na sua conta</a> ou <a href="criar-conta.html?voltar=apps%2Falimentacao%2F">crie uma</a>. Sem conta, tudo fica só neste aparelho.</p>
+        <p class="alim-suave" id="alim-status" role="status"></p>
+      </div>
+
+      <button class="botao botao-cheio" type="submit">Continuar</button>
+    </form>
+
+    <section class="alim-passo" id="passo-comida" tabindex="-1" hidden>
+      <h2 class="titulo-m">O que você come num dia comum</h2>
+      <p class="alim-suave">Não precisa ser exato: marque o de sempre, mais ou menos. Toque num alimento, escolha a quantidade e confirme. Para mudar algo depois, use Editar.</p>
+      <div id="alim-refeicoes"></div>
+      <p class="alim-total" id="alim-total-hoje" role="status"></p>
+      <div class="alim-botoes">
+        <button class="botao botao-cheio" id="alim-ir-plano" type="button">Ver meu plano</button>
+        <button class="texto-botao" id="alim-limpar" type="button">Apagar o que marquei</button>
+      </div>
+    </section>
+
+    <section class="alim-passo" id="passo-plano" tabindex="-1" hidden>
+      <h2 class="titulo-m">Seu plano</h2>
+      <dl class="alim-numeros" id="alim-numeros"></dl>
+      <div class="alim-modo" id="alim-modo" role="group" aria-label="Tipo de plano">
+        <button class="botao" id="alim-modo-ajustar" type="button" aria-pressed="true">Ajustar o que eu já como</button>
+        <button class="botao" id="alim-modo-novo" type="button" aria-pressed="false">Montar um plano novo</button>
+      </div>
+      <h3 class="titulo-s alim-plano-titulo" id="alim-plano-titulo"></h3>
+      <p class="alim-suave">Não gosta de algum item? Toque em <strong>Não gosto: trocar</strong> e escolha entre cinco opções com calorias parecidas.</p>
+      <div class="alim-minhas-trocas" id="alim-minhas-trocas" hidden></div>
+      <p class="alim-educativo"><strong>Um ponto de partida, não uma prescrição.</strong> Este plano é uma estimativa montada a partir de fórmulas e tabelas de alimentos. Para um plano feito para você, com seu histórico e exames, procure um nutricionista (registrado no CRN).</p>
+      <div id="alim-plano"></div>
+      <p class="alim-total" id="alim-plano-total"></p>
+      <p class="alim-suave">Beba água ao longo do dia, cerca de 35 ml por quilo de peso. Os temperos, como sal, alho e cebola, ficam por sua conta e quase não pesam no orçamento.</p>
+      <div class="alim-botoes">
+        <button class="botao botao-cheio" id="alim-ir-compras" type="button">Ver quanto custa</button>
+      </div>
+    </section>
+
+    <section class="alim-passo" id="passo-compras" tabindex="-1" hidden>
+      <h2 class="titulo-m">Quanto custa no mercado</h2>
+      <dl class="alim-numeros" id="alim-custo"></dl>
+      <p class="alim-veredito" id="alim-veredito" role="status"></p>
+
+      <div class="alim-economia" id="alim-economia-bloco" hidden>
+        <h3 class="titulo-s">Onde dá para economizar no plano</h3>
+        <ul id="alim-economia"></ul>
+      </div>
+
+      <section class="alim-despensa" aria-labelledby="despensa-titulo">
+        <div class="alim-despensa-cab">
+          <h3 class="titulo-m" id="despensa-titulo">Sua lista de compras</h3>
+          <button class="texto-botao" id="alim-copiar-lista" type="button">Copiar a lista</button>
+        </div>
+        <p class="alim-suave">Marque o que você comprou. A lista calcula até quando cada item dura e avisa a hora de comprar de novo. Se algo acabar antes, toque em Acabou: as próximas previsões se ajustam ao seu ritmo.</p>
+        <div class="alim-lembrete" id="alim-lembrete">
+          <label class="app-interruptor"><span><strong>Me avise por e-mail</strong></span><input id="alim-lembrete-email" type="checkbox"><span class="app-interruptor-trilho" aria-hidden="true"></span></label>
+          <p class="app-suave" id="alim-lembrete-texto">Quando um item que você comprou estiver para acabar, mandamos um e-mail dois dias antes.</p>
+        </div>
+        <div id="alim-despensa"></div>
+      </section>
+
+      <details class="alim-detalhes">
+        <summary>Custo de cada produto por mês</summary>
+        <div class="alim-modo" role="group" aria-label="Custo por produto">
+          <button class="botao" id="alim-lista-plano" type="button" aria-pressed="true">Do plano</button>
+          <button class="botao" id="alim-lista-hoje" type="button" aria-pressed="false">Do que eu como hoje</button>
+        </div>
+        <div id="alim-compras"></div>
+      </details>
+      <p class="alim-fontes" id="alim-fontes"></p>
+      <div class="alim-botoes">
+        <button class="botao botao-cheio" id="alim-ir-acompanhamento" type="button">Acompanhar meu peso e medidas</button>
+        <button class="botao" id="alim-ir-resumo" type="button">Ver meu resumo</button>
+        <button class="botao" id="alim-voltar-plano" type="button">Voltar ao plano</button>
+      </div>
+    </section>
+
+    <section class="alim-passo" id="passo-acompanhamento" tabindex="-1" hidden>
+      <h2 class="titulo-m">Acompanhamento</h2>
+      <p class="alim-suave">Registre o peso e as medidas a cada uma ou duas semanas, de manhã, em jejum e antes do treino. Medidas mostram o que a balança esconde: cintura caindo é gordura saindo, e braço e tórax subindo com cintura estável indicam ganho de massa.</p>
+
+      <div class="campos alim-campos alim-inicio">
+        <div class="campo">
+          <label for="alim-inicio">Início do plano</label>
+          <div class="campo-entrada"><input id="alim-inicio" type="date"></div>
+        </div>
+      </div>
+
+      <form class="alim-registro" id="alim-registro" novalidate>
+        <h3 class="titulo-s">Novo registro</h3>
+        <div class="alim-registro-campos">
+          <label class="alim-campo"><span>Data</span><input id="reg-data" type="date"></label>
+          <label class="alim-campo"><span>Peso (kg)</span><input id="reg-peso" type="text" inputmode="decimal" placeholder="82,5"></label>
+          <label class="alim-campo"><span>Cintura (cm)</span><input id="reg-cintura" type="text" inputmode="decimal" placeholder="na altura do umbigo"></label>
+          <label class="alim-campo"><span>Tórax (cm)</span><input id="reg-torax" type="text" inputmode="decimal"></label>
+          <label class="alim-campo"><span>Braço (cm)</span><input id="reg-braco" type="text" inputmode="decimal" placeholder="relaxado"></label>
+          <label class="alim-campo"><span>Coxa (cm)</span><input id="reg-coxa" type="text" inputmode="decimal"></label>
+        </div>
+        <p class="erro" id="reg-erro" role="alert"></p>
+        <div class="alim-botoes">
+          <button class="botao botao-cheio" type="submit">Registrar</button>
+          <button class="texto-botao" id="reg-do-cadastro" type="button" hidden>Usar as medidas do meu cadastro</button>
+        </div>
+      </form>
+
+      <div class="alim-evolucao" id="alim-evolucao"></div>
+      <div class="alim-tabela-caixa">
+        <table class="alim-tabela" id="alim-tabela" hidden>
+          <thead><tr><th scope="col">Data</th><th scope="col">Peso</th><th scope="col">Cintura</th><th scope="col">Tórax</th><th scope="col">Braço</th><th scope="col">Coxa</th><th scope="col"><span class="visualmente-oculto">Ações</span></th></tr></thead>
+          <tbody id="alim-registros"></tbody>
+        </table>
+      </div>
+      <div class="alim-botoes">
+        <button class="botao" id="alim-acomp-resumo" type="button">Ver meu resumo</button>
+      </div>
+    </section>
+
+    <aside class="alim-privacidade">
+      <p><span id="alim-privacidade-texto">Suas respostas ficam guardadas neste aparelho, no navegador.</span> <button class="texto-botao" id="alim-apagar" type="button">Apagar meus dados desta página</button></p>
+    </aside>
+  </main>
+
+  <nav class="app-abas" aria-label="Apps">
+    <a href="apps/"><svg data-icone="apps"></svg>Apps</a>
+    <a href="apps/guarda-roupa/"><svg data-icone="cabide"></svg>Guarda-roupa</a>
+    <a href="apps/alimentacao/" aria-current="page"><svg data-icone="folha"></svg>Alimentação</a>
+    <a href="apps/ocasioes/"><svg data-icone="calendario"></svg>Ocasiões</a>
+    <a href="apps/treino/"><svg data-icone="haltere"></svg>Treino</a>
+  </nav>
+
+  <script src="assets/js/config.js?v=20261104a"></script>
+  <script src="assets/js/conta-api.js?v=20261109a"></script>
+  <script src="assets/js/apps.js?v=20261109a"></script>
+  <script src="assets/js/alimentacao-dados.js?v=20261108a"></script>
+  <script src="assets/js/alimentacao-calculo.js?v=20261109a"></script>
+  <script src="assets/js/alimentacao.js?v=20261109a"></script>
+</body>
+</html>

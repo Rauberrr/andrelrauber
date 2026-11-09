@@ -205,6 +205,53 @@ CREATE TABLE IF NOT EXISTS alimentacao (
   CONSTRAINT fk_alimentacao_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Diário do guarda-roupa: o que a pessoa vestiu, em que dia e onde.
+-- A chave são os números das peças em ordem, como nos looks.
+CREATE TABLE IF NOT EXISTS usos_pecas (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  usuario_id INT UNSIGNED NOT NULL,
+  dia DATE NOT NULL,
+  chave VARCHAR(120) NOT NULL,
+  ocasiao VARCHAR(60) NOT NULL DEFAULT '',
+  observacao VARCHAR(200) NOT NULL DEFAULT '',
+  criado_em DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_uso_usuario (usuario_id, dia),
+  CONSTRAINT fk_uso_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Quanto a pessoa pagou em cada peça, para a conta do custo por uso. Em centavos.
+CREATE TABLE IF NOT EXISTS pecas_valores (
+  peca_id INT UNSIGNED NOT NULL,
+  usuario_id INT UNSIGNED NOT NULL,
+  preco_centavos INT UNSIGNED NOT NULL,
+  PRIMARY KEY (peca_id),
+  KEY idx_valor_usuario (usuario_id),
+  CONSTRAINT fk_valor_peca FOREIGN KEY (peca_id) REFERENCES pecas (id) ON DELETE CASCADE,
+  CONSTRAINT fk_valor_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ocasiões e Treino: o que a pessoa anotou em cada app.
+-- O Treino só é guardado com a autorização dela, registrada em consentiu_em.
+CREATE TABLE IF NOT EXISTS apps_dados (
+  usuario_id INT UNSIGNED NOT NULL,
+  app VARCHAR(20) NOT NULL,
+  dados MEDIUMTEXT NOT NULL,
+  consentiu_em DATETIME NULL,
+  atualizado_em DATETIME NOT NULL,
+  PRIMARY KEY (usuario_id, app),
+  CONSTRAINT fk_apps_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Lembretes por e-mail já enviados, para o mesmo aviso não chegar duas vezes
+CREATE TABLE IF NOT EXISTS lembretes_enviados (
+  usuario_id INT UNSIGNED NOT NULL,
+  chave VARCHAR(100) NOT NULL,
+  enviado_em DATETIME NOT NULL,
+  PRIMARY KEY (usuario_id, chave),
+  CONSTRAINT fk_lembrete_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Limite de tentativas de login, registro e recuperação de senha
 CREATE TABLE IF NOT EXISTS tentativas (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
