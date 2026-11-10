@@ -1,4 +1,4 @@
-/* Treino: exercícios, grupos musculares, movimentos e divisões de treino. Versão beta.
+/* Treino: exercícios, grupos musculares, movimentos e divisões de treino.
    As listas de objetivos, níveis, locais, cuidados e focos acompanham as de api/apps.php. */
 window.AR_TREINO_DADOS = (function () {
   'use strict';

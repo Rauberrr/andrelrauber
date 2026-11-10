@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Peça | Rauber</title>
+  <meta name="description" content="Peça masculina feita sob as suas medidas.">
+  <link rel="canonical" href="https://andrerauber.com/produto.html">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:site_name" content="Rauber">
+  <meta property="og:title" content="Peça | Rauber">
+  <meta property="og:description" content="Peça masculina feita sob as suas medidas.">
+  <meta property="og:url" content="https://andrerauber.com/produto.html">
+  <meta property="og:image" content="https://andrerauber.com/assets/img/compartilhar.png?v=20261109d">
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png?v=20261109c">
+  <link rel="icon" type="image/png" sizes="64x64" href="assets/img/favicon-64.png?v=20261109c">
+  <link rel="manifest" href="assets/site.webmanifest?v=20261109d">
+  <meta name="apple-mobile-web-app-title" content="Rauber">
+  <meta name="application-name" content="Rauber">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20261109d">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261110a">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <a class="pular" href="#principal">Pular para o conteúdo</a>
+
+  <header class="topo">
+    <div class="conteudo topo-interno">
+      <a class="topo-logo" href="index.html" aria-label="Rauber, página inicial">
+        <img class="logo-branca" src="assets/img/logo-branca.png?v=20261109c" alt="" width="453" height="91">
+        <img class="logo-preta" src="assets/img/logo-preta.png?v=20261109c" alt="" width="453" height="91">
+      </a>
+      <nav class="nav" aria-label="Principal">
+        <ul class="nav-lista">
+          <li><a href="index.html">Início</a></li>
+          <li><a href="colecao.html" aria-current="page">Coleção</a></li>
+          <li><a href="apps/">Apps</a></li>
+          <li><a href="contato.html">Contato</a></li>
+          <li><a href="minha-conta.html">Minha conta</a></li>
+        </ul>
+      </nav>
+      <button class="menu-botao" type="button" aria-expanded="false" aria-label="Abrir menu"><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main id="principal" class="conteudo produto">
+    <p class="carregando" id="produto-carregando">Carregando a peça...</p>
+    <section class="produto-sumiu" id="produto-sumiu" hidden>
+      <h1 class="titulo-m">Esta peça não está disponível.</h1>
+      <p>Ela pode ter saído da coleção ou ainda não ter sido lançada.</p>
+      <a class="botao botao-cheio" href="colecao.html">Ver a coleção</a>
+    </section>
+
+    <p class="produto-faixa" id="produto-faixa" hidden></p>
+    <article class="produto-grade" id="produto" hidden>
+      <div class="produto-galeria">
+        <div class="produto-foto" id="produto-foto"></div>
+        <div class="produto-miniaturas" id="produto-miniaturas" role="group" aria-label="Fotos da peça"></div>
+      </div>
+      <div class="produto-info">
+        <nav class="produto-trilha" aria-label="Você está em"><a href="colecao.html">Coleção</a><span aria-hidden="true">/</span><span id="produto-categoria"></span></nav>
+        <h1 class="titulo-l" id="produto-nome"></h1>
+        <p class="produto-preco" id="produto-preco"></p>
+        <p class="produto-frete" id="produto-frete"></p>
+        <p class="produto-resumo" id="produto-resumo"></p>
+
+        <fieldset class="produto-cores" id="produto-cores-caixa" hidden>
+          <legend>Cor: <strong id="produto-cor-nome"></strong></legend>
+          <div class="produto-cores-lista" id="produto-cores"></div>
+        </fieldset>
+
+        <div class="produto-sob-medida">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h18v8H3z"/><path d="M7 8v3M11 8v4M15 8v3M19 8v4"/></svg>
+          <div><strong>Feita sob as suas medidas</strong><span id="produto-prazo"></span></div>
+        </div>
+
+        <button class="botao botao-cheio produto-comprar" id="produto-comprar" type="button">Encomendar sob medida</button>
+        <p class="erro" id="produto-erro" role="alert"></p>
+        <p class="produto-nota" id="produto-nota"></p>
+
+        <div class="produto-texto" id="produto-descricao"></div>
+        <dl class="produto-ficha" id="produto-ficha"></dl>
+        <div class="produto-detalhes-caixa" id="produto-detalhes-caixa" hidden>
+          <h2 class="titulo-s">Detalhes</h2>
+          <ul class="produto-detalhes" id="produto-detalhes"></ul>
+        </div>
+      </div>
+    </article>
+
+    <section class="colecao-exclusivo sobre-preto" aria-labelledby="exclusivo-titulo">
+      <div>
+        <span class="etiqueta">Pedido exclusivo</span>
+        <h2 class="titulo-l" id="exclusivo-titulo">Não achou a peça que procura?</h2>
+        <p>Descreva a roupa que você quer e escolha o tecido e os detalhes. A gente responde com o valor e o prazo antes de qualquer corte.</p>
+      </div>
+      <a class="botao botao-cheio" href="pedido-exclusivo.html">Fazer um pedido exclusivo</a>
+    </section>
+  </main>
+
+  <footer class="rodape sobre-preto">
+    <div class="conteudo">
+      <img class="rodape-logo" src="assets/img/logo-branca.png?v=20261109c" alt="Rauber" width="453" height="91" loading="lazy">
+      <div class="rodape-colunas">
+        <p class="rodape-frase">Roupa masculina sob medida, com molde próprio e feita a partir das suas medidas.</p>
+        <div class="rodape-coluna">
+          <span class="etiqueta">Navegue</span>
+          <ul>
+            <li><a href="colecao.html">Coleção</a></li>
+            <li><a href="pedido-exclusivo.html">Pedido exclusivo</a></li>
+            <li><a href="apps/">Apps</a></li>
+            <li><a href="guia-de-medidas.html">Guia de Medidas</a></li>
+            <li><a href="a-marca.html">A Marca</a></li>
+            <li><a href="contato.html">Contato</a></li>
+          </ul>
+        </div>
+        <div class="rodape-coluna">
+          <span class="etiqueta">Fale conosco</span>
+          <ul>
+            <li><a data-whatsapp="" href="https://wa.me/5554997096003">WhatsApp</a></li>
+            <li><a href="https://www.instagram.com/andrelrauber/" target="_blank" rel="noopener">Instagram</a></li>
+            <li><a href="mailto:andreluisrauber2006@gmail.com">andreluisrauber2006@gmail.com</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="rodape-base">
+        <span>© <span data-ano>2026</span> Rauber</span>
+        <a href="privacidade.html">Política de privacidade</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/config.js?v=20261110a"></script>
+  <script src="assets/js/main.js?v=20261110a"></script>
+  <script src="assets/js/conta-api.js?v=20261110a"></script>
+  <script src="assets/js/colecao-dados.js?v=20261110a"></script>
+  <script src="assets/js/produto.js?v=20261110a"></script>
+</body>
+</html>

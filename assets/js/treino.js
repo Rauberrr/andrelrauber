@@ -1,4 +1,4 @@
-/* Treino (beta): monta um plano simples a partir do objetivo, do local, do tempo e do foco,
+/* Treino: monta um plano simples a partir do objetivo, do local, do tempo e do foco,
    com 3 opções de exercícios para cada treino, guia o treino do dia com séries e descanso
    e guarda as cargas e a semana. As medidas são as mesmas da Alimentação.
    Sem autorização, fica neste aparelho. Com autorização, também na conta. */
@@ -547,6 +547,7 @@
     var caixa = $('tr-treinos');
     caixa.textContent = '';
     plano().forEach(function (t) { caixa.appendChild(cartaoDoTreino(t)); });
+    desenharEstrategia(p);
     desenharAlimentacao();
     desenharHistorico();
     mostrarGuardar();
@@ -608,6 +609,52 @@
     salvar();
     app.avisar(estado.alternar ? 'Cada treino vai passar para a próxima opção depois de feito.' : 'Cada treino fica na opção escolhida.');
   });
+
+  /* --- A estratégia, explicada ---------------------------------------------------------------------- */
+
+  function estrategia(p) {
+    var itens = [];
+    var obj = T.porObjetivo[p.objetivo];
+    if (p.dias <= 3) {
+      itens.push(['Corpo inteiro, alternando A e B', 'Com ' + p.dias + ' dias por semana, cada músculo trabalha 2 ou 3 vezes. Treinar cada grupo pelo menos duas vezes por semana rende mais força e massa do que uma vez só, e o corpo tem 48 horas para se recuperar entre um treino e outro.']);
+    } else if (p.dias === 4) {
+      itens.push(['Parte de cima e pernas', 'Com 4 dias, cada parte do corpo treina duas vezes por semana, com descanso entre um treino e outro da mesma parte. Dá para colocar mais exercícios em cada grupo sem treinos longos demais.']);
+    } else {
+      itens.push(['Empurrar, puxar e pernas', 'Com ' + p.dias + ' dias, os músculos que trabalham juntos treinam no mesmo dia: peito, ombros e tríceps empurram; costas e bíceps puxam; as pernas ficam sozinhas. Cada grupo descansa enquanto os outros trabalham.']);
+    }
+    var porObjetivo = {
+      massa: 'De ' + obj.reps + ' repetições, com ' + obj.descanso + ' segundos de descanso: a faixa que mais estimula o músculo a crescer, com carga pesada o bastante e tempo para recuperar o fôlego entre as séries.',
+      emagrecer: 'De ' + obj.reps + ' repetições, com ' + obj.descanso + ' segundos de descanso: o treino fica mais intenso, gasta mais energia e preserva o músculo enquanto você perde gordura. O cardio no fim ajuda a fechar a conta.',
+      saude: 'De ' + obj.reps + ' repetições, com ' + obj.descanso + ' segundos de descanso: força e disposição sem exagero, num ritmo que dá para manter por muito tempo.'
+    };
+    itens.push(['Repetições para o seu objetivo', porObjetivo[p.objetivo]]);
+    itens.push([p.nivel === 'iniciante' ? '2 séries por exercício, para começar' : 'Mais séries, para quem já treina',
+      p.nivel === 'iniciante'
+        ? 'É o suficiente para evoluir rápido nas primeiras semanas, com menos dor muscular e tempo para aprender bem cada movimento.'
+        : series(p) + ' séries por exercício: mais volume, porque o corpo já se acostumou e precisa de mais estímulo para continuar evoluindo.']);
+    itens.push(['Os exercícios grandes primeiro', 'Agachamento, supino, remada e puxada vêm no começo, quando você está com mais energia. Os menores, como bíceps, tríceps e panturrilha, ficam para o fim.']);
+    if (p.foco.length) {
+      var nomes = p.foco.map(function (f) { return T.porFoco[f].rotulo.toLowerCase(); });
+      itens.push(['Foco em ' + juntar(nomes), 'Os grupos que você escolheu ganham exercícios e séries a mais. Mais volume na semana é o que mais faz um músculo crescer. Os outros continuam no treino, para o corpo ficar equilibrado.']);
+    }
+    itens.push(['Carga que sobe aos poucos', 'Anote o peso de cada exercício. Quando o treino fica leve duas vezes seguidas, o app sugere subir 1 a 2 kg ou fazer mais repetições. Essa sobrecarga progressiva é o que faz o corpo continuar mudando.']);
+    itens.push(['Três opções para não cansar', 'Cada treino tem 3 opções com exercícios diferentes para os mesmos músculos. Fique numa por 4 a 6 semanas para ver a carga subir e depois troque, para variar o estímulo.']);
+    if (p.cuidados.length) {
+      itens.push(['Respeitando o seu corpo', 'Os exercícios que costumam forçar ' + juntar(p.cuidados.map(function (c) { return (T.CUIDADOS.filter(function (x) { return x.id === c; })[0] || { rotulo: c }).rotulo.toLowerCase(); })) + ' saíram do treino e foram trocados por outros do mesmo grupo.']);
+    }
+    return itens;
+  }
+
+  function desenharEstrategia(p) {
+    var lista = $('tr-estrategia');
+    lista.textContent = '';
+    estrategia(p).forEach(function (i) {
+      var li = criar('li');
+      li.appendChild(criar('strong', '', i[0]));
+      li.appendChild(criar('span', '', i[1]));
+      lista.appendChild(li);
+    });
+  }
 
   /* --- Ligação com a Alimentação ----------------------------------------------------------------- */
 

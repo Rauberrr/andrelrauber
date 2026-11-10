@@ -74,10 +74,13 @@ window.AR_API = (function () {
   // Só volta para páginas do próprio site, para o link não levar a outro lugar
   var DESTINOS = [
     'medidas.html', 'minha-conta.html', 'painel.html', 'guarda-roupa.html', 'alimentacao.html',
-    'apps/', 'apps/guarda-roupa/', 'apps/alimentacao/', 'apps/ocasioes/', 'apps/treino/'
+    'apps/', 'apps/guarda-roupa/', 'apps/alimentacao/', 'apps/ocasioes/', 'apps/treino/',
+    'colecao.html', 'pedido-exclusivo.html'
   ];
   function destino(padrao) {
     var pedido = new URLSearchParams(location.search).get('voltar');
+    // A página de uma peça volta com o nome dela, só com letras, números e hífens
+    if (/^produto\.html\?p=[a-z0-9-]{1,90}$/.test(pedido || '')) return pedido;
     return DESTINOS.indexOf(pedido) !== -1 ? pedido : padrao;
   }
 

@@ -17,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261109c">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261109c">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261110a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261110a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -38,7 +38,7 @@
     <p class="alim-aviso"><strong>Estimativa educativa, não uma dieta prescrita.</strong> No Brasil, quem prescreve dieta é o nutricionista. Use estes números para entender sua alimentação e conversar com um profissional. Se você tem diabetes, problema nos rins ou no coração, está grávida ou amamentando, faz tratamento ou toma remédio contínuo, procure um nutricionista ou médico antes de mudar a alimentação.</p>
 
     <ol class="alim-passos" id="alim-topo" aria-label="Passos">
-      <li id="item-resumo" hidden><button type="button" id="ir-resumo"><span>★</span> Resumo</button></li>
+      <li id="item-resumo" hidden><button type="button" id="ir-resumo"><span>★</span> Minha dieta</button></li>
       <li><button type="button" id="ir-voce" aria-current="step"><span>1</span> Você</button></li>
       <li><button type="button" id="ir-comida"><span>2</span> O que você come</button></li>
       <li><button type="button" id="ir-plano"><span>3</span> Seu plano</button></li>
@@ -48,9 +48,13 @@
     <p class="alim-retorno" id="alim-retorno" role="status" aria-live="polite"></p>
 
     <section class="alim-passo" id="passo-resumo" tabindex="-1" hidden>
-      <h2 class="titulo-m">Seu resumo</h2>
+      <h2 class="titulo-m">Sua dieta</h2>
       <p class="alim-suave" id="alim-resumo-status"></p>
-      <div class="alim-cartoes" id="alim-cartoes"></div>
+      <div class="alim-dieta" id="alim-dieta"></div>
+      <details class="alim-tudo">
+        <summary>Ver todos os números: seus dados, energia, custo e acompanhamento</summary>
+        <div class="alim-cartoes" id="alim-cartoes"></div>
+      </details>
     </section>
 
     <form class="alim-passo" id="passo-voce" tabindex="-1" novalidate>
@@ -174,7 +178,7 @@
       <p class="alim-fontes" id="alim-fontes"></p>
       <div class="alim-botoes">
         <button class="botao botao-cheio" id="alim-ir-acompanhamento" type="button">Acompanhar meu peso e medidas</button>
-        <button class="botao" id="alim-ir-resumo" type="button">Ver meu resumo</button>
+        <button class="botao" id="alim-ir-resumo" type="button">Ver minha dieta</button>
         <button class="botao" id="alim-voltar-plano" type="button">Voltar ao plano</button>
       </div>
       <section class="app-cartao tr-ponte" aria-labelledby="alim-ponte-titulo">
@@ -240,11 +244,11 @@
     <a href="apps/treino/"><svg data-icone="haltere"></svg>Treino</a>
   </nav>
 
-  <script src="assets/js/config.js?v=20261104a"></script>
-  <script src="assets/js/conta-api.js?v=20261109c"></script>
-  <script src="assets/js/apps.js?v=20261109c"></script>
-  <script src="assets/js/alimentacao-dados.js?v=20261108a"></script>
-  <script src="assets/js/alimentacao-calculo.js?v=20261109c"></script>
-  <script src="assets/js/alimentacao.js?v=20261109c"></script>
+  <script src="assets/js/config.js?v=20261110a"></script>
+  <script src="assets/js/conta-api.js?v=20261110a"></script>
+  <script src="assets/js/apps.js?v=20261110a"></script>
+  <script src="assets/js/alimentacao-dados.js?v=20261110a"></script>
+  <script src="assets/js/alimentacao-calculo.js?v=20261110a"></script>
+  <script src="assets/js/alimentacao.js?v=20261110a"></script>
 </body>
 </html>

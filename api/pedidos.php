@@ -7,6 +7,7 @@
  * POST ?acao=conferir  consulta o Mercado Pago e atualiza o pedido
  * POST ?acao=criar     cria um pedido para um cliente (só administrador)
  * POST ?acao=cancelar  cancela um pedido ainda não pago (só administrador)
+ * POST ?acao=encomendar cria um pedido de um produto da coleção, para a própria pessoa
  */
 declare(strict_types=1);
 
@@ -36,6 +37,9 @@ switch ($_GET['acao'] ?? '') {
         break;
     case 'cancelar':
         cancelar();
+        break;
+    case 'encomendar':
+        encomendar();
         break;
     default:
         falhar(404, 'Ação desconhecida.');
@@ -215,4 +219,61 @@ function cancelar(): void
     registrar_evento((int) $pedido['usuario_id'], 'pedido_cancelado', null, (string) $pedido['descricao']);
     $atual = consultar('SELECT * FROM pedidos WHERE id = ?', [$pedido['id']])->fetch();
     responder(200, ['pedido' => pedido_publico($atual)]);
+}
+
+// A pessoa encomenda um produto da coleção. O valor vem do banco, nunca do navegador.
+function encomendar(): void
+{
+    $dados = exigir_post();
+    $usuario = exigir_login();
+    $id = (int) $usuario['id'];
+
+    $slug = texto($dados, 'slug', 90);
+    $produto = preg_match('/^[a-z0-9-]{1,90}$/', $slug) === 1
+        ? consultar('SELECT p.*, c.lanca_em FROM produtos p LEFT JOIN colecoes c ON c.id = p.colecao_id WHERE p.slug = ?', [$slug])->fetch()
+        : false;
+    $noAr = $produto && $produto['situacao'] === 'publicado' && ($produto['lanca_em'] === null || $produto['lanca_em'] <= agora());
+    if (!$noAr) {
+        falhar(404, 'Este produto não está disponível agora.');
+    }
+
+    $cores = json_decode((string) $produto['cores'], true) ?: [];
+    $cor = texto($dados, 'cor', 30);
+    if ($cores) {
+        $nomes = array_map(function ($c) { return (string) ($c['nome'] ?? ''); }, $cores);
+        if (!in_array($cor, $nomes, true)) {
+            falhar(422, 'Escolha a cor.', ['campos' => ['cor' => 'Escolha a cor.']]);
+        }
+    } else {
+        $cor = '';
+    }
+
+    // A peça é feita sob medida: sem as medidas, não há como começar
+    $cadastro = consultar('SELECT concluido_em FROM cadastros WHERE usuario_id = ?', [$id])->fetch();
+    if (!$cadastro || $cadastro['concluido_em'] === null) {
+        falhar(409, 'Preencha suas medidas antes de encomendar. Elas ficam salvas para as próximas compras.', ['precisaMedidas' => true]);
+    }
+
+    $limite = chave_limite('encomendar', (string) $id);
+    exigir_limite($limite, 15, 3600);
+    contar_tentativa($limite);
+
+    $abertos = (int) consultar(
+        "SELECT COUNT(*) FROM pedidos WHERE usuario_id = ? AND situacao IN ('aguardando', 'processando')",
+        [$id]
+    )->fetchColumn();
+    if ($abertos >= PEDIDOS_ABERTOS_MAXIMO) {
+        falhar(422, 'Você já tem muitos pedidos abertos. Pague ou fale conosco antes de encomendar outro.');
+    }
+
+    $descricao = mb_substr($produto['nome'] . ' sob medida' . ($cor !== '' ? ', ' . $cor : ''), 0, 160);
+    $momento = agora();
+    $codigo = bin2hex(random_bytes(16));
+    consultar(
+        'INSERT INTO pedidos (usuario_id, codigo, descricao, valor_centavos, frete_centavos, criado_em, atualizado_em) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [$id, $codigo, $descricao, (int) $produto['preco_centavos'], (int) $produto['frete_centavos'], $momento, $momento]
+    );
+    registrar_evento($id, 'pedido_criado', null, $descricao);
+    $pedido = consultar('SELECT * FROM pedidos WHERE codigo = ?', [$codigo])->fetch();
+    responder(201, ['pedido' => pedido_publico($pedido)]);
 }

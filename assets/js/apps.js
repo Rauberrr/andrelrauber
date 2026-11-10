@@ -140,11 +140,21 @@ window.AR_APP = (function () {
 
   // Quem preenche as medidas num app não precisa digitar de novo no outro.
   // medidas: sexo, idade, altura e peso. resumo: o que um app mostra do outro.
-  var COMUM = 'ar-medidas-v1';
+  // A página de medidas apaga 'ar-medidas-v1', um nome antigo dela; por isso o nome é outro
+  var COMUM = 'ar-corpo-v1';
+  var COMUM_ANTIGO = 'ar-medidas-v1';
   var CAMPOS_MEDIDAS = ['sexo', 'idade', 'altura', 'peso'];
 
   function comum() {
     var c = lerLocal(COMUM);
+    if (!c) {
+      // Quem já usava os apps com o nome antigo não perde as medidas
+      var antigo = lerLocal(COMUM_ANTIGO);
+      if (antigo && typeof antigo === 'object' && antigo.medidas && typeof antigo.medidas === 'object') {
+        c = antigo;
+        gravarLocal(COMUM, c);
+      }
+    }
     if (!c || typeof c !== 'object' || Array.isArray(c)) c = {};
     if (!c.medidas || typeof c.medidas !== 'object') c.medidas = {};
     return c;

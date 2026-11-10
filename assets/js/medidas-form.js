@@ -20,6 +20,8 @@
   var mostrarNome = false;
   var mostrarTelefone = false;
   var jaConcluido = false;
+  // Só pede para salvar alterações quando alguma coisa mudou depois de abrir a página
+  var alterado = false;
   var atual = null;
   var voltarParaRevisao = false;
   var avisoConfirmado = {};
@@ -171,12 +173,17 @@
         '<div id="revisao-conteudo"></div>' +
         '<div class="envio">' +
           '<p class="erro envio-erro" id="erro-geral" role="alert"></p>' +
+          '<div class="confirmacao" id="cadastro-completo" role="status" hidden>' +
+            '<h3 class="titulo-s">Seu cadastro está completo.</h3>' +
+            '<p>Suas medidas estão salvas para comprar na coleção ou fazer um pedido exclusivo. Se algo mudou, toque em Alterar ao lado da informação.</p>' +
+            '<div class="confirmacao-acoes"><a class="botao botao-cheio" href="minha-conta.html">Ir para o meu perfil</a><a class="botao" href="colecao.html">Ver a coleção</a></div>' +
+          '</div>' +
           '<button class="botao botao-cheio" id="botao-concluir" type="submit">Concluir cadastro</button>' +
-          '<p class="envio-nota">Você pode voltar à sua conta para alterar as informações quando quiser.</p>' +
+          '<p class="envio-nota" id="envio-nota">Você pode voltar à sua conta para alterar as informações quando quiser.</p>' +
           '<div class="confirmacao" id="confirmacao" role="status" tabindex="-1" hidden>' +
-            '<h3 class="titulo-s">Cadastro concluído.</h3>' +
-            '<p>Recebemos suas informações, e você não precisa enviar nenhuma mensagem. Entraremos em contato pelo seu telefone para falar sobre a peça.</p>' +
-            '<div class="confirmacao-acoes"><a class="link-seta" href="minha-conta.html">Ir para minha conta <span aria-hidden="true">→</span></a></div>' +
+            '<h3 class="titulo-s">Tudo salvo.</h3>' +
+            '<p>Recebemos suas informações, e você não precisa enviar nenhuma mensagem. Suas medidas ficam guardadas para as suas compras.</p>' +
+            '<div class="confirmacao-acoes"><a class="botao botao-cheio" href="minha-conta.html">Ir para o meu perfil</a><a class="botao" href="colecao.html">Ver a coleção</a></div>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -318,12 +325,29 @@
     return enviando;
   }
 
+  function marcarAlterado() {
+    if (alterado) return;
+    alterado = true;
+    if (voltarParaRevisao) botaoContinuar.textContent = 'Salvar e revisar';
+  }
+
+  // Cadastro já concluído e nada mudado: mostra que está completo, sem botão de salvar
+  function atualizarConcluir() {
+    var completo = jaConcluido && !alterado;
+    botaoConcluir.hidden = completo;
+    botaoConcluir.textContent = jaConcluido ? 'Salvar alterações' : 'Concluir cadastro';
+    document.getElementById('envio-nota').hidden = completo;
+    document.getElementById('cadastro-completo').hidden = !completo || !confirmacao.hidden;
+  }
+
   form.addEventListener('input', function (e) {
     if (!e.target.id) return;
+    marcarAlterado();
     marcar(e.target.id);
     agendarSalvamento();
   });
   form.addEventListener('change', function (e) {
+    if (e.target.id) marcarAlterado();
     if (e.target.tagName === 'SELECT' || e.target.type === 'date') {
       marcar(e.target.id);
       salvar();
@@ -441,12 +465,12 @@
     navEl.hidden = false;
     botaoVoltar.hidden = seq.indexOf(id) === 0;
     botaoContinuar.hidden = tipo === 'decisao' || tipo === 'revisao';
-    botaoContinuar.textContent = voltarParaRevisao ? 'Salvar e revisar' : 'Continuar';
+    botaoContinuar.textContent = voltarParaRevisao ? (alterado ? 'Salvar e revisar' : 'Voltar à revisão') : 'Continuar';
 
     if (id === 'revisao') {
       montarRevisao();
-      botaoConcluir.textContent = jaConcluido ? 'Salvar alterações' : 'Concluir cadastro';
       confirmacao.hidden = true;
+      atualizarConcluir();
       erroGeral.textContent = '';
     }
     if (id === 'endereco') buscarCep();
@@ -630,8 +654,9 @@
       if (r.status === 401) { api.irParaLogin('medidas.html'); return; }
       if (r.ok) {
         jaConcluido = true;
-        botaoConcluir.textContent = 'Salvar alterações';
+        alterado = false;
         confirmacao.hidden = false;
+        atualizarConcluir();
         confirmacao.focus({ preventScroll: true });
         confirmacao.scrollIntoView({ block: 'nearest' });
         return;
@@ -657,7 +682,7 @@
 
   function mostrarNoPainel(m) {
     var temDesenho = m && m.marca && (m.marca.l || m.marca.v);
-    painelFigura.innerHTML = figura.desenhar(m);
+    painelFigura.innerHTML = figura.desenhar(m, null, true);
     painelTitulo.textContent = m ? m.rotulo : 'Onde medir';
     painelTexto.textContent = m ? m.como : 'Nas etapas de medida, esta figura mostra onde passar a fita.';
     painelBotao.disabled = !temDesenho;
@@ -673,7 +698,7 @@
   function abrirModal(id) {
     var m = porMedida[id];
     if (!m) return;
-    document.getElementById('modal-desenho').innerHTML = figura.desenhar(m, m.recorte);
+    document.getElementById('modal-desenho').innerHTML = figura.desenhar(m, m.recorte, true);
     document.getElementById('modal-titulo').textContent = m.rotulo;
     document.getElementById('modal-como').textContent = m.como;
     document.getElementById('modal-erro').textContent = m.erro;

@@ -18,8 +18,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261109c">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261109c">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261110a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261110a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app app-inicio">
@@ -44,8 +44,8 @@
       <ul class="app-icones">
         <li><a class="app-icone" href="apps/guarda-roupa/"><span class="app-icone-fundo app-icone-guarda-roupa"><svg data-icone="cabide"></svg></span>Guarda-roupa</a></li>
         <li><a class="app-icone" href="apps/alimentacao/"><span class="app-icone-fundo app-icone-alimentacao"><svg data-icone="folha"></svg></span>Alimentação</a></li>
-        <li><a class="app-icone" href="apps/ocasioes/"><span class="app-icone-fundo app-icone-ocasioes"><svg data-icone="calendario"></svg></span><span class="app-icone-beta" aria-hidden="true">BETA</span>Ocasiões<span class="visualmente-oculto"> (versão beta)</span></a></li>
-        <li><a class="app-icone" href="apps/treino/"><span class="app-icone-fundo app-icone-treino"><svg data-icone="haltere"></svg></span><span class="app-icone-beta" aria-hidden="true">BETA</span>Treino<span class="visualmente-oculto"> (versão beta)</span></a></li>
+        <li><a class="app-icone" href="apps/ocasioes/"><span class="app-icone-fundo app-icone-ocasioes"><svg data-icone="calendario"></svg></span>Ocasiões</a></li>
+        <li><a class="app-icone" href="apps/treino/"><span class="app-icone-fundo app-icone-treino"><svg data-icone="haltere"></svg></span>Treino</a></li>
       </ul>
     </nav>
 
@@ -65,10 +65,27 @@
       </div>
     </section>
 
-    <section class="app-secao" aria-labelledby="tela-titulo">
-      <h2 class="app-secao-titulo" id="tela-titulo">Na tela do celular</h2>
-      <p class="app-secao-texto">No iPhone, toque em Compartilhar e depois em Adicionar à Tela de Início. No Android, abra o menu do navegador e toque em Instalar app ou Adicionar à tela inicial. Os apps abrem como um aplicativo.</p>
+    <section class="app-secao" id="app-instalar" aria-labelledby="tela-titulo">
+      <div class="app-instalar">
+        <img class="app-instalar-icone" src="assets/img/apple-touch-icon.png?v=20261109d" alt="" width="60" height="60">
+        <div>
+          <h2 class="app-cartao-titulo" id="tela-titulo">Rauber na tela do celular</h2>
+          <p class="app-suave">Abra os apps com um toque, em tela cheia, como um aplicativo.</p>
+        </div>
+        <button class="botao botao-cheio" type="button" id="app-instalar-botao">Adicionar à tela inicial</button>
+      </div>
     </section>
+
+    <dialog class="modal-figura gr-modal app-instalar-modal" id="app-instalar-modal" aria-labelledby="instalar-titulo">
+      <button class="modal-fechar" id="app-instalar-fechar" type="button" aria-label="Fechar">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+      </button>
+      <div class="gr-modal-corpo modal-texto">
+        <h2 class="titulo-m" id="instalar-titulo">Adicionar à tela inicial</h2>
+        <ol class="app-instalar-passos" id="app-instalar-passos"></ol>
+        <p class="app-suave" id="app-instalar-nota"></p>
+      </div>
+    </dialog>
 
     <footer class="app-rodape">
       <a href="index.html">Voltar ao site</a>
@@ -86,9 +103,9 @@
   </nav>
   <p class="app-aviso" id="app-aviso" role="status" aria-live="polite"></p>
 
-  <script src="assets/js/config.js?v=20261104a"></script>
-  <script src="assets/js/conta-api.js?v=20261109c"></script>
-  <script src="assets/js/apps.js?v=20261109c"></script>
-  <script src="assets/js/apps-inicio.js?v=20261109c"></script>
+  <script src="assets/js/config.js?v=20261110a"></script>
+  <script src="assets/js/conta-api.js?v=20261110a"></script>
+  <script src="assets/js/apps.js?v=20261110a"></script>
+  <script src="assets/js/apps-inicio.js?v=20261110a"></script>
 </body>
 </html>

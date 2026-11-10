@@ -25,7 +25,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@1,300&family=Jost:wght@300;400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261109c">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261110a">
   <script>document.documentElement.classList.add('js');</script>
   <script type="application/ld+json">
   {
@@ -55,8 +55,7 @@
       <nav class="nav" aria-label="Principal">
         <ul class="nav-lista">
           <li><a href="index.html" aria-current="page">Início</a></li>
-          <li><a href="a-marca.html">A Marca</a></li>
-          <li><a href="medidas.html">Tabela de Medidas</a></li>
+          <li><a href="colecao.html">Coleção</a></li>
           <li><a href="apps/">Apps</a></li>
           <li><a href="contato.html">Contato</a></li>
           <li><a href="minha-conta.html">Minha conta</a></li>
@@ -81,8 +80,8 @@
           <p class="hero-frase">Alfaiataria clássica, feita para durar mais que as estações.</p>
         </div>
         <div class="hero-acoes">
-          <a class="botao botao-cheio" href="medidas.html">Preencher minhas medidas</a>
-          <a class="botao" href="a-marca.html">Conhecer a marca</a>
+          <a class="botao botao-cheio" href="colecao.html">Ver a coleção</a>
+          <a class="botao" href="pedido-exclusivo.html">Pedido exclusivo</a>
         </div>
       </div>
     </section>
@@ -124,83 +123,37 @@
       </div>
     </section>
 
-    <section class="secao conteudo">
-      <div class="cab-secao">
-        <div>
-          <span class="etiqueta revelar">Como funciona</span>
-          <h2 class="titulo-l">Da fita métrica à sua porta.</h2>
+    <section class="fita-secao" aria-labelledby="fita-titulo">
+      <div class="fita-fixa">
+        <div class="conteudo fita-texto">
+          <span class="etiqueta">Sob medida</span>
+          <h2 class="titulo-l" id="fita-titulo">Cada peça começa nas suas medidas.</h2>
+          <p class="suave">Ombro, tórax, cintura e comprimento. O molde é desenhado a partir de você, não de uma grade de tamanhos.</p>
         </div>
-        <p class="suave revelar">Você preenche tudo aqui no site, sem precisar mandar mensagem. Depois, quem desenha e costura a sua peça entra em contato.</p>
+        <canvas class="fita-canvas" id="fita-canvas" aria-hidden="true"></canvas>
       </div>
-      <ol class="passos">
-        <li class="passo fio revelar">
-          <h3 class="titulo-m">Você cria sua conta e preenche</h3>
-          <p>Uma informação de cada vez, seguindo o guia ilustrado. Tudo fica salvo, e não é preciso enviar mensagem.</p>
-        </li>
-        <li class="passo fio revelar">
-          <h3 class="titulo-m">A gente alinha o projeto</h3>
-          <p>Entramos em contato para falar sobre a peça, o tecido, a cor e o caimento. Você recebe o valor e o prazo antes de qualquer corte.</p>
-        </li>
-        <li class="passo fio revelar">
-          <h3 class="titulo-m">O molde é desenhado</h3>
-          <p>Suas medidas viram um molde próprio, desenvolvido com modelagem e design 3D.</p>
-        </li>
-        <li class="passo fio revelar">
-          <h3 class="titulo-m">Projeção, corte e costura</h3>
-          <p>O molde é projetado direto no tecido, o que dá precisão ao corte. Depois, a peça é costurada.</p>
-        </li>
-        <li class="passo fio revelar">
-          <h3 class="titulo-m">Enviamos pelos Correios</h3>
-          <p>A peça sai pronta e embalada, com prazo e valor de frete definidos conforme o serviço dos Correios.</p>
-        </li>
-      </ol>
     </section>
 
-    <section class="secao sobre-off-2">
-      <div class="conteudo">
-        <div class="cab-secao">
-          <div>
-            <span class="etiqueta revelar">O que fazemos</span>
-            <h2 class="titulo-l">Peças essenciais, feitas uma a uma.</h2>
-          </div>
-        </div>
-        <div class="pecas">
-          <article class="peca">
-            <svg viewBox="0 0 200 240" aria-hidden="true">
-              <path class="traco" pathLength="1" d="M62 18H138L140 30L147 120L145 226H112L101 90L100 85L99 90L88 226H55L53 120L60 30Z"/>
-              <path class="traco" pathLength="1" d="M60 30H140M100 30V85"/>
-              <path class="traco traco-fino" pathLength="1" d="M68 30C70 45 64 52 56 56M132 30C130 45 136 52 144 56M76 95L72 226M124 95L128 226"/>
-            </svg>
-            <h3 class="titulo-s">Calça</h3>
-            <p>Cintura, gancho e linha da perna feitos para o seu corpo.</p>
-          </article>
-          <article class="peca">
-            <svg viewBox="0 0 200 240" aria-hidden="true">
-              <path class="traco" pathLength="1" d="M82 22L34 46L16 170L36 176L52 86L50 222H150L148 86L164 176L184 170L166 46L118 22C110 30 90 30 82 22Z"/>
-              <path class="traco" pathLength="1" d="M84 22L70 62L84 72L78 80L100 130L122 80L116 72L130 62L116 22M100 130V222"/>
-              <path class="traco traco-fino" pathLength="1" d="M60 170L88 176M112 176L140 170M118 98L138 94"/>
-              <g class="botoes-peca"><circle cx="105" cy="148" r="1.6"/><circle cx="105" cy="175" r="1.6"/></g>
-            </svg>
-            <h3 class="titulo-s">Blazer</h3>
-            <p>Ombro e cintura desenhados para vestir com presença.</p>
-          </article>
-          <article class="peca">
-            <svg viewBox="0 0 200 240" aria-hidden="true">
-              <path class="traco" pathLength="1" d="M80 30L48 42L22 78L44 96L58 76V210H142V76L156 96L178 78L152 42L120 30C112 44 88 44 80 30Z"/>
-              <path class="traco traco-fino" pathLength="1" d="M74 33C86 56 114 56 126 33M58 202H142M28 72L49 90M172 72L151 90"/>
-            </svg>
-            <h3 class="titulo-s">Camiseta</h3>
-            <p>A peça mais simples do armário, com a proporção que faltava.</p>
-          </article>
+    <section class="camiseta-secao" aria-labelledby="camiseta-titulo">
+      <div class="camiseta-fixa">
+        <div class="camiseta-palco" id="camiseta-palco" aria-hidden="true"></div>
+        <div class="conteudo camiseta-texto">
+          <span class="etiqueta">A coleção</span>
+          <h2 class="titulo-l" id="camiseta-titulo">Peças essenciais, feitas uma a uma.</h2>
+          <p class="suave">Camisetas, calças, camisas e blazers com o corte, o caimento e a proporção certos para o seu corpo.</p>
+          <a class="botao botao-cheio" href="colecao.html">Ver a coleção</a>
         </div>
       </div>
     </section>
 
     <section class="secao sobre-bordo chamada">
       <div class="conteudo">
-        <h2 class="titulo-l">Sua próxima peça começa com uma fita métrica.</h2>
-        <p class="suave revelar">Tire suas medidas com o nosso guia e responda uma informação de cada vez.</p>
-        <a class="botao botao-cheio revelar" href="medidas.html">Começar agora</a>
+        <h2 class="titulo-l">Encontre a sua próxima peça.</h2>
+        <p class="suave revelar">Escolha na coleção ou faça um pedido exclusivo, com a peça do seu jeito.</p>
+        <div class="chamada-botoes revelar">
+          <a class="botao botao-cheio" href="colecao.html">Ver a coleção</a>
+          <a class="botao" href="pedido-exclusivo.html">Pedido exclusivo</a>
+        </div>
       </div>
     </section>
   </main>
@@ -213,10 +166,11 @@
         <div class="rodape-coluna">
           <span class="etiqueta">Navegue</span>
           <ul>
-            <li><a href="a-marca.html">A Marca</a></li>
-            <li><a href="medidas.html">Tabela de Medidas</a></li>
-            <li><a href="guia-de-medidas.html">Guia de Medidas</a></li>
+            <li><a href="colecao.html">Coleção</a></li>
+            <li><a href="pedido-exclusivo.html">Pedido exclusivo</a></li>
             <li><a href="apps/">Apps</a></li>
+            <li><a href="guia-de-medidas.html">Guia de Medidas</a></li>
+            <li><a href="a-marca.html">A Marca</a></li>
             <li><a href="contato.html">Contato</a></li>
           </ul>
         </div>
@@ -236,7 +190,8 @@
     </div>
   </footer>
 
-  <script src="assets/js/config.js?v=20261104a"></script>
-  <script src="assets/js/main.js?v=20261107a"></script>
+  <script src="assets/js/config.js?v=20261110a"></script>
+  <script src="assets/js/main.js?v=20261110a"></script>
+  <script src="assets/js/home-animacoes.js?v=20261110a"></script>
 </body>
 </html>

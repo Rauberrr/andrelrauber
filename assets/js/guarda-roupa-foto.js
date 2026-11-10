@@ -9,8 +9,9 @@ window.AR_FOTO = (function () {
   // Limite pensado para caber no envio de hospedagens mais restritas
   var MAXIMO_BYTES = 1800000;
   var LIMITE_MS = 180000;
-  var ENDERECO_WORKER = 'assets/js/guarda-roupa-fundo-worker.js?v=20261104c';
-  var CHAVE_PRONTO = 'ar-guarda-roupa-fundo';
+  var ENDERECO_WORKER = 'assets/js/guarda-roupa-fundo-worker.js?v=20261110a';
+  // Mudou com a ferramenta mais precisa: quem já tinha a antiga é avisado do novo download
+  var CHAVE_PRONTO = 'ar-guarda-roupa-fundo-2';
 
   function novoCanvas(l, a) {
     var c = document.createElement('canvas');
@@ -215,6 +216,126 @@ window.AR_FOTO = (function () {
     ctx.putImageData(imagem, 0, 0);
   }
 
+  // A ferramenta deixa partes da peça meio transparentes, sobretudo em tecidos claros.
+  // Aqui o contorno fica firme: o que é quase peça vira peça, o que é quase fundo some.
+  function firmarContorno(canvas) {
+    var ctx = canvas.getContext('2d');
+    var imagem = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var px = imagem.data;
+    for (var i = 3; i < px.length; i += 4) {
+      var a = px[i];
+      if (a === 0 || a === 255) continue;
+      px[i] = a < 40 ? 0 : (a > 190 ? 255 : Math.round((a - 40) * 255 / 150));
+    }
+    ctx.putImageData(imagem, 0, 0);
+  }
+
+  // Buracos dentro da peça, que a ferramenta apagou por engano, voltam com os pixels da foto
+  // original. Só os buracos fechados e pequenos: a abertura de uma alça de bolsa fica como está.
+  var BURACO_MAXIMO = 0.06;
+
+  function preencherBuracos(canvas, original) {
+    var l = canvas.width;
+    var a = canvas.height;
+    if (!original || original.width !== l || original.height !== a) return;
+    var ctx = canvas.getContext('2d');
+    var imagem = ctx.getImageData(0, 0, l, a);
+    var px = imagem.data;
+    var foto = original.getContext('2d').getImageData(0, 0, l, a).data;
+    var total = l * a;
+    var marca = new Uint8Array(total);
+    var pilha = new Int32Array(total);
+    var topo = 0;
+    var peca = 0;
+    var i;
+    function vazio(k) { return px[k * 4 + 3] < 128; }
+    for (i = 0; i < total; i += 1) if (!vazio(i)) peca += 1;
+    // O fundo de verdade encosta na borda da foto
+    for (var x = 0; x < l; x += 1) {
+      [x, (a - 1) * l + x].forEach(function (k) { if (vazio(k) && !marca[k]) { marca[k] = 1; pilha[topo++] = k; } });
+    }
+    for (var y = 0; y < a; y += 1) {
+      [y * l, y * l + l - 1].forEach(function (k) { if (vazio(k) && !marca[k]) { marca[k] = 1; pilha[topo++] = k; } });
+    }
+    while (topo > 0) {
+      var atual = pilha[--topo];
+      var ax = atual % l;
+      var viz = [ax > 0 ? atual - 1 : -1, ax < l - 1 ? atual + 1 : -1, atual - l, atual + l];
+      for (var v = 0; v < 4; v += 1) {
+        var n = viz[v];
+        if (n >= 0 && n < total && !marca[n] && vazio(n)) { marca[n] = 1; pilha[topo++] = n; }
+      }
+    }
+    // O que ficou vazio e sem marca é buraco: agrupa e devolve os pequenos
+    var limite = peca * BURACO_MAXIMO;
+    for (i = 0; i < total; i += 1) {
+      if (marca[i] || !vazio(i)) continue;
+      var grupo = [];
+      marca[i] = 2;
+      pilha[0] = i;
+      topo = 1;
+      while (topo > 0) {
+        var b = pilha[--topo];
+        grupo.push(b);
+        var bx = b % l;
+        var vz = [bx > 0 ? b - 1 : -1, bx < l - 1 ? b + 1 : -1, b - l, b + l];
+        for (var w = 0; w < 4; w += 1) {
+          var m = vz[w];
+          if (m >= 0 && m < total && !marca[m] && vazio(m)) { marca[m] = 2; pilha[topo++] = m; }
+        }
+      }
+      if (grupo.length > limite) continue;
+      grupo.forEach(function (k) {
+        var o = k * 4;
+        px[o] = foto[o];
+        px[o + 1] = foto[o + 1];
+        px[o + 2] = foto[o + 2];
+        px[o + 3] = 255;
+      });
+    }
+    ctx.putImageData(imagem, 0, 0);
+  }
+
+  // O eixo principal da peça, pela distribuição dos pixels. Calças e camisas costumam
+  // ficar em pé; sapatos e bonés, deitados. Devolve o giro, em graus, para endireitar.
+  function inclinacao(canvas) {
+    var l = canvas.width;
+    var a = canvas.height;
+    var px = canvas.getContext('2d').getImageData(0, 0, l, a).data;
+    var n = 0, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
+    for (var y = 0; y < a; y += 2) {
+      for (var x = 0; x < l; x += 2) {
+        if (px[(y * l + x) * 4 + 3] < 128) continue;
+        n += 1; sx += x; sy += y; sxx += x * x; syy += y * y; sxy += x * y;
+      }
+    }
+    if (n < 50) return 0;
+    var mx = sx / n, my = sy / n;
+    var cxx = sxx / n - mx * mx, cyy = syy / n - my * my, cxy = sxy / n - mx * my;
+    // Peças quase redondas ou quadradas não têm um eixo claro
+    var media = (cxx + cyy) / 2;
+    var dif = Math.sqrt(Math.pow((cxx - cyy) / 2, 2) + cxy * cxy);
+    if ((media + dif) / Math.max(media - dif, 1) < 1.35) return 0;
+    var angulo = 0.5 * Math.atan2(2 * cxy, cxx - cyy) * 180 / Math.PI;
+    // Gira para o eixo em pé ou deitado mais próximo, só quando a diferença é pequena
+    var alvo = Math.abs(angulo) > 45 ? (angulo > 0 ? 90 : -90) : 0;
+    var desvio = angulo - alvo;
+    return Math.abs(desvio) >= 1.5 && Math.abs(desvio) <= 20 ? -desvio : 0;
+  }
+
+  function rotacionar(canvas, graus) {
+    if (!graus) return canvas;
+    var r = graus * Math.PI / 180;
+    var c = Math.abs(Math.cos(r)), s = Math.abs(Math.sin(r));
+    var novo = novoCanvas(Math.ceil(canvas.width * c + canvas.height * s), Math.ceil(canvas.width * s + canvas.height * c));
+    var ctx = novo.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.translate(novo.width / 2, novo.height / 2);
+    ctx.rotate(r);
+    ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+    return novo;
+  }
+
   // Encontra onde a peça está depois de tirar o fundo
   function areaDaPeca(canvas) {
     var l = canvas.width;
@@ -238,30 +359,59 @@ window.AR_FOTO = (function () {
     return { x: minX, y: minY, l: largura, a: altura, parte: cheios / (l * a), preenchido: cheios / (largura * altura) };
   }
 
-  // Corta o vazio, centraliza a peça e deixa todas as fotos do mesmo tamanho.
-  // Devolve null quando o recorte não encontrou uma peça de verdade.
-  function enquadrar(recorte) {
+  // Coloca a peça no centro, do mesmo tamanho em todas as fotos, já girada
+  function centralizar(peca, graus) {
+    var girada = rotacionar(peca, graus);
+    var area = areaDaPeca(girada);
+    if (!area) return null;
+    var final = novoCanvas(LARGURA_FINAL, ALTURA_FINAL);
+    var util = 1 - MARGEM * 2;
+    var escala = Math.min(LARGURA_FINAL * util / area.l, ALTURA_FINAL * util / area.a);
+    var l = area.l * escala;
+    var a = area.a * escala;
+    var ctx = final.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(girada, area.x, area.y, area.l, area.a, (LARGURA_FINAL - l) / 2, (ALTURA_FINAL - a) / 2, l, a);
+    final.area = area;
+    return final;
+  }
+
+  // Corta o vazio, firma o contorno, devolve partes apagadas, endireita e centraliza.
+  // original: a foto antes de tirar o fundo, do mesmo tamanho. Devolve null quando
+  // o recorte não encontrou uma peça de verdade. O resultado guarda a peça limpa e o
+  // giro automático, para a pessoa ajustar o ângulo depois com ajustarAngulo().
+  function enquadrar(recorte, original) {
     return decodificar(recorte).then(function (imagem) {
       var bruto = novoCanvas(imagem.width, imagem.height);
       bruto.getContext('2d').drawImage(imagem, 0, 0);
       if (imagem.close) imagem.close();
 
+      firmarContorno(bruto);
       limparManchas(bruto);
+      preencherBuracos(bruto, original);
       var area = areaDaPeca(bruto);
       if (!area || area.parte < 0.02 || area.parte > 0.98) return null;
 
-      var final = novoCanvas(LARGURA_FINAL, ALTURA_FINAL);
-      var util = 1 - MARGEM * 2;
-      var escala = Math.min(LARGURA_FINAL * util / area.l, ALTURA_FINAL * util / area.a);
-      var l = area.l * escala;
-      var a = area.a * escala;
-      var ctx = final.getContext('2d');
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(bruto, area.x, area.y, area.l, area.a, (LARGURA_FINAL - l) / 2, (ALTURA_FINAL - a) / 2, l, a);
+      var giro = inclinacao(bruto);
+      var final = centralizar(bruto, giro);
+      if (!final) return null;
+      final.peca = bruto;
+      final.giroAutomatico = giro;
       // Um recorte quase retangular costuma ser o fundo que ficou junto com a peça
       final.fundoSuspeito = area.preenchido > 0.9;
       return final;
     });
+  }
+
+  // Ajuste fino do ângulo, a partir da peça limpa, sem perder qualidade a cada toque
+  function ajustarAngulo(final, graus) {
+    if (!final || !final.peca) return final;
+    var novo = centralizar(final.peca, final.giroAutomatico + graus);
+    if (!novo) return final;
+    novo.peca = final.peca;
+    novo.giroAutomatico = final.giroAutomatico;
+    novo.fundoSuspeito = final.fundoSuspeito;
+    return novo;
   }
 
   function reduzir(canvas, escala) {
@@ -330,6 +480,6 @@ window.AR_FOTO = (function () {
 
   return {
     abrir: abrir, podeRemover: podeRemover, jaBaixou: jaBaixou, removerFundo: removerFundo,
-    enquadrar: enquadrar, exportar: exportar, corPrincipal: corPrincipal, reduzir: reduzir
+    enquadrar: enquadrar, ajustarAngulo: ajustarAngulo, exportar: exportar, corPrincipal: corPrincipal, reduzir: reduzir
   };
 })();

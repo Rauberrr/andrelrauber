@@ -638,3 +638,70 @@ html:not(.app-liberado) body.app .tr-cronometro { display: none !important; }
 .oc-adicionar .botao { flex: none; display: inline-flex; align-items: center; gap: .3rem; }
 .oc-adicionar .botao svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .oc-restaurar { margin-top: .5rem; }
+
+/* --- Guarda-roupa: dicas de foto e ajuste do ângulo ---------------------------------- */
+
+.gr-dicas-foto { display: grid; gap: .65rem; margin-block: .5rem 1.5rem; }
+.gr-dicas-foto li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: .85rem; align-items: start; padding: .75rem .85rem; border-radius: 14px; background: var(--app-cartao-2, #efebe3); }
+.gr-dicas-foto svg { width: 56px; height: 42px; fill: none; stroke: var(--preto); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.gr-dicas-foto strong { display: block; margin-bottom: .15rem; font-weight: 600; }
+.gr-dicas-foto span { color: var(--app-texto-2, #5f5b54); font-size: .9rem; line-height: 1.45; }
+.gr-dicas-foto strong { color: var(--preto); }
+.gr-ajuste { display: grid; gap: .45rem; margin-block: .25rem 1rem; padding: .8rem .9rem; border-radius: 14px; background: var(--app-cartao-2, #efebe3); }
+.gr-ajuste-cab { display: flex; align-items: center; gap: .6rem; }
+.gr-ajuste-cab label { font-weight: 600; }
+.gr-ajuste-cab output { color: var(--app-texto-2, #5f5b54); font-variant-numeric: tabular-nums; }
+.gr-ajuste-cab .texto-botao { margin-left: auto; }
+.gr-ajuste input[type="range"] { width: 100%; accent-color: var(--bordo-vivo); }
+
+/* --- Início dos apps: na tela inicial do celular ------------------------------------- */
+
+.app-instalar { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .9rem 1rem; align-items: center; padding: 1.1rem; border-radius: 20px; background: var(--app-cartao); box-shadow: 0 1px 2px rgba(0, 0, 0, .05); }
+.app-instalar-icone { width: 60px; height: 60px; border-radius: 14px; box-shadow: 0 6px 16px -8px rgba(0, 0, 0, .5); }
+.app-instalar .botao { grid-column: 1 / -1; width: 100%; justify-content: center; }
+@media (min-width: 700px) {
+  .app-instalar { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .app-instalar .botao { grid-column: auto; width: auto; }
+}
+.app-instalar-passos { display: grid; gap: .75rem; margin-block: 1.25rem 1rem; }
+.app-instalar-passos li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: .85rem; align-items: center; padding: .75rem; border-radius: 14px; background: var(--app-cartao); }
+.app-instalar-simbolo { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--app-cartao-2, #efebe3); color: #0a84ff; }
+.app-instalar-simbolo svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.app-instalar-simbolo svg circle { fill: currentColor; stroke: none; }
+.app-instalar-simbolo svg rect { fill: none; }
+
+/* --- Treino: a estratégia explicada -------------------------------------------------- */
+
+.tr-estrategia { display: grid; gap: .6rem; counter-reset: passo; }
+.tr-estrategia li { position: relative; display: grid; gap: .2rem; padding: .9rem 1rem .9rem 3.1rem; border-radius: 16px; background: var(--app-cartao); counter-increment: passo; }
+.tr-estrategia li::before { content: counter(passo); position: absolute; left: 1rem; top: .9rem; display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: linear-gradient(160deg, #c08a48, #7a4c1b); color: #fff; font-size: .78rem; font-weight: 700; }
+.tr-estrategia strong { font-weight: 600; }
+.tr-estrategia span { color: var(--app-texto-2); font-size: .92rem; line-height: 1.45; }
+
+/* --- Alimentação: minha dieta, para o dia a dia --------------------------------------- */
+
+.alim-dieta { display: grid; gap: 1rem; margin-top: 1rem; }
+.alim-dieta-numeros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; }
+.alim-dieta-numeros div { display: grid; gap: .15rem; padding: .85rem .9rem; border-radius: 16px; background: var(--app-cartao); }
+.alim-dieta-numeros dt { color: var(--app-texto-2); font-size: .78rem; }
+.alim-dieta-numeros dd { margin: 0; font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.alim-dieta-refeicoes { display: grid; gap: .6rem; }
+.alim-dieta-refeicao { padding: .9rem 1rem; border-radius: 18px; background: var(--app-cartao); }
+.alim-dieta-refeicao header { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: .45rem; }
+.alim-dieta-refeicao h3 { font-size: 1rem; font-weight: 600; }
+.alim-dieta-refeicao header span { color: var(--app-texto-2); font-size: .85rem; font-variant-numeric: tabular-nums; }
+.alim-dieta-refeicao ul { display: grid; gap: .3rem; }
+.alim-dieta-refeicao li { padding-left: .9rem; position: relative; line-height: 1.4; }
+.alim-dieta-refeicao li::before { content: ""; position: absolute; left: 0; top: .6em; width: 5px; height: 5px; border-radius: 50%; background: #7c8a45; }
+.alim-dieta-refeicao small { color: var(--app-texto-2); }
+.alim-atalhos { display: flex; flex-wrap: wrap; gap: .5rem; }
+.alim-atalho { min-height: 40px; padding: .4rem .95rem; border: 0; border-radius: 999px; background: var(--app-cartao); box-shadow: inset 0 0 0 1px var(--app-linha); color: var(--preto); font: inherit; font-size: .9rem; cursor: pointer; }
+.alim-atalho:hover { box-shadow: inset 0 0 0 1px #7c8a45; }
+.alim-tudo { margin-top: 1.5rem; }
+.alim-tudo summary { padding: .85rem 1rem; border-radius: 14px; background: var(--app-cartao-2, #efebe3); color: var(--app-texto-2); cursor: pointer; font-size: .92rem; }
+.alim-tudo[open] summary { margin-bottom: .5rem; }
+@media (max-width: 420px) { .alim-dieta-numeros dd { font-size: .95rem; } }
+
+/* Elementos novos escondidos pelo atributo hidden, mesmo com display definido acima */
+.gr-ajuste[hidden], #app-instalar[hidden], .alim-dieta [hidden], .tr-estrategia [hidden] { display: none !important; }
+.app .app-instalar-modal { height: fit-content !important; max-height: 80svh; }

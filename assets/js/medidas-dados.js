@@ -173,18 +173,33 @@ window.AR_FIGURA = (function () {
   var PREENCHIMENTO = 'M150 84 L' + CONTORNO.slice(1) + ' Z';
   var ESPELHO = ' transform="translate(300 0) scale(-1 1)"';
 
-  function marca(m) {
+  // A ponta da fita percorre o caminho da medida, como num vídeo curto que se repete
+  function ponta(caminho, transformar) {
+    return '<g' + (transformar || '') + '><circle class="fig-ponta" r="4.5">' +
+      '<animateMotion dur="3s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;0.62;1" path="' + caminho + '"/>' +
+      '</circle></g>';
+  }
+
+  // animar: a fita se estende e a ponta mostra o caminho; só na figura grande
+  function marca(m, animar) {
     if (!m) return '';
     var saida = '';
+    var classe = 'fig-fita' + (animar ? ' fig-anima' : '');
     (m.t || []).forEach(function (s) {
       saida += '<line class="fig-fita fig-fita-apoio" x1="' + s[0] + '" y1="' + s[1] + '" x2="' + s[2] + '" y2="' + s[3] + '"/>';
     });
     (m.l || []).forEach(function (s) {
-      saida += '<line class="fig-fita" x1="' + s[0] + '" y1="' + s[1] + '" x2="' + s[2] + '" y2="' + s[3] + '"/>';
+      saida += '<line class="' + classe + '" pathLength="1" x1="' + s[0] + '" y1="' + s[1] + '" x2="' + s[2] + '" y2="' + s[3] + '"/>';
+      if (animar) saida += ponta('M' + s[0] + ' ' + s[1] + ' L' + s[2] + ' ' + s[3]);
     });
     (m.v || []).forEach(function (v) {
-      saida += '<ellipse class="fig-fita" cx="' + v[0] + '" cy="' + v[1] + '" rx="' + v[2] + '" ry="' + v[3] + '"' +
-        (v[4] ? ' transform="rotate(' + v[4] + ' ' + v[0] + ' ' + v[1] + ')"' : '') + '/>';
+      var giro = v[4] ? ' transform="rotate(' + v[4] + ' ' + v[0] + ' ' + v[1] + ')"' : '';
+      saida += '<ellipse class="' + classe + '" pathLength="1" cx="' + v[0] + '" cy="' + v[1] + '" rx="' + v[2] + '" ry="' + v[3] + '"' + giro + '/>';
+      if (animar) {
+        // Começa na frente do corpo e dá a volta, como a fita passada em volta
+        var x = v[0], y = v[1] + v[3], rx = v[2], ry = v[3];
+        saida += ponta('M' + x + ' ' + y + ' A' + rx + ' ' + ry + ' 0 1 0 ' + x + ' ' + (y - 2 * ry) + ' A' + rx + ' ' + ry + ' 0 1 0 ' + x + ' ' + y, giro);
+      }
     });
     (m.p || []).forEach(function (p) {
       saida += '<circle class="fig-ponto" cx="' + p[0] + '" cy="' + p[1] + '" r="3"/>';
@@ -192,7 +207,7 @@ window.AR_FIGURA = (function () {
     return saida;
   }
 
-  function desenhar(medida, recorte) {
+  function desenhar(medida, recorte, animar) {
     return '<svg viewBox="' + (recorte || '0 0 300 724') + '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="' +
       (medida ? 'Onde medir: ' + medida.rotulo : 'Figura do corpo') + '">' +
       '<path class="fig-fundo" d="' + PREENCHIMENTO + '"/>' +
@@ -200,7 +215,7 @@ window.AR_FIGURA = (function () {
       '<path class="fig-contorno" d="' + CONTORNO + '"/>' +
       '<path class="fig-contorno" d="' + CONTORNO + '"' + ESPELHO + '/>' +
       '<ellipse class="fig-cabeca" cx="150" cy="50" rx="30" ry="38"/>' +
-      (medida ? marca(medida.marca) : '') +
+      (medida ? marca(medida.marca, animar) : '') +
       '</svg>';
   }
 

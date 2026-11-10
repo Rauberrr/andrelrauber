@@ -7,7 +7,7 @@
 
   function cartao(m) {
     return '<article class="guia-item revelar" id="' + m.id + '">' +
-      '<div class="guia-figura">' + figura.desenhar(m, m.recorte) + '</div>' +
+      '<div class="guia-figura">' + figura.desenhar(m, m.recorte, true) + '</div>' +
       '<div>' +
         '<h3 class="titulo-s">' + m.rotulo + '</h3>' +
         '<p>' + m.como + '</p>' +

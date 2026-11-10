@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261109c">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261110a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -30,8 +30,7 @@
       <nav class="nav" aria-label="Principal">
         <ul class="nav-lista">
           <li><a href="index.html">Início</a></li>
-          <li><a href="a-marca.html">A Marca</a></li>
-          <li><a href="medidas.html">Tabela de Medidas</a></li>
+          <li><a href="colecao.html">Coleção</a></li>
           <li><a href="apps/">Apps</a></li>
           <li><a href="contato.html">Contato</a></li>
           <li><a href="minha-conta.html" aria-current="page">Minha conta</a></li>
@@ -79,7 +78,18 @@
         <a class="botao botao-cheio" id="conta-acao" href="medidas.html"></a>
       </section>
 
-      <div id="conta-dados"></div>
+      <section class="conta-resumo" aria-labelledby="conta-resumo-titulo">
+        <div class="conta-resumo-cab">
+          <h2 class="titulo-s" id="conta-resumo-titulo">Seus dados</h2>
+          <button class="texto-botao" type="button" id="conta-ver-tudo">Ver todos os dados</button>
+        </div>
+        <dl class="conta-resumo-lista" id="conta-resumo"></dl>
+        <div class="conta-atalhos">
+          <a class="botao" href="medidas.html?revisar=1" id="conta-tabela">Tabela de medidas</a>
+          <a class="botao" href="guia-de-medidas.html">Como tirar as medidas</a>
+          <a class="botao" href="colecao.html">Ver a coleção</a>
+        </div>
+      </section>
 
       <section class="conta-rodape">
         <div class="conta-botoes">
@@ -103,6 +113,17 @@
     </div>
   </main>
 
+  <dialog class="modal-figura conta-modal" id="conta-modal" aria-labelledby="conta-modal-titulo">
+    <button class="modal-fechar" id="conta-modal-fechar" type="button" aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+    <div class="modal-texto">
+      <h2 class="titulo-m" id="conta-modal-titulo">Todos os seus dados</h2>
+      <div id="conta-dados"></div>
+      <a class="botao botao-cheio" href="medidas.html?revisar=1">Alterar minhas informações</a>
+    </div>
+  </dialog>
+
   <footer class="rodape sobre-preto">
     <div class="conteudo">
       <div class="rodape-base" style="margin-top:0;border-top:0;padding-top:0">
@@ -113,11 +134,11 @@
     </div>
   </footer>
 
-  <script src="assets/js/config.js?v=20261104a"></script>
-  <script src="assets/js/medidas-dados.js?v=20261104a"></script>
-  <script src="assets/js/main.js?v=20261107a"></script>
-  <script src="assets/js/conta-api.js?v=20261109c"></script>
-  <script src="assets/js/minha-conta.js?v=20261109c"></script>
-  <script src="assets/js/pedidos.js?v=20261104e"></script>
+  <script src="assets/js/config.js?v=20261110a"></script>
+  <script src="assets/js/medidas-dados.js?v=20261110a"></script>
+  <script src="assets/js/main.js?v=20261110a"></script>
+  <script src="assets/js/conta-api.js?v=20261110a"></script>
+  <script src="assets/js/minha-conta.js?v=20261110a"></script>
+  <script src="assets/js/pedidos.js?v=20261110a"></script>
 </body>
 </html>
