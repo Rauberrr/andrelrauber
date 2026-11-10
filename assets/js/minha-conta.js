@@ -114,6 +114,8 @@
   });
 
   el('conta-sair').addEventListener('click', function () {
+    // Os apps deixam de abrir direto neste aparelho
+    try { localStorage.removeItem('ar-conta-ativa'); } catch (e) { /* nada guardado */ }
     api.post(AUTH + 'sair').then(function () { location.replace('index.html'); });
   });
 
@@ -123,6 +125,7 @@
       el('excluir-erro').textContent = 'Digite EXCLUIR para confirmar.';
       return;
     }
+    try { localStorage.removeItem('ar-conta-ativa'); } catch (e) { /* nada guardado */ }
     api.post(AUTH + 'excluir', { confirmacao: confirmacao }).then(function (r) {
       if (r.ok) { location.replace('index.html'); return; }
       el('excluir-erro').textContent = r.erro;

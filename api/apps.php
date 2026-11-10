@@ -135,6 +135,36 @@ function limpar_ocasioes($d): ?array
                 $mala[(string) $chave] = true;
             }
         }
+        // Ajustes da pessoa nas listas da viagem
+        $removidos = [];
+        foreach ((is_array($e['removidos'] ?? null) ? array_slice($e['removidos'], 0, 80) : []) as $chave) {
+            if (codigo_valido($chave) && !in_array($chave, $removidos, true)) {
+                $removidos[] = $chave;
+            }
+        }
+        $editados = [];
+        foreach ((is_array($e['editados'] ?? null) ? array_slice($e['editados'], 0, 60, true) : []) as $chave => $texto) {
+            $texto = is_string($texto) ? linha_de_texto(['t' => $texto], 't', 80) : '';
+            if (codigo_valido((string) $chave) && trim($texto) !== '') {
+                $editados[(string) $chave] = $texto;
+            }
+        }
+        $extras = [];
+        foreach ((is_array($e['extras'] ?? null) ? array_slice($e['extras'], 0, 40) : []) as $x) {
+            if (!is_array($x) || !codigo_valido($x['id'] ?? null, 16) || !in_array($x['lista'] ?? '', ['mala', 'lembrar'], true)) {
+                continue;
+            }
+            $texto = linha_de_texto($x, 'texto', 80);
+            if (trim($texto) !== '') {
+                $extras[] = ['id' => $x['id'], 'texto' => $texto, 'lista' => $x['lista']];
+            }
+        }
+        $malaPecas = [];
+        foreach ((is_array($e['malaPecas'] ?? null) ? array_slice($e['malaPecas'], 0, 40) : []) as $peca) {
+            if (is_int($peca) && $peca > 0 && !in_array($peca, $malaPecas, true)) {
+                $malaPecas[] = $peca;
+            }
+        }
         $uf = $e['uf'] ?? '';
         $eventos[] = [
             'id' => $e['id'],
@@ -150,6 +180,10 @@ function limpar_ocasioes($d): ?array
             'atividades' => $atividades,
             'climaViagem' => uma_de($e['climaViagem'] ?? '', OC_CLIMAS, 'auto'),
             'mala' => (object) $mala,
+            'removidos' => $removidos,
+            'editados' => (object) $editados,
+            'extras' => $extras,
+            'malaPecas' => $malaPecas,
             'look' => $look,
             'encomendarAte' => $encomendar,
             'encomendado' => ($e['encomendado'] ?? false) === true,

@@ -80,6 +80,8 @@ Sem isso, o botão do Google fica escondido e o resto funciona normalmente.
 
 Os apps ficam em `/apps/`, com cara de aplicativo: barra translúcida, título grande, cartões arredondados e abas embaixo. A pessoa entra pelo link **Apps** do menu ou pelo cartão **Seus apps** em Minha conta.
 
+**Só para quem tem conta.** Quem abre um app sem estar na conta vê uma tela de convite, com o que aquele app entrega e os botões **Criar minha conta grátis** e **Já tenho conta**. Depois de criar a conta ou entrar, a pessoa volta direto para o app. Os textos de cada tela ficam em `PORTOES`, em `assets/js/apps.js`. Quem já entrou neste aparelho vê o app na hora, enquanto a conta é confirmada; sair da conta em Minha conta desfaz isso.
+
 | Endereço | O que é |
 | --- | --- |
 | `/apps/` | Início, com a saudação e um resumo de cada app para o dia |
@@ -181,6 +183,12 @@ Em `/apps/ocasioes/`, a pessoa anota um evento, como casamento, formatura, entre
 - o look montado com as peças do Guarda-roupa. O look escolhido também fica salvo no Guarda-roupa, com o nome do evento;
 - o que falta e até quando encomendar a peça sob medida, com o botão para pedir pelo WhatsApp. Padrinhos e noivos recebem essa sugestão mesmo com o look pronto;
 - nas viagens, a mala com poucas peças que combinam entre si e uma lista do que não esquecer.
+
+A pessoa pode mudar tudo o que o app sugere:
+
+- **Look:** depois de escolher, **Editar peças** tira peças e inclui outras do Guarda-roupa, até 8. **Montar o meu look** começa do zero.
+- **Mala:** tirar peças sugeridas, incluir outras do Guarda-roupa e incluir itens em texto. **Voltar à sugestão** desfaz.
+- **Não esqueça:** editar o texto de cada item no lápis, tirar itens e incluir novos. As caixas de marcar continuam.
 
 Os prazos de confecção são estimativas, em `SOB_MEDIDA` e `FOLGA`, no começo de `assets/js/ocasioes-dados.js`. Mude os dias para os seus prazos reais. Os eventos ficam no navegador e, para quem tem conta, na tabela `apps_dados`.
 

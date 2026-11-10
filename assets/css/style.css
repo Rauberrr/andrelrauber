@@ -203,7 +203,7 @@ em { font-style: italic; }
   width: 100%;
   display: flex; align-items: center; justify-content: space-between; gap: 2rem;
 }
-.topo-logo { flex: none; display: block; width: clamp(170px, 16vw, 230px); }
+.topo-logo { flex: none; display: block; width: clamp(96px, 8.6vw, 124px); }
 .topo-logo img { width: 100%; height: auto; }
 .topo-logo .logo-branca { display: none; }
 
@@ -366,7 +366,7 @@ em { font-style: italic; }
 .hero-centro { align-self: center; width: 100%; }
 .hero-nome {
   position: relative;
-  width: min(100%, 1040px);
+  width: min(100%, 620px);
   margin: 0 auto;
 }
 .hero-nome img { width: 100%; height: auto; }
@@ -897,7 +897,7 @@ em { font-style: italic; }
 /* --- Rodapé ------------------------------------------------------------------ */
 
 .rodape { padding-block: clamp(3.5rem, 7vw, 6rem) 2rem; }
-.rodape-logo { width: min(100%, 888px); height: auto; margin-bottom: clamp(3rem, 6vw, 5.5rem); }
+.rodape-logo { width: min(100%, 520px); height: auto; margin-bottom: clamp(3rem, 6vw, 5.5rem); }
 .rodape-colunas { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(1rem, 2vw, 2rem); row-gap: 2.5rem; }
 .rodape-frase { grid-column: 1 / span 5; max-width: 22rem; color: var(--claro); }
 .rodape-coluna:nth-of-type(1) { grid-column: 7 / span 3; }
