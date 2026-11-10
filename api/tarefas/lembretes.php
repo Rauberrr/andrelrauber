@@ -157,7 +157,7 @@ foreach ($avisos as $id => $partes) {
         }
         $corpo .= "\nVeja os detalhes: " . $siteUrl . "/apps/ocasioes/\n\n";
     }
-    $corpo .= "Para não receber mais estes avisos, desligue a opção \"Me avise por e-mail\" no app.\n\nAndre Rauber";
+    $corpo .= "Para não receber mais estes avisos, desligue a opção \"Me avise por e-mail\" no app.\n\nRauber";
     $assunto = 'Lembrete: ' . implode(' e ', $assuntos);
     if (enviar_email((string) $usuario['email'], $assunto, $corpo)) {
         foreach ($partes as $lista) {

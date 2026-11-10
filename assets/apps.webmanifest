@@ -1,7 +1,7 @@
 {
-  "name": "Andre Rauber Apps",
-  "short_name": "AR Apps",
-  "description": "Guarda-roupa, Alimentação, Ocasiões e Treino da Andre Rauber.",
+  "name": "Rauber Apps",
+  "short_name": "Rauber",
+  "description": "Guarda-roupa, Alimentação, Ocasiões e Treino da Rauber.",
   "lang": "pt-BR",
   "start_url": "/apps/",
   "scope": "/",
@@ -9,7 +9,8 @@
   "background_color": "#f4f1ea",
   "theme_color": "#f4f1ea",
   "icons": [
-    { "src": "/assets/img/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/assets/img/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+    { "src": "/assets/img/icone-192.png?v=20261109d", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/assets/img/icone-512.png?v=20261109d", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/assets/img/apple-touch-icon.png?v=20261109d", "sizes": "180x180", "type": "image/png" }
   ]
 }

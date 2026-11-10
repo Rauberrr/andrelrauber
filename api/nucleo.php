@@ -379,7 +379,7 @@ function enviar_email(string $para, string $assunto, string $corpo): bool
     $cabecalhos = [
         'MIME-Version: 1.0',
         'Content-Type: text/plain; charset=UTF-8',
-        'From: Andre Rauber <' . $remetente . '>',
+        'From: Rauber <' . $remetente . '>',
     ];
     // Sem o -f, a hospedagem envia em nome do servidor, e o Gmail costuma recusar
     $parametros = filter_var($remetente, FILTER_VALIDATE_EMAIL) ? '-f' . $remetente : '';
