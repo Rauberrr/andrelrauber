@@ -144,8 +144,8 @@ function enviar_confirmacao_de_email(array $usuario): void
     $link = rtrim((string) config()['site_url'], '/') . '/confirmar-email.html?token=' . $token;
     enviar_email(
         (string) $usuario['email'],
-        'Confirme seu e-mail | Andre Rauber',
-        "Olá!\n\nPara confirmar que este e-mail é seu, abra o link abaixo em até 7 dias:\n\n{$link}\n\nSe não foi você que criou esta conta, é só ignorar este e-mail.\n\nAndre Rauber"
+        'Confirme seu e-mail | Rauber',
+        "Olá!\n\nPara confirmar que este e-mail é seu, abra o link abaixo em até 7 dias:\n\n{$link}\n\nSe não foi você que criou esta conta, é só ignorar este e-mail.\n\nRauber"
     );
 }
 
@@ -329,8 +329,8 @@ function acao_esqueci(): void
         $link = rtrim((string) config()['site_url'], '/') . '/redefinir-senha.html?token=' . $token;
         enviar_email(
             $email,
-            'Redefinir sua senha | Andre Rauber',
-            "Olá!\n\nRecebemos um pedido para redefinir a senha da sua conta. Para criar uma nova senha, abra o link abaixo em até 1 hora:\n\n{$link}\n\nSe não foi você, é só ignorar este e-mail. Sua senha continua a mesma.\n\nAndre Rauber"
+            'Redefinir sua senha | Rauber',
+            "Olá!\n\nRecebemos um pedido para redefinir a senha da sua conta. Para criar uma nova senha, abra o link abaixo em até 1 hora:\n\n{$link}\n\nSe não foi você, é só ignorar este e-mail. Sua senha continua a mesma.\n\nRauber"
         );
         registrar_evento((int) $usuario['id'], 'senha_pedida');
     }
