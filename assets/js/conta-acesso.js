@@ -10,6 +10,14 @@
   var esqueci = document.getElementById('form-esqueci');
   var redefinir = document.getElementById('form-redefinir');
 
+  // Quem veio de um app e troca entre "Entrar" e "Criar conta" continua voltando para o app
+  var voltar = api.destino('');
+  if (voltar) {
+    document.querySelectorAll('a[href="entrar.html"], a[href="criar-conta.html"]').forEach(function (a) {
+      a.href = a.getAttribute('href') + '?voltar=' + encodeURIComponent(voltar);
+    });
+  }
+
   /* --- Mensagens ---------------------------------------------------------------- */
 
   function erroCampo(form, nome, mensagem) {

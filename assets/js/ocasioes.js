@@ -21,6 +21,9 @@
   var climas = {};
   var aberto = null;
   var editando = null;
+  // lookDe: o evento cujo look está sendo editado. seletor: 'look' ou 'mala', quando a lista de peças está aberta.
+  var ui = { lookDe: null, lookAntes: '', seletor: '' };
+  var MAXIMO_LOOK = 8;
 
   function $(id) { return document.getElementById(id); }
 
@@ -31,6 +34,11 @@
       if (!Array.isArray(x.atividades)) x.atividades = [];
       if (!x.mala || typeof x.mala !== 'object' || Array.isArray(x.mala)) x.mala = {};
       if (!Array.isArray(x.look)) x.look = [];
+      // Ajustes da pessoa nas listas: itens tirados, textos editados, itens novos e peças incluídas na mala
+      if (!Array.isArray(x.removidos)) x.removidos = [];
+      if (!x.editados || typeof x.editados !== 'object' || Array.isArray(x.editados)) x.editados = {};
+      if (!Array.isArray(x.extras)) x.extras = [];
+      if (!Array.isArray(x.malaPecas)) x.malaPecas = [];
     });
     if (typeof e.lembretes !== 'boolean') e.lembretes = false;
     return e;
@@ -285,17 +293,82 @@
     return ul;
   }
 
-  function fotoDaPeca(p) {
-    var item = criar('div');
-    var fig = criar('div', 'gr-foto' + (p.fundoRemovido ? ' gr-foto-recorte' : ''));
+  // emBotao: dentro de um botão só cabem spans
+  function fotoDaPeca(p, emBotao) {
+    var item = criar(emBotao ? 'span' : 'div', 'oc-peca');
+    var fig = criar(emBotao ? 'span' : 'div', 'gr-foto' + (p.fundoRemovido ? ' gr-foto-recorte' : ''));
     var img = document.createElement('img');
     img.src = p.foto;
-    img.alt = GR.descrever(p);
+    img.alt = emBotao ? '' : GR.descrever(p);
     img.loading = 'lazy';
     fig.appendChild(img);
     item.appendChild(fig);
-    item.appendChild(criar('p', '', GR.descrever(p)));
+    item.appendChild(criar(emBotao ? 'span' : 'p', 'oc-peca-nome', p.apelido || GR.descrever(p)));
     return item;
+  }
+
+  /* --- Ajustes da pessoa: redesenhar sem perder o lugar, e desfazer ----------------------------- */
+
+  function redesenhar() {
+    if (!aberto) return;
+    var y = window.scrollY;
+    abrirDetalhe(aberto.id);
+    window.scrollTo(0, y);
+  }
+
+  var AJUSTES = ['look', 'removidos', 'editados', 'extras', 'malaPecas', 'mala'];
+
+  // Faz a mudança, guarda, redesenha e oferece desfazer
+  function ajustar(e, aviso, mudar) {
+    var antes = JSON.stringify(AJUSTES.reduce(function (o, k) { o[k] = e[k]; return o; }, {}));
+    mudar();
+    salvar();
+    redesenhar();
+    if (aviso) {
+      app.avisar(aviso, function () {
+        var volta = JSON.parse(antes);
+        AJUSTES.forEach(function (k) { e[k] = volta[k]; });
+        salvar();
+        redesenhar();
+      });
+    }
+  }
+
+  function porIdDoGuarda() {
+    var m = {};
+    (guarda.pecas || []).forEach(function (p) { m[p.id] = p; });
+    return m;
+  }
+
+  // Lista das peças do guarda-roupa, por grupo, para incluir no look ou na mala
+  function seletorDePecas(titulo, fora, aoEscolher) {
+    var caixa = criar('div', 'oc-seletor');
+    var cab = criar('div', 'oc-seletor-cab');
+    cab.appendChild(criar('p', 'oc-subtitulo', titulo));
+    cab.appendChild(botao('Fechar', 'texto-botao', function () { ui.seletor = ''; redesenhar(); }));
+    caixa.appendChild(cab);
+    var algum = false;
+    GR.GRUPOS.forEach(function (g) {
+      var doGrupo = (guarda.pecas || []).filter(function (p) { return grupoDe(p) === g.id && fora.indexOf(p.id) === -1; });
+      if (!doGrupo.length) return;
+      algum = true;
+      caixa.appendChild(criar('p', 'oc-seletor-grupo', g.rotulo));
+      var grade = criar('div', 'oc-look-pecas');
+      doGrupo.forEach(function (p) {
+        var b = criar('button', 'oc-peca-opcao');
+        b.type = 'button';
+        b.setAttribute('aria-label', 'Incluir ' + (p.apelido || GR.descrever(p)));
+        b.appendChild(fotoDaPeca(p, true));
+        var mais = criar('span', 'oc-peca-mais');
+        mais.appendChild(app.icone('mais'));
+        b.appendChild(mais);
+        b.addEventListener('click', function () { aoEscolher(p); });
+        grade.appendChild(b);
+      });
+      caixa.appendChild(grade);
+    });
+    if (!algum) caixa.appendChild(criar('p', 'app-suave', 'Todas as suas peças já estão aqui.'));
+    return caixa;
   }
 
   function nomeDoClima(c) {
@@ -345,17 +418,86 @@
     return caixa;
   }
 
-  function escolherLook(e, look) {
-    e.look = look.pecas.map(function (p) { return p.id; });
-    salvar();
-    abrirDetalhe(e.id);
+  // O look do evento também fica salvo no Guarda-roupa, com o nome do evento
+  function guardarLookNoGuarda(e, aviso) {
     var nome = (nomeDoEvento(e) + ' ' + app.dataCurta(e.data)).slice(0, 60);
     api.post('api/guarda-roupa.php?acao=look-nota', { pecas: e.look.slice().sort(function (a, b) { return a - b; }), nome: nome, observacao: '' }).then(function (r) {
-      app.avisar(r.ok ? 'Look escolhido. Ele também ficou salvo no Guarda-roupa, com o nome do evento.' : 'Look escolhido.');
+      app.avisar(r.ok ? aviso + ' Ele também ficou salvo no Guarda-roupa, com o nome do evento.' : aviso);
     });
   }
 
+  function escolherLook(e, look) {
+    e.look = look.pecas.map(function (p) { return p.id; });
+    salvar();
+    redesenhar();
+    guardarLookNoGuarda(e, 'Look escolhido.');
+  }
+
+  function editarLook(e, pecas) {
+    if (pecas) e.look = pecas;
+    ui.lookDe = e.id;
+    ui.lookAntes = pecas ? '' : e.look.slice().sort().join(',');
+    ui.seletor = e.look.length ? '' : 'look';
+    salvar();
+    redesenhar();
+  }
+
+  function concluirLook(e) {
+    var mudou = e.look.slice().sort().join(',') !== ui.lookAntes;
+    ui.lookDe = null;
+    ui.seletor = '';
+    salvar();
+    redesenhar();
+    if (!e.look.length) app.avisar('Look vazio. Escolha uma das sugestões ou monte de novo.');
+    else if (mudou && e.look.length >= 2) guardarLookNoGuarda(e, 'Look ajustado.');
+    else if (mudou) app.avisar('Look ajustado.');
+  }
+
+  // Modo de edição: tirar peças e incluir outras do guarda-roupa
+  function cartaoEditarLook(e) {
+    var porId = porIdDoGuarda();
+    e.look = e.look.filter(function (id) { return porId[id]; });
+    var caixa = cartao('Seu look');
+    caixa.classList.add('oc-editando');
+    caixa.appendChild(criar('p', '', e.look.length
+      ? 'Tire o que não quiser e inclua peças do seu guarda-roupa. Até ' + MAXIMO_LOOK + ' peças.'
+      : 'Inclua as peças do seu guarda-roupa que você quer usar.'));
+    var grade = criar('div', 'oc-look-pecas');
+    e.look.forEach(function (id) {
+      var p = porId[id];
+      var item = fotoDaPeca(p);
+      item.classList.add('oc-peca-editavel');
+      var tirar = criar('button', 'oc-peca-tirar');
+      tirar.type = 'button';
+      tirar.setAttribute('aria-label', 'Tirar ' + (p.apelido || GR.descrever(p)) + ' do look');
+      tirar.appendChild(app.icone('fechar'));
+      tirar.addEventListener('click', function () {
+        ajustar(e, 'Peça tirada do look.', function () { e.look = e.look.filter(function (x) { return x !== id; }); });
+      });
+      item.appendChild(tirar);
+      grade.appendChild(item);
+    });
+    caixa.appendChild(grade);
+    var acoes = criar('div', 'app-botoes');
+    acoes.appendChild(botao('Pronto', 'botao botao-cheio', function () { concluirLook(e); }));
+    if (e.look.length < MAXIMO_LOOK) {
+      acoes.appendChild(botao('Incluir peça', 'botao', function () { ui.seletor = ui.seletor === 'look' ? '' : 'look'; redesenhar(); }, 'mais'));
+    }
+    caixa.appendChild(acoes);
+    if (ui.seletor === 'look' && e.look.length < MAXIMO_LOOK) {
+      caixa.appendChild(seletorDePecas('Incluir no look', e.look, function (p) {
+        e.look.push(p.id);
+        if (e.look.length >= MAXIMO_LOOK) ui.seletor = '';
+        salvar();
+        redesenhar();
+        app.avisar('Incluída: ' + (p.apelido || GR.descrever(p)) + '.');
+      }));
+    }
+    return caixa;
+  }
+
   function cartaoDoLook(e, r) {
+    if (ui.lookDe === e.id && guarda.pecas) return cartaoEditarLook(e);
     var caixa = cartao('Seu look');
     if (!conta.logado) {
       caixa.appendChild(criar('p', '', 'Entre na sua conta para montarmos o look com as peças do seu Guarda-roupa.'));
@@ -376,12 +518,17 @@
       r.escolhido.pecas.forEach(function (p) { grade.appendChild(fotoDaPeca(p)); });
       caixa.appendChild(grade);
       var acoes = criar('div', 'app-botoes');
-      acoes.appendChild(botao('Escolher outro', 'texto-botao', function () { e.look = []; salvar(); abrirDetalhe(e.id); }));
+      acoes.appendChild(botao('Editar peças', 'botao', function () { editarLook(e); }, 'lapis'));
+      acoes.appendChild(botao('Escolher outro', 'texto-botao', function () {
+        ajustar(e, 'Look desmarcado. Escolha outro abaixo.', function () { e.look = []; });
+      }));
       caixa.appendChild(acoes);
       return caixa;
     }
+    var montar = guarda.pecas.length ? botao('Montar o meu look', 'botao', function () { editarLook(e, []); }, 'lapis') : null;
     if (r.looks.length) {
-      caixa.appendChild(criar('p', '', r.looks.length === 1 ? 'Com as suas peças, este look serve para o traje.' : 'Com as suas peças, estes ' + r.looks.length + ' looks servem para o traje. Escolha um.'));
+      caixa.appendChild(criar('p', '', (r.looks.length === 1 ? 'Com as suas peças, este look serve para o traje.' : 'Com as suas peças, estes ' + r.looks.length + ' looks servem para o traje. Escolha um.') +
+        ' Depois de escolher, dá para tirar e incluir peças.'));
       r.looks.forEach(function (look, i) {
         var bloco = criar('div');
         bloco.style.marginTop = '1rem';
@@ -392,9 +539,16 @@
         if (look.motivos && look.motivos[0]) bloco.appendChild(criar('p', 'app-suave', look.motivos[0]));
         var acoes = criar('div', 'app-botoes');
         acoes.appendChild(botao('Escolher este look', 'botao', function () { escolherLook(e, look); }));
+        acoes.appendChild(botao('Escolher e ajustar', 'texto-botao', function () {
+          editarLook(e, look.pecas.map(function (p) { return p.id; }));
+        }));
         bloco.appendChild(acoes);
         caixa.appendChild(bloco);
       });
+      var outro = criar('div', 'app-botoes');
+      outro.style.marginTop = '1rem';
+      outro.appendChild(montar);
+      caixa.appendChild(outro);
       return caixa;
     }
     if (r.falta.length) {
@@ -402,9 +556,12 @@
     } else {
       caixa.appendChild(criar('p', '', 'Suas peças não formaram um look para este traje. Confira a ocasião e a cor das peças no Guarda-roupa, ou veja abaixo o que dá para fazer sob medida.'));
     }
+    var fim = criar('div', 'app-botoes');
+    if (montar) fim.appendChild(montar);
     var link = criar('a', 'texto-botao', 'Abrir o Guarda-roupa');
     link.href = 'apps/guarda-roupa/';
-    caixa.appendChild(link);
+    fim.appendChild(link);
+    caixa.appendChild(fim);
     return caixa;
   }
 
@@ -545,7 +702,9 @@
     return itens;
   }
 
-  function itemDaMala(e, chave, texto, peca) {
+  // opcoes.editar(novoTexto): o item pode ter o texto editado. opcoes.tirar(): o item pode sair da lista.
+  function itemDaMala(e, chave, texto, peca, opcoes) {
+    opcoes = opcoes || {};
     var li = criar('li');
     var caixa = document.createElement('input');
     caixa.type = 'checkbox';
@@ -566,9 +725,160 @@
       fig.appendChild(img);
       li.appendChild(fig);
     }
-    li.appendChild(criar('span', 'app-lista-texto', texto));
+    var rotulo = criar('span', 'app-lista-texto', texto);
+    li.appendChild(rotulo);
+    if (opcoes.editar) {
+      var editar = criar('button', 'app-icone-botao plano oc-item-acao');
+      editar.type = 'button';
+      editar.setAttribute('aria-label', 'Editar: ' + texto);
+      editar.appendChild(app.icone('lapis'));
+      editar.addEventListener('click', function () { editarItem(e, li, rotulo, texto, opcoes.editar); });
+      li.appendChild(editar);
+    }
+    if (opcoes.tirar) {
+      var tirar = criar('button', 'app-icone-botao plano perigo oc-item-acao');
+      tirar.type = 'button';
+      tirar.setAttribute('aria-label', 'Tirar da lista: ' + texto);
+      tirar.appendChild(app.icone('lixeira'));
+      tirar.addEventListener('click', function () {
+        ajustar(e, 'Tirado da lista: ' + texto + '.', function () { opcoes.tirar(); delete e.mala[chave]; });
+      });
+      li.appendChild(tirar);
+    }
     li.classList.toggle('oc-mala-feito', caixa.checked);
     return li;
+  }
+
+  // Troca o texto por um campo. Enter ou sair do campo guarda; Esc cancela.
+  function editarItem(e, li, rotulo, texto, aoMudar) {
+    var campo = document.createElement('input');
+    campo.type = 'text';
+    campo.className = 'oc-item-campo';
+    campo.value = texto;
+    campo.maxLength = 80;
+    campo.setAttribute('aria-label', 'Novo texto do item');
+    li.replaceChild(campo, rotulo);
+    li.querySelectorAll('.oc-item-acao').forEach(function (b) { b.hidden = true; });
+    campo.focus();
+    campo.select();
+    var feito = false;
+    function terminar(guardar) {
+      if (feito) return;
+      feito = true;
+      var novo = campo.value.replace(/\s+/g, ' ').trim();
+      if (guardar && novo && novo !== texto) ajustar(e, 'Item editado.', function () { aoMudar(novo); });
+      else redesenhar();
+    }
+    campo.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') { ev.preventDefault(); terminar(true); }
+      if (ev.key === 'Escape') { ev.preventDefault(); terminar(false); }
+    });
+    campo.addEventListener('blur', function () { terminar(true); });
+  }
+
+  // Uma lista de itens em texto que a pessoa pode editar, tirar e completar.
+  // onde: 'mala' ou 'lembrar'. base: os itens sugeridos, como [chave, texto].
+  function listaEditavel(e, onde, base, rotuloNovo) {
+    var bloco = document.createDocumentFragment();
+    var ul = criar('ul', 'oc-mala');
+    base.filter(function (x) { return e.removidos.indexOf(x[0]) === -1; }).forEach(function (x) {
+      ul.appendChild(itemDaMala(e, x[0], e.editados[x[0]] || x[1], null, {
+        editar: function (novo) { if (novo === x[1]) delete e.editados[x[0]]; else e.editados[x[0]] = novo; },
+        tirar: function () { e.removidos.push(x[0]); delete e.editados[x[0]]; }
+      }));
+    });
+    e.extras.filter(function (x) { return x.lista === onde; }).forEach(function (x) {
+      ul.appendChild(itemDaMala(e, x.id, x.texto, null, {
+        editar: function (novo) { x.texto = novo; },
+        tirar: function () { e.extras = e.extras.filter(function (y) { return y !== x; }); }
+      }));
+    });
+    bloco.appendChild(ul);
+
+    var form = criar('form', 'oc-adicionar');
+    form.dataset.lista = onde;
+    var campo = document.createElement('input');
+    campo.type = 'text';
+    campo.maxLength = 80;
+    campo.placeholder = rotuloNovo;
+    campo.setAttribute('aria-label', rotuloNovo);
+    form.appendChild(campo);
+    var incluir = criar('button', 'botao');
+    incluir.type = 'submit';
+    incluir.appendChild(app.icone('mais'));
+    incluir.appendChild(document.createTextNode('Incluir'));
+    form.appendChild(incluir);
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var texto = campo.value.replace(/\s+/g, ' ').trim();
+      if (!texto) { campo.focus(); return; }
+      if (e.extras.length >= 40) { app.avisar('A lista já tem itens demais. Tire algum antes de incluir.'); return; }
+      ajustar(e, '', function () { e.extras.push({ id: 'x' + Date.now().toString(36), texto: texto, lista: onde }); });
+      app.avisar('Incluído: ' + texto + '.');
+      var novo = document.querySelector('.oc-adicionar[data-lista="' + onde + '"] input');
+      if (novo) novo.focus();
+    });
+    bloco.appendChild(form);
+
+    var chaves = base.map(function (x) { return x[0]; });
+    var mexeu = e.removidos.some(function (k) { return chaves.indexOf(k) !== -1; }) ||
+      chaves.some(function (k) { return e.editados[k]; }) ||
+      e.extras.some(function (x) { return x.lista === onde; });
+    if (mexeu && base.length) {
+      bloco.appendChild(botao('Voltar à lista sugerida', 'texto-botao oc-restaurar', function () {
+        ajustar(e, 'A lista voltou a ser a sugerida.', function () {
+          e.removidos = e.removidos.filter(function (k) { return chaves.indexOf(k) === -1; });
+          chaves.forEach(function (k) { delete e.editados[k]; });
+          e.extras = e.extras.filter(function (x) { return x.lista !== onde; });
+        });
+      }));
+    }
+    return bloco;
+  }
+
+  // As roupas da mala: as sugeridas, menos as que a pessoa tirou, mais as que ela incluiu
+  function cartaoDaMalaComPecas(e, c, mala) {
+    var m = montarMala(e, c.categoria);
+    var porId = porIdDoGuarda();
+    var lista = m.pecas.filter(function (p) { return e.removidos.indexOf('p' + p.id) === -1; });
+    e.malaPecas.forEach(function (id) { if (porId[id] && lista.indexOf(porId[id]) === -1) lista.push(porId[id]); });
+    var mexeu = lista.length !== m.pecas.length || e.malaPecas.length > 0;
+    mala.appendChild(criar('p', '', lista.length + (lista.length === 1 ? ' peça' : ' peças') + ' do seu guarda-roupa' +
+      (!mexeu && m.combinacoes > 1 ? ', que formam ' + m.combinacoes + ' looks diferentes.' : '.') +
+      ' Tire o que não vai levar e inclua outras peças.'));
+    var ul = criar('ul', 'oc-mala');
+    ul.style.marginTop = '.75rem';
+    lista.forEach(function (p) {
+      ul.appendChild(itemDaMala(e, 'p' + p.id, p.apelido || GR.descrever(p), p, {
+        tirar: function () {
+          if (e.malaPecas.indexOf(p.id) !== -1) e.malaPecas = e.malaPecas.filter(function (x) { return x !== p.id; });
+          else e.removidos.push('p' + p.id);
+        }
+      }));
+    });
+    mala.appendChild(ul);
+    var acoes = criar('div', 'app-botoes');
+    acoes.appendChild(botao('Incluir peça do guarda-roupa', 'botao', function () { ui.seletor = ui.seletor === 'mala' ? '' : 'mala'; redesenhar(); }, 'mais'));
+    if (mexeu) {
+      acoes.appendChild(botao('Voltar à sugestão', 'texto-botao', function () {
+        ajustar(e, 'A mala voltou a ser a sugerida.', function () {
+          e.removidos = e.removidos.filter(function (k) { return !/^p\d+$/.test(k); });
+          e.malaPecas = [];
+        });
+      }));
+    }
+    mala.appendChild(acoes);
+    if (ui.seletor === 'mala') {
+      mala.appendChild(seletorDePecas('Incluir na mala', lista.map(function (p) { return p.id; }), function (p) {
+        if (e.removidos.indexOf('p' + p.id) !== -1) e.removidos = e.removidos.filter(function (k) { return k !== 'p' + p.id; });
+        else if (e.malaPecas.length < 40) e.malaPecas.push(p.id);
+        salvar();
+        redesenhar();
+        app.avisar('Incluída na mala: ' + (p.apelido || GR.descrever(p)) + '.');
+      }));
+    }
+    // Outros itens em texto, como sunga ou guarda-chuva
+    mala.appendChild(listaEditavel(e, 'mala', [], 'Incluir outro item, como guarda-chuva'));
   }
 
   function desenharViagem(e, caixa) {
@@ -585,23 +895,17 @@
     caixa.appendChild(resumo);
 
     var mala = cartao('Roupas para a mala');
-    var ul = criar('ul', 'oc-mala');
     if (guarda.pecas && guarda.pecas.length) {
-      var m = montarMala(e, c.categoria);
-      mala.appendChild(criar('p', '', m.pecas.length + ' peças do seu guarda-roupa' + (m.combinacoes > 1 ? ', que formam ' + m.combinacoes + ' looks diferentes.' : '.')));
-      m.pecas.forEach(function (p) { ul.appendChild(itemDaMala(e, 'p' + p.id, p.apelido || GR.descrever(p), p)); });
+      cartaoDaMalaComPecas(e, c, mala);
     } else {
-      mala.appendChild(criar('p', 'app-suave', conta.logado ? 'Cadastre peças no Guarda-roupa para a mala sair com as suas roupas.' : 'Com a conta e o Guarda-roupa, a mala sai com as suas próprias peças.'));
-      malaGenerica(e, c.categoria).forEach(function (x) { ul.appendChild(itemDaMala(e, x[0], x[1])); });
+      mala.appendChild(criar('p', 'app-suave', 'Cadastre peças no Guarda-roupa para a mala sair com as suas roupas. Enquanto isso, ajuste a lista como quiser.'));
+      mala.appendChild(listaEditavel(e, 'mala', malaGenerica(e, c.categoria), 'Incluir um item na mala'));
     }
-    ul.style.marginTop = '.75rem';
-    mala.appendChild(ul);
     caixa.appendChild(mala);
 
     var extra = cartao('Não esqueça');
-    var ul2 = criar('ul', 'oc-mala');
-    essenciais(e, c.categoria).forEach(function (x) { ul2.appendChild(itemDaMala(e, x[0], x[1])); });
-    extra.appendChild(ul2);
+    extra.appendChild(criar('p', 'app-suave', 'Marque o que já está na mala. Toque no lápis para mudar um item, ou inclua o que faltar.'));
+    extra.appendChild(listaEditavel(e, 'lembrar', essenciais(e, c.categoria), 'Incluir um item, como fone de ouvido'));
     caixa.appendChild(extra);
   }
 
@@ -639,7 +943,7 @@
     caixa.textContent = '';
     if (e.tipo === 'viagem') {
       desenharViagem(e, caixa);
-      buscarClima(e, e.data, function () { if (aberto === e) abrirDetalhe(e.id); });
+      buscarClima(e, e.data, function () { if (aberto === e) redesenhar(); });
       return;
     }
     var r = analisar(e);
@@ -649,11 +953,13 @@
     caixa.appendChild(cartaoDoLook(e, r));
     var encomenda = cartaoDaEncomenda(e, r);
     if (encomenda) caixa.appendChild(encomenda);
-    buscarClima(e, e.data, function () { if (aberto === e) abrirDetalhe(e.id); });
+    buscarClima(e, e.data, function () { if (aberto === e) redesenhar(); });
   }
 
   function fecharDetalhe() {
     aberto = null;
+    ui.lookDe = null;
+    ui.seletor = '';
     mostrarTela(false);
     $('oc-barra-titulo').textContent = 'Ocasiões';
     desenharLista();

@@ -33,7 +33,8 @@ window.AR_APP = (function () {
     relogio: ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z', 'M12 7v5l3 2'],
     sino: ['M6 16.5V11a6 6 0 1 1 12 0v5.5l1.5 2h-15Z', 'M10 21h4'],
     diario: ['M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14.5A1.5 1.5 0 0 1 17 21H6Z', 'M6 3.5v17.5', 'M9.5 8h5.5', 'M9.5 11.5h5.5'],
-    conversa: ['M4 19.5l1.3-3.7A7.5 7.5 0 1 1 8.4 18.6Z']
+    conversa: ['M4 19.5l1.3-3.7A7.5 7.5 0 1 1 8.4 18.6Z'],
+    fechar: ['M6.5 6.5l11 11', 'M17.5 6.5l-11 11']
   };
 
   function icone(nome, classe) {
@@ -191,9 +192,13 @@ window.AR_APP = (function () {
 
   /* --- Conta ---------------------------------------------------------------------- */
 
-  var sessao = api
-    ? api.get('api/auth.php?acao=sessao').then(function (r) { return r.ok && r.dados.logado ? r.dados.usuario : null; })
-    : Promise.resolve(null);
+  // respondeu: o servidor respondeu. Sem resposta, não dá para saber se a pessoa tem conta.
+  var verificacao = api
+    ? api.get('api/auth.php?acao=sessao').then(function (r) {
+      return { respondeu: Boolean(r.ok), usuario: r.ok && r.dados.logado ? r.dados.usuario : null };
+    }, function () { return { respondeu: false, usuario: null }; })
+    : Promise.resolve({ respondeu: false, usuario: null });
+  var sessao = verificacao.then(function (v) { return v.usuario; });
 
   sessao.then(function (usuario) {
     var conta = document.getElementById('app-conta');
@@ -211,6 +216,165 @@ window.AR_APP = (function () {
       conta.classList.add('app-conta-visitante');
     }
   });
+
+  /* --- Acesso: os apps são de quem tem conta ----------------------------------------- */
+
+  // Para quem ainda não tem conta, cada app mostra o que entrega e o convite para criar.
+  // itens: [ícone, título, texto]. No início, cada item é um app: [ícone, título, texto, classe do ícone].
+  var PORTOES = {
+    'apps/': {
+      classe: 'app-icone-portao', icone: 'apps', nome: 'Apps',
+      titulo: 'Vista-se melhor, coma melhor e chegue pronto a cada ocasião',
+      texto: 'Quatro apps que trabalham juntos para você. Crie sua conta grátis em menos de um minuto e libere todos eles agora.',
+      itens: [
+        ['cabide', 'Guarda-roupa', 'Seu armário no celular, com looks prontos para o clima do dia e o custo de cada peça.', 'app-icone-guarda-roupa'],
+        ['folha', 'Alimentação', 'Um plano para o seu objetivo, com a lista de compras e quanto custa no mercado da sua região.', 'app-icone-alimentacao'],
+        ['calendario', 'Ocasiões', 'O traje certo para cada evento, montado com as suas próprias peças, e a mala da viagem pronta.', 'app-icone-ocasioes'],
+        ['haltere', 'Treino', 'Um treino para o seu objetivo e o seu foco, na academia ou em casa, no tempo que você tem.', 'app-icone-treino']
+      ]
+    },
+    'apps/guarda-roupa/': {
+      classe: 'app-icone-guarda-roupa', icone: 'cabide', nome: 'Guarda-roupa',
+      titulo: 'Nunca mais pare na frente do armário sem saber o que vestir',
+      texto: 'Fotografe suas roupas uma vez e receba, todo dia, looks prontos com o que você já tem.',
+      itens: [
+        ['camera', 'Seu armário no bolso', 'Fotografe as peças: o fundo sai sozinho e tudo fica organizado por tipo e cor.'],
+        ['varinha', 'Looks prontos todo dia', 'Combinações que respeitam as cores, a formalidade e o clima de hoje na sua cidade.'],
+        ['diario', 'Sem repetir sem querer', 'Anote o que usou e o app avisa antes de você repetir o look no mesmo lugar.'],
+        ['tesoura', 'Compre melhor', 'Veja o custo por uso de cada peça e as que estão paradas há meses.']
+      ]
+    },
+    'apps/alimentacao/': {
+      classe: 'app-icone-alimentacao', icone: 'folha', nome: 'Alimentação',
+      titulo: 'Um plano de alimentação que cabe no seu objetivo e no seu bolso',
+      texto: 'Descubra quanto você precisa comer por dia e receba um plano montado a partir da sua rotina, sem dieta maluca.',
+      itens: [
+        ['folha', 'Sua meta calculada', 'Calorias e proteína por dia para perder peso, manter ou ganhar massa.'],
+        ['check', 'Parte do que você já come', 'O plano ajusta a sua rotina, e você troca o que não gosta por opções parecidas.'],
+        ['carrinho', 'Quanto custa no mercado', 'Lista de compras com preços da sua região e onde dá para economizar.'],
+        ['sino', 'Avisos antes de acabar', 'O app avisa por e-mail quando um item da despensa está para acabar.']
+      ]
+    },
+    'apps/ocasioes/': {
+      classe: 'app-icone-ocasioes', icone: 'calendario', nome: 'Ocasiões',
+      titulo: 'Chegue a cada evento vestido do jeito certo',
+      texto: 'Casamento, formatura, entrevista ou viagem: anote a data e o app cuida do resto.',
+      itens: [
+        ['calendario', 'O traje explicado', 'Esporte fino, passeio completo, black tie: o que usar e o que evitar, sem dúvida.'],
+        ['cabide', 'O look com as suas peças', 'O app escolhe no seu guarda-roupa o que serve para o traje, e você ajusta como quiser.'],
+        ['tesoura', 'O prazo do sob medida', 'Se faltar uma peça, você sabe até quando encomendar para ficar pronta a tempo.'],
+        ['mala', 'A mala sem esquecer nada', 'Poucas peças que combinam entre si, com a previsão do tempo do destino.']
+      ]
+    },
+    'apps/treino/': {
+      classe: 'app-icone-treino', icone: 'haltere', nome: 'Treino',
+      titulo: 'Um treino feito para você, no tempo que você tem',
+      texto: 'Diga o seu objetivo, onde treina e quanto tempo tem. O app monta o plano e guia cada série.',
+      itens: [
+        ['haltere', 'Para o seu objetivo', 'Emagrecer, ganhar massa ou ter mais disposição, na academia ou em casa.'],
+        ['pessoa', 'Foco onde você quer', 'Escolha até dois grupos musculares para receberem mais atenção.'],
+        ['girar', 'Três opções por treino', 'Varie os exercícios sem perder o rumo e troque o que não gostar.'],
+        ['relogio', 'Tudo sob controle', 'Descanso cronometrado, histórico das cargas e a sua semana à vista.']
+      ]
+    }
+  };
+
+  var LEMBRAR = 'ar-conta-ativa';
+  var raiz = document.documentElement;
+  var principal = document.querySelector('body.app .app-conteudo');
+
+  function liberar() { raiz.classList.add('app-liberado'); }
+
+  function linkDeConta(classe, texto, pagina, destino) {
+    var a = criar('a', classe, texto);
+    a.href = pagina + '?voltar=' + encodeURIComponent(destino);
+    return a;
+  }
+
+  function mostrarPortao() {
+    var destino = paginaAtual();
+    var p = PORTOES[destino] || PORTOES['apps/'];
+    if (document.getElementById('app-portao')) return;
+    var portao = criar('section', 'app-portao');
+    portao.id = 'app-portao';
+    portao.setAttribute('aria-labelledby', 'app-portao-titulo');
+
+    var topo = criar('div', 'app-portao-topo');
+    var marca = criar('div', 'app-portao-marca');
+    var fundo = criar('span', 'app-icone-fundo ' + p.classe);
+    fundo.setAttribute('aria-hidden', 'true');
+    fundo.appendChild(icone(p.icone));
+    marca.appendChild(fundo);
+    marca.appendChild(criar('span', '', p.nome));
+    topo.appendChild(marca);
+    topo.appendChild(criar('p', 'app-portao-selo', 'Exclusivo para quem tem conta · grátis'));
+    var h = criar('h1', 'app-portao-titulo', p.titulo);
+    h.id = 'app-portao-titulo';
+    topo.appendChild(h);
+    topo.appendChild(criar('p', 'app-portao-texto', p.texto));
+    var botoes = criar('div', 'app-convite-botoes');
+    botoes.appendChild(linkDeConta('botao botao-cheio', 'Criar minha conta grátis', 'criar-conta.html', destino));
+    botoes.appendChild(linkDeConta('botao', 'Já tenho conta', 'entrar.html', destino));
+    topo.appendChild(botoes);
+    portao.appendChild(topo);
+
+    portao.appendChild(criar('h2', 'app-secao-titulo', 'O que você ganha'));
+    var lista = criar('ul', 'app-portao-lista');
+    p.itens.forEach(function (i) {
+      var li = criar('li');
+      var ic = criar('span', 'app-portao-ico ' + (i[3] || p.classe));
+      ic.setAttribute('aria-hidden', 'true');
+      ic.appendChild(icone(i[0]));
+      li.appendChild(ic);
+      var texto = criar('span');
+      texto.appendChild(criar('strong', '', i[1]));
+      texto.appendChild(criar('span', '', i[2]));
+      li.appendChild(texto);
+      lista.appendChild(li);
+    });
+    portao.appendChild(lista);
+
+    var garantias = criar('ul', 'app-portao-garantias');
+    ['Grátis, sem cartão de crédito', 'Uma conta só para todos os apps', 'O que você anota é visível só para você', 'Abre no celular e no computador'].forEach(function (g) {
+      var li = criar('li');
+      li.appendChild(icone('check'));
+      li.appendChild(document.createTextNode(g));
+      garantias.appendChild(li);
+    });
+    portao.appendChild(garantias);
+    var fim = criar('div', 'app-portao-fim');
+    fim.appendChild(linkDeConta('botao botao-cheio', 'Criar minha conta grátis', 'criar-conta.html', destino));
+    portao.appendChild(fim);
+
+    var abrindo = document.getElementById('app-abrindo');
+    if (abrindo) abrindo.remove();
+    principal.insertBefore(portao, principal.firstChild);
+    window.scrollTo(0, 0);
+  }
+
+  if (principal) {
+    // Quem já entrou neste aparelho vê o app na hora; a confirmação chega em seguida
+    if (lerLocal(LEMBRAR)) liberar();
+    else {
+      var abrindo = criar('p', 'app-abrindo', 'Abrindo...');
+      abrindo.id = 'app-abrindo';
+      principal.insertBefore(abrindo, principal.firstChild);
+    }
+    verificacao.then(function (v) {
+      var abrindo = document.getElementById('app-abrindo');
+      if (v.usuario) {
+        gravarLocal(LEMBRAR, 1);
+        if (abrindo) abrindo.remove();
+        liberar();
+        return;
+      }
+      // Sem resposta do servidor, quem já entrou antes continua usando o que está no aparelho
+      if (!v.respondeu && lerLocal(LEMBRAR)) return;
+      try { localStorage.removeItem(LEMBRAR); } catch (e) { /* nada guardado */ }
+      raiz.classList.remove('app-liberado');
+      mostrarPortao();
+    });
+  }
 
   /* --- Barra: o título pequeno aparece quando o grande sai da tela -------------------- */
 
