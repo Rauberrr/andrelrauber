@@ -87,8 +87,8 @@ Os apps ficam em `/apps/`, com cara de aplicativo: barra translúcida, título g
 | `/apps/` | Início, com a saudação e um resumo de cada app para o dia |
 | `/apps/guarda-roupa/` | Guarda-roupa |
 | `/apps/alimentacao/` | Alimentação |
-| `/apps/ocasioes/` | Ocasiões (beta) |
-| `/apps/treino/` | Treino (beta) |
+| `/apps/ocasioes/` | Ocasiões |
+| `/apps/treino/` | Treino |
 
 - Os endereços antigos, `guarda-roupa.html` e `alimentacao.html`, levam para os novos.
 - Cada página dos apps tem `<base href="/">`, então todos os caminhos partem da raiz do site.
@@ -146,6 +146,34 @@ Ao atualizar o site depois, nunca apague a pasta `api/fotos-pecas`: é nela que 
 - **Custo por uso:** a pessoa informa quanto pagou na peça, guardado em `pecas_valores`, e o app divide pelas vezes que ela usou.
 - **Clima do dia:** a aba Looks já abre com o clima de hoje na cidade da pessoa, ou de amanhã, depois das 19h.
 
+## Coleção
+
+A coleção fica em `colecao.html`. Cada peça tem a sua página, em `produto.html?p=nome-da-peca`. Enquanto não houver peças no ar, a coleção avisa que novos produtos chegam em breve, e `produto.html?exemplo=1` mostra como a página de uma peça vai ficar.
+
+### Cadastrar uma peça
+
+1. Entre no site com a conta de gestor e abra **Painel**, em Minha conta.
+2. Na aba **Coleção**, toque em **Nova peça**.
+3. Preencha nome, categoria, preço, frete (em branco é frete grátis), prazo de confecção, modelagem, tecido, composição, gramatura, cuidados, detalhes (um por linha) e as cores.
+4. Toque em **Salvar**. Depois disso, envie as fotos: a primeira é a capa, e as setas mudam a ordem.
+5. Para a peça aparecer no site, mude a **Situação** para **No ar**. **Esgotado** mostra a peça sem o botão de compra. **Ver a página** abre a prévia, mesmo antes de ir ao ar.
+
+As fotos ficam em `api/fotos-produtos`, fora do GitHub, e saem por `api/produtos.php`. Como a pasta de fotos das peças, ela não deve ser apagada ao atualizar o site.
+
+### Lançar uma coleção numa data
+
+Em **Agendar coleção**, dê um nome, a data e a hora do lançamento (horário de Brasília) e uma chamada. Escolha essa coleção nas peças. Até a data, a página da coleção mostra a contagem regressiva, e as peças ficam escondidas; na hora marcada, todas aparecem juntas.
+
+### Comprar uma peça
+
+Na página da peça, a pessoa escolhe a cor e toca em **Encomendar sob medida**. Sem conta, entra antes. Sem as medidas preenchidas, o site pede para preencher. Com tudo certo, o pedido é criado com o preço e o frete da peça e aparece em Minha conta, pronto para pagar pelo Mercado Pago, como os pedidos criados no painel.
+
+### Pedido exclusivo
+
+Em `pedido-exclusivo.html`, a pessoa descreve a peça em sete passos: a peça, a ocasião, o tecido, a cor, o caimento com os detalhes de cada peça, uma referência e o prazo, e a revisão. Os tecidos são os tradicionais; couro, camurça, veludo, seda pura, paetê e tecidos técnicos ficam de fora, como diz o próprio formulário. As opções ficam em `assets/js/colecao-dados.js`.
+
+Os pedidos chegam na aba **Pedidos exclusivos** do painel, com um aviso no e-mail de `email_aviso`. Ali você muda a situação, responde pelo WhatsApp e abre a ficha do cliente para criar o pedido de pagamento quando fechar o valor.
+
 ## Pedidos e pagamento
 
 O cliente paga o valor total pelo Mercado Pago, com Pix ou cartão, em Minha conta. Você cria cada pedido no painel, na ficha da pessoa, com a descrição, o valor e o frete.
@@ -175,7 +203,7 @@ Nunca envie esses valores por mensagem nem os coloque no GitHub.
 - **Exclusão de conta:** quem tem pedido pago, em análise ou em disputa, com movimento nos últimos 90 dias, precisa falar com você para excluir a conta.
 - **Condições:** o texto fica em `condicoes-de-compra.html`. Peça a um advogado para revisar antes de vender.
 
-## Ocasiões (beta)
+## Ocasiões
 
 Em `/apps/ocasioes/`, a pessoa anota um evento, como casamento, formatura, entrevista ou viagem, e recebe:
 
@@ -192,14 +220,14 @@ A pessoa pode mudar tudo o que o app sugere:
 
 Os prazos de confecção são estimativas, em `SOB_MEDIDA` e `FOLGA`, no começo de `assets/js/ocasioes-dados.js`. Mude os dias para os seus prazos reais. Os eventos ficam no navegador e, para quem tem conta, na tabela `apps_dados`.
 
-## Treino (beta)
+## Treino
 
 Em `/apps/treino/`, a pessoa escolhe o objetivo, a experiência, o local (academia, casa com halteres ou casa sem equipamento), os dias por semana e o tempo, e marca se sente dor no joelho, no ombro ou na lombar. O app monta a divisão (corpo inteiro, parte de cima e pernas, ou empurrar, puxar e pernas), guia o treino com as séries e o descanso, guarda as cargas e mostra a semana. Os exercícios e as alternativas ficam em `assets/js/treino-dados.js`.
 
 - **Foco:** a pessoa pode escolher até dois grupos, como peito e braços. Os treinos que trabalham esses grupos ganham até dois exercícios a mais, e cada exercício do foco ganha uma série a mais. Eles aparecem com o selo **Foco**.
 - **3 opções por treino:** cada treino (A, B, C...) tem 3 opções, com exercícios diferentes para os mesmos músculos. A pessoa escolhe a opção no cartão do treino, ou liga **Alternar as opções a cada treino**.
 - **Trocar um exercício:** o botão de troca mostra até 3 exercícios do mesmo grupo muscular que servem para o local e os cuidados da pessoa. Com restrições fortes, como em casa e com dor no joelho, podem sobrar menos de 3. A troca vale para aquele treino e aquela opção.
-- **Ligação com a Alimentação:** os dois apps usam as mesmas medidas (sexo, idade, altura e peso), guardadas no navegador em `ar-medidas-v1`. Quem preenche num, não digita de novo no outro. Ao terminar o plano alimentar, a Alimentação convida a montar o treino; depois de montar o treino, o Treino mostra a meta de calorias e de proteína do plano, ou convida a montá-lo. Os dias de treino sugerem a rotina na Alimentação, e o objetivo passa de um app para o outro.
+- **Ligação com a Alimentação:** os dois apps usam as mesmas medidas (sexo, idade, altura e peso), guardadas no navegador em `ar-corpo-v1`. Quem preenche num, não digita de novo no outro. Ao terminar o plano alimentar, a Alimentação convida a montar o treino; depois de montar o treino, o Treino mostra a meta de calorias e de proteína do plano, ou convida a montá-lo. Os dias de treino sugerem a rotina na Alimentação, e o objetivo passa de um app para o outro.
 
 O treino fica no navegador e só vai para a conta, na tabela `apps_dados`, se a pessoa autorizar. A página avisa que é uma sugestão geral e recomenda um médico e um profissional de educação física.
 
@@ -243,6 +271,9 @@ Os mesmos dados ficam no phpMyAdmin, nas tabelas `usuarios`, `cadastros` e `even
 | Prazos de confecção usados em Ocasiões | `assets/js/ocasioes-dados.js` |
 | Exercícios do Treino | `assets/js/treino-dados.js` |
 | Visual dos apps | `assets/css/apps.css` |
+| Opções do pedido exclusivo e categorias da coleção | `assets/js/colecao-dados.js` |
+| Fita métrica e camiseta 3D da página inicial | `assets/js/home-animacoes.js` |
+| Textos de convite dos apps para quem não tem conta | `PORTOES`, em `assets/js/apps.js` |
 | Medidas, faixas de valores e textos do guia | `assets/js/medidas-dados.js` |
 | Perguntas e ordem da tabela | `assets/js/medidas-form.js` |
 | Cores e fontes | início de `assets/css/style.css` |

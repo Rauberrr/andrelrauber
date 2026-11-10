@@ -1449,12 +1449,61 @@
     return bloco;
   }
 
+  // O que a pessoa usa no dia a dia: a meta, as refeições e os atalhos.
+  // Os números completos ficam embaixo, recolhidos.
+  function desenharDieta(c) {
+    var p = estado.perfil;
+    var dieta = $('alim-dieta');
+    dieta.textContent = '';
+    var numeros = criar('dl', 'alim-dieta-numeros');
+    [
+      ['Meta do dia', kcal(c.metas.meta)],
+      ['Proteína', c.metas.proteina + ' g'],
+      ['Água', String(Math.round(p.peso * 35 / 100) / 10).replace('.', ',') + ' litros']
+    ].forEach(function (n) {
+      var d = criar('div');
+      d.appendChild(criar('dt', '', n[0]));
+      d.appendChild(criar('dd', '', n[1]));
+      numeros.appendChild(d);
+    });
+    dieta.appendChild(numeros);
+
+    var refeicoes = criar('div', 'alim-dieta-refeicoes');
+    C.REFEICOES.forEach(function (ref) {
+      var itens = c.plano.filter(function (i) { return i.refeicao === ref.id; });
+      if (!itens.length) return;
+      var bloco = criar('section', 'alim-dieta-refeicao');
+      var cab = criar('header');
+      cab.appendChild(criar('h3', '', ref.rotulo));
+      cab.appendChild(criar('span', '', kcal(C.nutrientes(itens).kcal)));
+      bloco.appendChild(cab);
+      var ul = criar('ul');
+      itens.forEach(function (item) {
+        var li = criar('li', '', C.descreverItem(item));
+        if (item.freq && item.freq !== 'diario') {
+          li.appendChild(criar('small', '', ' · ' + C.FREQUENCIAS.filter(function (f) { return f.id === item.freq; })[0].rotulo.toLowerCase()));
+        }
+        ul.appendChild(li);
+      });
+      bloco.appendChild(ul);
+      refeicoes.appendChild(bloco);
+    });
+    dieta.appendChild(refeicoes);
+
+    var atalhos = criar('div', 'alim-atalhos');
+    [['Trocar um alimento', 'plano'], ['Lista de compras', 'compras'], ['Registrar peso', 'acompanhamento'], ['Meus dados', 'voce']].forEach(function (a) {
+      atalhos.appendChild(botao(a[0], 'alim-atalho', function () { irPara(a[1]); }));
+    });
+    dieta.appendChild(atalhos);
+  }
+
   function desenharResumo() {
     var p = estado.perfil;
     var c = contas();
     var hoje = C.nutrientes(itensValidos());
     var noPlano = C.nutrientes(c.plano);
     var atividade = (C.ATIVIDADES.filter(function (a) { return a.id === p.atividade; })[0] || C.ATIVIDADES[0]).rotulo;
+    desenharDieta(c);
     var caixa = $('alim-cartoes');
     caixa.textContent = '';
     caixa.appendChild(cartao('Seus dados', [
@@ -1528,7 +1577,9 @@
       });
       aviso.appendChild(ul);
       aviso.appendChild(botao('Ver a lista de compras', 'botao', function () { irPara('compras'); }));
-      caixa.insertBefore(aviso, caixa.firstChild);
+      // Avisos da lista são do dia a dia: ficam logo abaixo da meta
+      var dieta = $('alim-dieta');
+      dieta.insertBefore(aviso, dieta.children[1] || null);
     }
     var veredito = criar('p', 'alim-veredito', textoVeredito(c.doPlano, c.deHoje));
     caixa.insertBefore(veredito, caixa.firstChild);

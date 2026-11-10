@@ -84,7 +84,7 @@
     $('lote-tirar-fundo').checked = pode;
     $('lote-fundo-texto').textContent = foto.jaBaixou()
       ? 'Tirar o fundo das fotos enquanto eu descrevo'
-      : 'Tirar o fundo das fotos enquanto eu descrevo. Na primeira vez, baixa cerca de 45 MB: prefira o Wi-Fi.';
+      : 'Tirar o fundo das fotos enquanto eu descrevo. Na primeira vez, baixa cerca de 90 MB: prefira o Wi-Fi.';
     desenharMiniaturas();
     mostrarPasso('lote-passo-fotos');
     $('lote-modal').showModal();
@@ -206,10 +206,12 @@
       processarFila();
     }
 
+    var original = null;
     foto.abrir(item.original).then(function (canvas) {
+      original = canvas;
       tarefa = foto.removerFundo(canvas, function () {});
       return tarefa.resultado;
-    }).then(foto.enquadrar).then(function (final) {
+    }).then(function (recorte) { return foto.enquadrar(recorte, original); }).then(function (final) {
       if (!final) { item.fundo = 'falhou'; return null; }
       var cor = foto.corPrincipal(final, true);
       if (!item.corTocada && cor) {

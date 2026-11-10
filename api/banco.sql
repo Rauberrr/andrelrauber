@@ -260,3 +260,68 @@ CREATE TABLE IF NOT EXISTS tentativas (
   PRIMARY KEY (id),
   KEY idx_tentativa (chave, criado_em)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Coleções agendadas: os produtos ligados a elas só aparecem na data do lançamento
+CREATE TABLE IF NOT EXISTS colecoes (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nome VARCHAR(80) NOT NULL,
+  descricao VARCHAR(600) NOT NULL DEFAULT '',
+  lanca_em DATETIME NOT NULL,
+  criado_em DATETIME NOT NULL,
+  atualizado_em DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_colecao_lanca (lanca_em)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Produtos da coleção, cadastrados no painel. cores, detalhes e fotos são listas em JSON.
+CREATE TABLE IF NOT EXISTS produtos (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  slug VARCHAR(90) NOT NULL,
+  nome VARCHAR(90) NOT NULL,
+  categoria VARCHAR(20) NOT NULL,
+  resumo VARCHAR(200) NOT NULL DEFAULT '',
+  descricao TEXT NOT NULL,
+  preco_centavos INT UNSIGNED NOT NULL,
+  frete_centavos INT UNSIGNED NOT NULL DEFAULT 0,
+  tecido VARCHAR(80) NOT NULL DEFAULT '',
+  composicao VARCHAR(120) NOT NULL DEFAULT '',
+  gramatura VARCHAR(40) NOT NULL DEFAULT '',
+  modelagem VARCHAR(12) NOT NULL DEFAULT 'regular',
+  cores TEXT NOT NULL,
+  detalhes TEXT NOT NULL,
+  cuidados VARCHAR(300) NOT NULL DEFAULT '',
+  prazo_dias SMALLINT UNSIGNED NOT NULL DEFAULT 20,
+  fotos TEXT NOT NULL,
+  situacao VARCHAR(12) NOT NULL DEFAULT 'rascunho',
+  colecao_id INT UNSIGNED NULL,
+  ordem INT NOT NULL DEFAULT 0,
+  criado_em DATETIME NOT NULL,
+  atualizado_em DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_produto_slug (slug),
+  KEY idx_produto_situacao (situacao, ordem),
+  CONSTRAINT fk_produto_colecao FOREIGN KEY (colecao_id) REFERENCES colecoes (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Pedidos exclusivos: a pessoa descreve a peça que quer, e a marca responde com valor e prazo
+CREATE TABLE IF NOT EXISTS pedidos_exclusivos (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  usuario_id INT UNSIGNED NOT NULL,
+  peca VARCHAR(20) NOT NULL,
+  ocasiao VARCHAR(20) NOT NULL DEFAULT '',
+  tecido VARCHAR(20) NOT NULL DEFAULT '',
+  cor VARCHAR(60) NOT NULL DEFAULT '',
+  caimento VARCHAR(12) NOT NULL DEFAULT '',
+  detalhes TEXT NOT NULL,
+  referencia VARCHAR(300) NOT NULL DEFAULT '',
+  observacoes VARCHAR(1000) NOT NULL DEFAULT '',
+  orcamento VARCHAR(20) NOT NULL DEFAULT '',
+  quantidade TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  prazo DATE NULL,
+  situacao VARCHAR(12) NOT NULL DEFAULT 'novo',
+  criado_em DATETIME NOT NULL,
+  atualizado_em DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_exclusivo_usuario (usuario_id, id),
+  CONSTRAINT fk_exclusivo_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

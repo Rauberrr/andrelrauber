@@ -11,3 +11,6 @@ imagens-guarda-roupa/
 
 # Respostas guardadas do clima e dos preços: o servidor refaz sozinho
 api/cache/
+
+# Fotos dos produtos da coleção, enviadas pelo painel
+api/fotos-produtos/*

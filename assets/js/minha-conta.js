@@ -75,6 +75,30 @@
       endereco = c.logradouro + (c.numero ? ', ' + c.numero : '') + (c.complemento ? ' (' + c.complemento + ')' : '') +
         (c.bairro ? ' · ' + c.bairro : '') + (c.cidade ? ' · ' + c.cidade : '') + (c.uf ? '/' + c.uf : '');
     }
+    // Só o principal na página; o resto abre na janela "Ver todos os dados"
+    var cidade = c.cidade ? c.cidade + (c.uf ? '/' + c.uf : '') : '';
+    var todas = dados.geral.concat(Number(c.parte_cima) === 1 ? dados.cima : [], Number(c.parte_baixo) === 1 ? dados.baixo : []);
+    var preenchidas = todas.filter(function (m) { return c[m.id] !== null && c[m.id] !== undefined && c[m.id] !== ''; }).length;
+    var resumo = el('conta-resumo');
+    [
+      ['Nome', u.nome],
+      ['E-mail', u.email],
+      ['Telefone', api.mascaraTelefone(u.telefone || '')],
+      ['Cidade', cidade],
+      ['Medidas', preenchidas ? preenchidas + (preenchidas === 1 ? ' medida salva' : ' medidas salvas') : 'Ainda não preenchidas']
+    ].forEach(function (i) {
+      if (!i[1]) return;
+      var linha = document.createElement('div');
+      var dt = document.createElement('dt');
+      dt.textContent = i[0];
+      var dd = document.createElement('dd');
+      dd.textContent = i[1];
+      linha.appendChild(dt);
+      linha.appendChild(dd);
+      resumo.appendChild(linha);
+    });
+    if (!c.concluido_em) el('conta-tabela').href = 'medidas.html';
+
     var caixa = el('conta-dados');
     [
       grupo('Seus dados', [
@@ -112,6 +136,10 @@
       botao.disabled = !r.ok;
     });
   });
+
+  el('conta-ver-tudo').addEventListener('click', function () { el('conta-modal').showModal(); });
+  el('conta-modal-fechar').addEventListener('click', function () { el('conta-modal').close(); });
+  el('conta-modal').addEventListener('click', function (e) { if (e.target === el('conta-modal')) el('conta-modal').close(); });
 
   el('conta-sair').addEventListener('click', function () {
     // Os apps deixam de abrir direto neste aparelho

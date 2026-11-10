@@ -17,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261109c">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261109c">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261110a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261110a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -179,11 +179,24 @@
     <div class="gr-modal-corpo">
       <section id="gr-passo-foto">
         <h2 class="titulo-m" id="gr-foto-titulo">Fotografe a peça</h2>
-        <ul class="gr-dicas">
-          <li>Estenda a peça ou pendure em um cabide.</li>
-          <li>Prefira um fundo liso e boa luz.</li>
-          <li>Deixe a peça inteira na foto, sem pessoas por perto.</li>
-        </ul>
+        <ol class="gr-dicas-foto">
+          <li>
+            <svg viewBox="0 0 64 48" aria-hidden="true"><rect x="4" y="4" width="56" height="40" rx="3"/><path d="M24 12l-7 4-4 8 5 2 3-4v14h22V22l3 4 5-2-4-8-7-4c-2 3-14 3-16 0z"/></svg>
+            <span><strong>Estique a peça numa superfície lisa</strong>Cama, mesa ou chão, de uma cor diferente da peça. Peça clara em fundo escuro e peça escura em fundo claro.</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 64 48" aria-hidden="true"><rect x="22" y="2" width="20" height="30" rx="3"/><path d="M8 44h48M32 34v6"/><path d="M14 38l4-4M50 38l-4-4" stroke-dasharray="2 3"/></svg>
+            <span><strong>Fotografe de cima, com o celular reto</strong>Paralelo à peça, bem no meio dela. Assim ela não fica torta nem com uma parte maior que a outra.</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 64 48" aria-hidden="true"><circle cx="32" cy="16" r="7"/><path d="M32 3v3M32 26v3M19 16h3M42 16h3M23 7l2 2M41 7l-2 2"/><path d="M10 44h44"/></svg>
+            <span><strong>Luz do dia, sem sombra</strong>Perto de uma janela e sem flash. Sombras e reflexos confundem a ferramenta que tira o fundo.</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 64 48" aria-hidden="true"><path d="M8 14V6h8M48 6h8v8M56 34v8h-8M16 42H8v-8"/><path d="M26 12l-6 4-3 7 4 2 2-3v12h18V22l2 3 4-2-3-7-6-4c-2 3-10 3-12 0z"/></svg>
+            <span><strong>A peça inteira, com folga</strong>Deixe um espaço em volta, sem cortar mangas ou barras, e sem pessoas ou outros objetos na foto.</span>
+          </li>
+        </ol>
         <div class="gr-botoes-empilhados">
           <button class="botao botao-cheio" id="gr-tirar" type="button">Tirar foto</button>
           <button class="botao" id="gr-escolher" type="button">Escolher da galeria</button>
@@ -200,6 +213,14 @@
         <p class="gr-fundo-texto" id="gr-fundo-texto" role="status"></p>
         <div class="progresso gr-progresso" id="gr-fundo-progresso" hidden><span id="gr-fundo-barra"></span></div>
         <p class="erro" id="gr-fundo-erro" role="alert"></p>
+        <div class="gr-ajuste" id="gr-ajuste" hidden>
+          <div class="gr-ajuste-cab">
+            <label for="gr-ajuste-angulo">Endireitar</label>
+            <output id="gr-ajuste-valor" for="gr-ajuste-angulo">0°</output>
+            <button class="texto-botao" id="gr-ajuste-zerar" type="button">Automático</button>
+          </div>
+          <input type="range" id="gr-ajuste-angulo" min="-15" max="15" step="0.5" value="0">
+        </div>
         <div class="gr-botoes-empilhados">
           <button class="botao botao-cheio" id="gr-fundo-iniciar" type="button" hidden>Tirar o fundo</button>
           <button class="botao botao-cheio" id="gr-fundo-aceitar" type="button" hidden>Ficou bom, continuar</button>
@@ -410,13 +431,13 @@
     <a href="apps/treino/"><svg data-icone="haltere"></svg>Treino</a>
   </nav>
 
-  <script src="assets/js/config.js?v=20261104a"></script>
-  <script src="assets/js/conta-api.js?v=20261109c"></script>
-  <script src="assets/js/apps.js?v=20261109c"></script>
-  <script src="assets/js/guarda-roupa-dados.js?v=20261105a"></script>
-  <script src="assets/js/guarda-roupa-foto.js?v=20261104c"></script>
-  <script src="assets/js/guarda-roupa-looks.js?v=20261109c"></script>
-  <script src="assets/js/guarda-roupa.js?v=20261109c"></script>
-  <script src="assets/js/guarda-roupa-lote.js?v=20261109c"></script>
+  <script src="assets/js/config.js?v=20261110a"></script>
+  <script src="assets/js/conta-api.js?v=20261110a"></script>
+  <script src="assets/js/apps.js?v=20261110a"></script>
+  <script src="assets/js/guarda-roupa-dados.js?v=20261110a"></script>
+  <script src="assets/js/guarda-roupa-foto.js?v=20261110a"></script>
+  <script src="assets/js/guarda-roupa-looks.js?v=20261110a"></script>
+  <script src="assets/js/guarda-roupa.js?v=20261110a"></script>
+  <script src="assets/js/guarda-roupa-lote.js?v=20261110a"></script>
 </body>
 </html>

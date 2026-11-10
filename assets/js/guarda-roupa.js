@@ -374,6 +374,7 @@
   }
 
   function estadoFundo(titulo, texto, opcoes) {
+    if (!opcoes.aceitar) $('gr-ajuste').hidden = true;
     $('gr-fundo-titulo').textContent = titulo;
     $('gr-fundo-texto').textContent = texto;
     $('gr-fundo-erro').textContent = '';
@@ -402,7 +403,7 @@
     }
     estadoFundo(
       'Tirar o fundo da foto?',
-      'A ferramenta roda no seu aparelho e sua foto não é enviada para esse processo. Na primeira vez, ela baixa cerca de 45 MB, então prefira usar Wi-Fi. Nas próximas, começa mais rápido.',
+      'A ferramenta roda no seu aparelho e sua foto não é enviada para esse processo. Na primeira vez, ela baixa cerca de 90 MB, então prefira usar Wi-Fi. Nas próximas, começa mais rápido.',
       { iniciar: true }
     );
   }
@@ -415,10 +416,10 @@
       if (rascunho !== atual) return;
       definirProgresso(p.parte);
       $('gr-fundo-texto').textContent = p.fase === 'baixando'
-        ? (foto.jaBaixou() ? 'Preparando a ferramenta: ' : 'Baixando a ferramenta (cerca de 45 MB): ') + Math.round(p.parte * 100) + '%.'
+        ? (foto.jaBaixou() ? 'Preparando a ferramenta: ' : 'Baixando a ferramenta (cerca de 90 MB): ') + Math.round(p.parte * 100) + '%.'
         : 'Separando a peça do fundo. Deixe esta tela aberta.';
     });
-    atual.tarefa.resultado.then(foto.enquadrar).then(function (final) {
+    atual.tarefa.resultado.then(function (recorte) { return foto.enquadrar(recorte, atual.original); }).then(function (final) {
       if (rascunho !== atual) return;
       atual.tarefa = null;
       if (!final) {
@@ -426,10 +427,15 @@
         return;
       }
       atual.recorte = final;
+      atual.recorteBase = final;
       mostrarPrevia(final, true);
+      $('gr-ajuste-angulo').value = '0';
+      $('gr-ajuste').hidden = false;
       estadoFundo('Ficou bom?', final.fundoSuspeito
         ? 'Parte do fundo pode ter ficado na imagem. Confira e, se precisar, tire outra foto com a peça sobre um fundo liso de outra cor.'
-        : 'A peça foi centralizada e o fundo foi removido.', { aceitar: true });
+        : (final.giroAutomatico
+          ? 'A peça foi centralizada, endireitada e o fundo foi removido. Se ainda estiver torta, ajuste o ângulo abaixo.'
+          : 'A peça foi centralizada e o fundo foi removido. Se estiver torta, ajuste o ângulo abaixo.'), { aceitar: true });
     }).catch(function (erro) {
       if (rascunho !== atual || (erro && erro.message === 'cancelado')) return;
       atual.tarefa = null;
@@ -445,6 +451,23 @@
   }
 
   $('gr-fundo-iniciar').addEventListener('click', iniciarRemocao);
+
+  // Ajuste fino do ângulo: a prévia acompanha o controle
+  var ajusteAgendado = null;
+  $('gr-ajuste-angulo').addEventListener('input', function () {
+    var graus = Number($('gr-ajuste-angulo').value) || 0;
+    $('gr-ajuste-valor').textContent = (graus > 0 ? '+' : '') + String(graus).replace('.', ',') + '°';
+    window.clearTimeout(ajusteAgendado);
+    ajusteAgendado = window.setTimeout(function () {
+      if (!rascunho || !rascunho.recorteBase) return;
+      rascunho.recorte = foto.ajustarAngulo(rascunho.recorteBase, graus);
+      mostrarPrevia(rascunho.recorte, true);
+    }, 60);
+  });
+  $('gr-ajuste-zerar').addEventListener('click', function () {
+    $('gr-ajuste-angulo').value = '0';
+    $('gr-ajuste-angulo').dispatchEvent(new Event('input'));
+  });
 
   function cancelarTarefa() {
     if (rascunho.tarefa) {

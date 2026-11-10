@@ -162,4 +162,68 @@
       desenhar();
     });
   });
+
+  /* --- Tela inicial do celular ----------------------------------------------------------------- */
+
+  // No Android, o navegador oferece instalar e o botão abre esse pedido.
+  // No iPhone não existe esse pedido: o botão mostra os passos no Safari.
+  var pedidoInstalar = null;
+  var secaoInstalar = document.getElementById('app-instalar');
+  var modalInstalar = document.getElementById('app-instalar-modal');
+  var jaNaTela = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+  if (secaoInstalar && jaNaTela) secaoInstalar.hidden = true;
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    pedidoInstalar = e;
+  });
+  window.addEventListener('appinstalled', function () {
+    if (secaoInstalar) secaoInstalar.hidden = true;
+    app.avisar('Pronto: a Rauber está na sua tela inicial.');
+  });
+
+  var COMPARTILHAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M6 11H5v10h14V11h-1"/></svg>';
+  var MAIS = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
+  var CERTO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var MENU = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>';
+
+  function passosParaEste() {
+    var ua = navigator.userAgent;
+    var ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var safari = ios && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+    if (ios && !safari) {
+      return { passos: [[COMPARTILHAR, 'Toque em <strong>Compartilhar</strong>, no topo ou embaixo da tela.'], [MAIS, 'Escolha <strong>Adicionar à Tela de Início</strong>.'], ['', 'Se a opção não aparecer, abra esta página no <strong>Safari</strong> e faça o mesmo.']], nota: '' };
+    }
+    if (ios) {
+      return { passos: [[COMPARTILHAR, 'Toque em <strong>Compartilhar</strong>, na barra do Safari.'], [MAIS, 'Role a lista e toque em <strong>Adicionar à Tela de Início</strong>.'], ['', 'Confirme em <strong>Adicionar</strong>. O ícone RAUBER aparece junto dos seus aplicativos.']], nota: '' };
+    }
+    if (/Android/.test(ua)) {
+      return { passos: [[MENU, 'Toque no menu do navegador, os três pontinhos no canto.'], [MAIS, 'Escolha <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.'], ['', 'Confirme. O ícone RAUBER aparece junto dos seus aplicativos.']], nota: '' };
+    }
+    return { passos: [['', 'No celular, abra <strong>andrerauber.com/apps</strong> e toque neste mesmo botão.'], [MAIS, 'No computador, procure o ícone de <strong>instalar</strong> no lado direito da barra de endereço.']], nota: 'Os apps abrem em tela cheia, como um aplicativo.' };
+  }
+
+  function mostrarPassos() {
+    var guia = passosParaEste();
+    var lista = document.getElementById('app-instalar-passos');
+    // Textos fixos deste arquivo, sem nada digitado por alguém
+    lista.innerHTML = guia.passos.map(function (p) {
+      return '<li><span class="app-instalar-simbolo">' + (p[0] || CERTO) + '</span><span>' + p[1] + '</span></li>';
+    }).join('');
+    document.getElementById('app-instalar-nota').textContent = guia.nota;
+    modalInstalar.showModal();
+  }
+
+  if (secaoInstalar) {
+    document.getElementById('app-instalar-botao').addEventListener('click', function () {
+      if (!pedidoInstalar) { mostrarPassos(); return; }
+      pedidoInstalar.prompt();
+      pedidoInstalar.userChoice.then(function (escolha) {
+        if (escolha && escolha.outcome === 'accepted') secaoInstalar.hidden = true;
+        pedidoInstalar = null;
+      });
+    });
+    document.getElementById('app-instalar-fechar').addEventListener('click', function () { modalInstalar.close(); });
+    modalInstalar.addEventListener('click', function (e) { if (e.target === modalInstalar) modalInstalar.close(); });
+  }
 })();

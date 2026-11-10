@@ -21,7 +21,7 @@
     pedido_criado: 'Pedido criado', pedido_cancelado: 'Pedido cancelado', pagamento_aberto: 'Abriu a tela de pagamento',
     pagamento_iniciado: 'Pagamento em análise', pagamento_aprovado: 'Pagamento aprovado', pagamento_estornado: 'Pagamento devolvido',
     pagamento_contestado: 'Pagamento em disputa', pagamento_duplicado: 'Pagamento em duplicidade',
-    pagamento_divergente: 'Pagamento com valor diferente'
+    pagamento_divergente: 'Pagamento com valor diferente', exclusivo_pedido: 'Fez um pedido exclusivo'
   };
 
   var PEDIDOS = 'api/pedidos.php?acao=';
@@ -361,6 +361,9 @@
   $('modal-pessoa').addEventListener('click', function (e) { if (e.target === $('modal-pessoa')) $('modal-pessoa').close(); });
 
   /* --- Início ------------------------------------------------------------------------ */
+
+  // A aba de pedidos exclusivos abre a ficha do cliente por aqui
+  window.AR_PAINEL = { abrirPessoa: function (id) { abrir(id); } };
 
   api.get(ENDERECO).then(function (r) {
     if (r.status === 401) { api.irParaLogin('painel.html'); return; }

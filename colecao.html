@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coleção | Rauber</title>
+  <meta name="description" content="Peças masculinas feitas sob as suas medidas: camisetas, camisas, calças e blazers, com o corte e o caimento certos.">
+  <link rel="canonical" href="https://andrerauber.com/colecao.html">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:site_name" content="Rauber">
+  <meta property="og:title" content="Coleção | Rauber">
+  <meta property="og:description" content="Peças masculinas feitas sob as suas medidas.">
+  <meta property="og:url" content="https://andrerauber.com/colecao.html">
+  <meta property="og:image" content="https://andrerauber.com/assets/img/compartilhar.png?v=20261109d">
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png?v=20261109c">
+  <link rel="icon" type="image/png" sizes="64x64" href="assets/img/favicon-64.png?v=20261109c">
+  <link rel="manifest" href="assets/site.webmanifest?v=20261109d">
+  <meta name="apple-mobile-web-app-title" content="Rauber">
+  <meta name="application-name" content="Rauber">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20261109d">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261110a">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <a class="pular" href="#principal">Pular para o conteúdo</a>
+
+  <header class="topo">
+    <div class="conteudo topo-interno">
+      <a class="topo-logo" href="index.html" aria-label="Rauber, página inicial">
+        <img class="logo-branca" src="assets/img/logo-branca.png?v=20261109c" alt="" width="453" height="91">
+        <img class="logo-preta" src="assets/img/logo-preta.png?v=20261109c" alt="" width="453" height="91">
+      </a>
+      <nav class="nav" aria-label="Principal">
+        <ul class="nav-lista">
+          <li><a href="index.html">Início</a></li>
+          <li><a href="colecao.html" aria-current="page">Coleção</a></li>
+          <li><a href="apps/">Apps</a></li>
+          <li><a href="contato.html">Contato</a></li>
+          <li><a href="minha-conta.html">Minha conta</a></li>
+        </ul>
+      </nav>
+      <button class="menu-botao" type="button" aria-expanded="false" aria-label="Abrir menu"><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main id="principal" class="conteudo colecao">
+    <header class="colecao-cab">
+      <span class="etiqueta">Coleção</span>
+      <h1 class="titulo-l">Peças essenciais, feitas sob as suas medidas.</h1>
+      <p class="lead">Cada peça é cortada a partir das medidas salvas na sua conta. Você escolhe o modelo e a cor, e o caimento já vem certo.</p>
+    </header>
+
+    <section class="colecao-proxima" id="colecao-proxima" aria-labelledby="proxima-titulo" hidden>
+      <div>
+        <span class="etiqueta">Próximo lançamento</span>
+        <h2 class="titulo-m" id="proxima-titulo"></h2>
+        <p id="proxima-texto"></p>
+      </div>
+      <div class="contagem" id="proxima-contagem"></div>
+    </section>
+
+    <p class="carregando" id="colecao-carregando">Carregando a coleção...</p>
+    <div class="vitrine" id="vitrine"></div>
+
+    <section class="colecao-vazia" id="colecao-vazia" hidden>
+      <h2 class="titulo-m">Novos produtos serão cadastrados em breve.</h2>
+      <p>Enquanto isso, salve suas medidas para encomendar assim que as peças chegarem, ou faça um pedido exclusivo com a roupa do seu jeito.</p>
+      <a class="link-seta" href="produto.html?exemplo=1">Ver como fica a página de uma peça <span aria-hidden="true">→</span></a>
+    </section>
+
+    <section class="colecao-passos" aria-labelledby="passos-titulo">
+      <h2 class="titulo-m" id="passos-titulo">Como comprar</h2>
+      <ol>
+        <li><strong>Salve suas medidas</strong><span>Uma vez só. Elas ficam na sua conta para as próximas compras.</span></li>
+        <li><strong>Escolha a peça e a cor</strong><span>O valor, o frete e o prazo aparecem na página de cada peça.</span></li>
+        <li><strong>Pague pela sua conta</strong><span>Com segurança, pelo Mercado Pago.</span></li>
+        <li><strong>Receba em casa</strong><span>A peça é feita para você e enviada pelos Correios.</span></li>
+      </ol>
+      <p class="colecao-medidas-ok" id="colecao-medidas-ok" hidden>Suas medidas já estão salvas. É só escolher a peça.</p>
+      <a class="botao botao-cheio" id="colecao-medidas" href="medidas.html">Preencher minhas medidas</a>
+    </section>
+
+    <section class="colecao-exclusivo sobre-preto" aria-labelledby="exclusivo-titulo">
+      <div>
+        <span class="etiqueta">Pedido exclusivo</span>
+        <h2 class="titulo-l" id="exclusivo-titulo">Não achou a peça que procura?</h2>
+        <p>Descreva a roupa que você quer e escolha o tecido e os detalhes. A gente responde com o valor e o prazo antes de qualquer corte.</p>
+      </div>
+      <a class="botao botao-cheio" href="pedido-exclusivo.html">Fazer um pedido exclusivo</a>
+    </section>
+  </main>
+
+  <footer class="rodape sobre-preto">
+    <div class="conteudo">
+      <img class="rodape-logo" src="assets/img/logo-branca.png?v=20261109c" alt="Rauber" width="453" height="91" loading="lazy">
+      <div class="rodape-colunas">
+        <p class="rodape-frase">Roupa masculina sob medida, com molde próprio e feita a partir das suas medidas.</p>
+        <div class="rodape-coluna">
+          <span class="etiqueta">Navegue</span>
+          <ul>
+            <li><a href="colecao.html">Coleção</a></li>
+            <li><a href="pedido-exclusivo.html">Pedido exclusivo</a></li>
+            <li><a href="apps/">Apps</a></li>
+            <li><a href="guia-de-medidas.html">Guia de Medidas</a></li>
+            <li><a href="a-marca.html">A Marca</a></li>
+            <li><a href="contato.html">Contato</a></li>
+          </ul>
+        </div>
+        <div class="rodape-coluna">
+          <span class="etiqueta">Fale conosco</span>
+          <ul>
+            <li><a data-whatsapp="" href="https://wa.me/5554997096003">WhatsApp</a></li>
+            <li><a href="https://www.instagram.com/andrelrauber/" target="_blank" rel="noopener">Instagram</a></li>
+            <li><a href="mailto:andreluisrauber2006@gmail.com">andreluisrauber2006@gmail.com</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="rodape-base">
+        <span>© <span data-ano>2026</span> Rauber</span>
+        <a href="privacidade.html">Política de privacidade</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/config.js?v=20261110a"></script>
+  <script src="assets/js/main.js?v=20261110a"></script>
+  <script src="assets/js/conta-api.js?v=20261110a"></script>
+  <script src="assets/js/colecao-dados.js?v=20261110a"></script>
+  <script src="assets/js/colecao.js?v=20261110a"></script>
+</body>
+</html>

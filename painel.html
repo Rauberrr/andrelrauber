@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Painel de clientes | Rauber</title>
+  <title>Painel | Rauber</title>
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#f4f1ea">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png?v=20261109c">
@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261109c">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261110a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -30,7 +30,15 @@
 
   <main id="principal" class="conteudo painel-admin">
     <span class="etiqueta">Painel</span>
-    <h1 class="titulo-m">Clientes</h1>
+    <h1 class="titulo-m">Gestão da marca</h1>
+
+    <div class="painel-abas" role="tablist" aria-label="Partes do painel">
+      <button type="button" role="tab" id="aba-clientes" aria-controls="painel-clientes" aria-selected="true">Clientes</button>
+      <button type="button" role="tab" id="aba-colecao" aria-controls="painel-colecao" aria-selected="false" tabindex="-1">Coleção</button>
+      <button type="button" role="tab" id="aba-exclusivos" aria-controls="painel-exclusivos" aria-selected="false" tabindex="-1">Pedidos exclusivos <span class="painel-contador" id="exclusivos-novos" hidden></span></button>
+    </div>
+
+    <section id="painel-clientes" role="tabpanel" aria-labelledby="aba-clientes">
     <p class="carregando" id="carregando">Carregando...</p>
 
     <div id="painel-conteudo" hidden>
@@ -64,7 +72,106 @@
       </div>
       <p class="carregando" id="painel-vazio" hidden>Ninguém encontrado.</p>
     </div>
+    </section>
+
+    <section id="painel-colecao" role="tabpanel" aria-labelledby="aba-colecao" hidden>
+      <div class="painel-acoes">
+        <button class="botao botao-cheio" type="button" id="novo-produto">Nova peça</button>
+        <button class="botao" type="button" id="nova-colecao">Agendar coleção</button>
+        <a class="botao" href="colecao.html" target="_blank" rel="noopener">Ver a coleção no site</a>
+      </div>
+      <p class="carregando" id="colecao-carregando">Carregando...</p>
+
+      <h2 class="titulo-s painel-subtitulo">Coleções agendadas</h2>
+      <p class="painel-ajuda">As peças ligadas a uma coleção só aparecem no site na data e na hora do lançamento. Até lá, a página da coleção mostra a contagem regressiva.</p>
+      <ul class="painel-colecoes" id="painel-colecoes"></ul>
+
+      <h2 class="titulo-s painel-subtitulo">Peças</h2>
+      <div class="painel-tabela-caixa">
+        <table class="painel-tabela">
+          <thead>
+            <tr><th scope="col">Peça</th><th scope="col">Preço</th><th scope="col">Situação</th><th scope="col">Coleção</th><th scope="col">Fotos</th><th scope="col"><span class="visualmente-oculto">Ações</span></th></tr>
+          </thead>
+          <tbody id="produtos-linhas"></tbody>
+        </table>
+      </div>
+      <p class="carregando" id="produtos-vazio" hidden>Nenhuma peça cadastrada ainda. Toque em Nova peça para começar.</p>
+    </section>
+
+    <section id="painel-exclusivos" role="tabpanel" aria-labelledby="aba-exclusivos" hidden>
+      <p class="painel-ajuda">Pedidos de peças sob medida que os clientes descreveram. Responda pelo telefone ou e-mail e, quando fechar o valor, crie o pedido de pagamento na ficha do cliente, na aba Clientes.</p>
+      <ul class="painel-exclusivos" id="exclusivos-lista"></ul>
+      <p class="carregando" id="exclusivos-vazio" hidden>Nenhum pedido exclusivo ainda.</p>
+    </section>
   </main>
+
+  <dialog class="modal-figura painel-modal" id="produto-modal" aria-labelledby="produto-modal-titulo">
+    <button class="modal-fechar" type="button" data-fechar aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+    <form class="modal-texto painel-form" id="produto-form" novalidate>
+      <h2 class="titulo-m" id="produto-modal-titulo">Nova peça</h2>
+      <p class="erro" id="produto-form-erro" role="alert"></p>
+      <div class="painel-campos">
+        <div class="campo campo-inteiro"><label for="pf-nome">Nome</label><div class="campo-entrada"><input id="pf-nome" name="nome" maxlength="90" placeholder="Camiseta Essencial"></div><p class="erro" data-erro="nome"></p></div>
+        <div class="campo"><label for="pf-categoria">Categoria</label><div class="campo-entrada"><select id="pf-categoria" name="categoria"></select></div><p class="erro" data-erro="categoria"></p></div>
+        <div class="campo"><label for="pf-situacao">Situação</label><div class="campo-entrada"><select id="pf-situacao" name="situacao"></select></div><p class="erro" data-erro="situacao"></p></div>
+        <div class="campo"><label for="pf-preco">Preço (R$)</label><div class="campo-entrada"><input id="pf-preco" name="preco" inputmode="decimal" placeholder="189,90"></div><p class="erro" data-erro="preco"></p></div>
+        <div class="campo"><label for="pf-frete">Frete (R$)</label><div class="campo-entrada"><input id="pf-frete" name="frete" inputmode="decimal" placeholder="Em branco: frete grátis"></div><p class="erro" data-erro="frete"></p></div>
+        <div class="campo"><label for="pf-prazo">Prazo de confecção (dias)</label><div class="campo-entrada"><input id="pf-prazo" name="prazoDias" type="number" min="1" max="180" value="20"></div><p class="erro" data-erro="prazoDias"></p></div>
+        <div class="campo"><label for="pf-modelagem">Modelagem</label><div class="campo-entrada"><select id="pf-modelagem" name="modelagem"></select></div></div>
+        <div class="campo"><label for="pf-colecao">Coleção</label><div class="campo-entrada"><select id="pf-colecao" name="colecaoId"></select></div><p class="erro" data-erro="colecaoId"></p></div>
+        <div class="campo"><label for="pf-ordem">Ordem na vitrine</label><div class="campo-entrada"><input id="pf-ordem" name="ordem" type="number" min="-999" max="999" value="0"></div></div>
+        <div class="campo campo-inteiro"><label for="pf-resumo">Resumo (uma frase)</label><div class="campo-entrada"><input id="pf-resumo" name="resumo" maxlength="200"></div></div>
+        <div class="campo campo-inteiro"><label for="pf-descricao">Descrição</label><div class="campo-entrada"><textarea id="pf-descricao" name="descricao" rows="5" maxlength="3000" placeholder="Separe os parágrafos com uma linha em branco."></textarea></div></div>
+        <div class="campo"><label for="pf-tecido">Tecido</label><div class="campo-entrada"><input id="pf-tecido" name="tecido" maxlength="80" placeholder="Malha de algodão penteado"></div></div>
+        <div class="campo"><label for="pf-composicao">Composição</label><div class="campo-entrada"><input id="pf-composicao" name="composicao" maxlength="120" placeholder="100% algodão"></div></div>
+        <div class="campo"><label for="pf-gramatura">Gramatura</label><div class="campo-entrada"><input id="pf-gramatura" name="gramatura" maxlength="40" placeholder="180 g/m²"></div></div>
+        <div class="campo"><label for="pf-cuidados">Cuidados</label><div class="campo-entrada"><input id="pf-cuidados" name="cuidados" maxlength="300" placeholder="Lavar do avesso, em água fria"></div></div>
+        <div class="campo campo-inteiro"><label for="pf-detalhes">Detalhes (um por linha)</label><div class="campo-entrada"><textarea id="pf-detalhes" name="detalhes" rows="4" placeholder="Gola careca com ribana&#10;Costura dupla nos ombros"></textarea></div></div>
+      </div>
+
+      <fieldset class="painel-cores">
+        <legend>Cores disponíveis</legend>
+        <div id="pf-cores"></div>
+        <button class="texto-botao" type="button" id="pf-cor-mais">Adicionar cor</button>
+      </fieldset>
+
+      <fieldset class="painel-fotos" id="pf-fotos-caixa">
+        <legend>Fotos</legend>
+        <p class="painel-ajuda" id="pf-fotos-ajuda">Salve a peça para enviar as fotos.</p>
+        <div class="painel-fotos-lista" id="pf-fotos"></div>
+        <label class="botao" id="pf-foto-botao" hidden>Enviar fotos<input type="file" id="pf-foto" accept="image/jpeg,image/png,image/webp" multiple hidden></label>
+        <p class="painel-ajuda" id="pf-fotos-estado" role="status"></p>
+      </fieldset>
+
+      <div class="painel-form-botoes">
+        <button class="botao botao-cheio" type="submit">Salvar</button>
+        <a class="botao" id="pf-ver" href="#" target="_blank" rel="noopener" hidden>Ver a página</a>
+        <button class="texto-botao painel-perigo" type="button" id="pf-apagar" hidden>Apagar peça</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal-figura painel-modal" id="colecao-modal" aria-labelledby="colecao-modal-titulo">
+    <button class="modal-fechar" type="button" data-fechar aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+    <form class="modal-texto painel-form" id="colecao-form" novalidate>
+      <h2 class="titulo-m" id="colecao-modal-titulo">Agendar coleção</h2>
+      <p class="painel-ajuda">Cadastre as peças e escolha esta coleção nelas. Na data marcada, todas aparecem juntas no site.</p>
+      <p class="erro" id="colecao-form-erro" role="alert"></p>
+      <div class="painel-campos">
+        <div class="campo campo-inteiro"><label for="cf-nome">Nome</label><div class="campo-entrada"><input id="cf-nome" maxlength="80" placeholder="Coleção Verão"></div><p class="erro" data-erro="nome"></p></div>
+        <div class="campo campo-inteiro"><label for="cf-lanca">Lançamento (data e hora de Brasília)</label><div class="campo-entrada"><input id="cf-lanca" type="datetime-local"></div><p class="erro" data-erro="lancaEm"></p></div>
+        <div class="campo campo-inteiro"><label for="cf-descricao">Chamada</label><div class="campo-entrada"><textarea id="cf-descricao" rows="3" maxlength="600" placeholder="Peças leves em linho e algodão, para os dias quentes."></textarea></div></div>
+      </div>
+      <div class="painel-form-botoes">
+        <button class="botao botao-cheio" type="submit">Salvar</button>
+        <button class="texto-botao painel-perigo" type="button" id="cf-apagar" hidden>Apagar coleção</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog class="modal-figura modal-pessoa" id="modal-pessoa" aria-labelledby="pessoa-nome">
     <button class="modal-fechar" id="pessoa-fechar" type="button" aria-label="Fechar">
@@ -73,10 +180,12 @@
     <div class="modal-texto" id="pessoa-conteudo"></div>
   </dialog>
 
-  <script src="assets/js/config.js?v=20261104a"></script>
-  <script src="assets/js/medidas-dados.js?v=20261104a"></script>
-  <script src="assets/js/conta-api.js?v=20261109c"></script>
-  <script src="assets/js/guarda-roupa-dados.js?v=20261105a"></script>
-  <script src="assets/js/painel.js?v=20261109c"></script>
+  <script src="assets/js/config.js?v=20261110a"></script>
+  <script src="assets/js/medidas-dados.js?v=20261110a"></script>
+  <script src="assets/js/conta-api.js?v=20261110a"></script>
+  <script src="assets/js/guarda-roupa-dados.js?v=20261110a"></script>
+  <script src="assets/js/painel.js?v=20261110a"></script>
+  <script src="assets/js/colecao-dados.js?v=20261110a"></script>
+  <script src="assets/js/painel-colecao.js?v=20261110a"></script>
 </body>
 </html>

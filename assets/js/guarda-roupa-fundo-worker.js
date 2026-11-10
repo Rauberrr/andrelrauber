@@ -14,7 +14,7 @@ function avisar(chave, atual, total) {
 
 self.onmessage = function (e) {
   removeBackground(e.data, {
-    model: 'isnet_quint8',
+    model: 'isnet_fp16',
     output: { format: 'image/png' },
     progress: avisar
   }).then(function (recorte) {
