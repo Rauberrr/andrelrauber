@@ -70,13 +70,15 @@
     setInterval(passo, 30000);
   }
 
-  function mostrarProxima(c) {
+  function mostrarProxima(c, destaque) {
     var data = paraData(c.lancaEm);
+    $('colecao-proxima').classList.toggle('colecao-proxima-destaque', Boolean(destaque));
     $('proxima-titulo').textContent = c.nome;
     var quando = data.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' }) + ', às ' +
       data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     $('proxima-texto').textContent = (c.descricao ? c.descricao + ' ' : '') + 'Lança em ' + quando +
-      (c.total ? ', com ' + c.total + (c.total === 1 ? ' peça.' : ' peças.') : '.');
+      (c.total ? ', com ' + c.total + (c.total === 1 ? ' peça.' : ' peças.') : '.') +
+      ' Na hora do lançamento, é só atualizar esta página.';
     $('colecao-proxima').hidden = false;
     contagem(data.getTime());
   }
@@ -89,8 +91,11 @@
     }
     var vitrine = $('vitrine');
     r.dados.produtos.forEach(function (p) { vitrine.appendChild(cartao(p)); });
-    $('colecao-vazia').hidden = r.dados.produtos.length > 0;
-    if (r.dados.proximas[0]) mostrarProxima(r.dados.proximas[0]);
+    var proxima = r.dados.proximas[0];
+    // Sem peças e sem lançamento: o aviso de que a coleção chega em breve.
+    // Com lançamento agendado, a contagem fica no lugar do aviso.
+    $('colecao-vazia').hidden = r.dados.produtos.length > 0 || Boolean(proxima);
+    if (proxima) mostrarProxima(proxima, r.dados.produtos.length === 0);
   });
 
   // Quem já salvou as medidas vê que está tudo pronto para comprar

@@ -17,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261110a">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261110a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261110b">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261110b">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -123,6 +123,21 @@
           </div>
         </div>
         <label class="campo-marcar" id="gr-filtro-recentes-campo" style="margin:-.5rem 0 1.25rem"><input id="gr-filtro-recentes" type="checkbox"> <span>Esconder looks que usei nos últimos 14 dias</span></label>
+
+        <section class="gr-sugestao" id="gr-sugestao" aria-labelledby="gr-sugestao-titulo" hidden>
+          <div class="gr-sugestao-foto"><img id="gr-sugestao-img" alt=""></div>
+          <div class="gr-sugestao-texto">
+            <p class="gr-sugestao-selo">Sugestão para o seu guarda-roupa</p>
+            <h2 class="app-cartao-titulo" id="gr-sugestao-titulo"></h2>
+            <p class="app-suave" id="gr-sugestao-detalhe"></p>
+          </div>
+          <div class="gr-sugestao-acoes">
+            <button class="botao" type="button" id="gr-sugestao-ver" aria-expanded="false">Ver combinações</button>
+            <a class="botao botao-cheio" id="gr-sugestao-comprar" href="colecao.html">Comprar</a>
+            <button class="texto-botao" type="button" id="gr-sugestao-descartar">Descartar sugestão</button>
+          </div>
+          <ul class="gr-sugestao-lista" id="gr-sugestao-lista" hidden></ul>
+        </section>
 
         <p class="gr-suave" id="gr-looks-vazio" hidden></p>
         <div class="gr-looks" id="gr-looks"></div>
@@ -431,13 +446,13 @@
     <a href="apps/treino/"><svg data-icone="haltere"></svg>Treino</a>
   </nav>
 
-  <script src="assets/js/config.js?v=20261110a"></script>
-  <script src="assets/js/conta-api.js?v=20261110a"></script>
-  <script src="assets/js/apps.js?v=20261110a"></script>
-  <script src="assets/js/guarda-roupa-dados.js?v=20261110a"></script>
-  <script src="assets/js/guarda-roupa-foto.js?v=20261110a"></script>
-  <script src="assets/js/guarda-roupa-looks.js?v=20261110a"></script>
-  <script src="assets/js/guarda-roupa.js?v=20261110a"></script>
-  <script src="assets/js/guarda-roupa-lote.js?v=20261110a"></script>
+  <script src="assets/js/config.js?v=20261110b"></script>
+  <script src="assets/js/conta-api.js?v=20261110b"></script>
+  <script src="assets/js/apps.js?v=20261110b"></script>
+  <script src="assets/js/guarda-roupa-dados.js?v=20261110b"></script>
+  <script src="assets/js/guarda-roupa-foto.js?v=20261110b"></script>
+  <script src="assets/js/guarda-roupa-looks.js?v=20261110b"></script>
+  <script src="assets/js/guarda-roupa.js?v=20261110b"></script>
+  <script src="assets/js/guarda-roupa-lote.js?v=20261110b"></script>
 </body>
 </html>

@@ -342,8 +342,18 @@ window.AR_LOOKS = (function () {
     return g.camada.length > 0 || g.conjunto.length > 0;
   }
 
+  // Quantos looks uma peça nova abriria: as combinações que só existem com ela
+  function looksCom(pecas, nova) {
+    return todasAsCombinacoes(pecas.concat([nova]), '').filter(function (c) {
+      return c.pecas.some(function (p) { return p.id === nova.id; });
+    }).sort(function (a, b) { return b.nota - a.nota; });
+  }
+
+  function totalDeLooks(pecas) { return combinacoesDe(pecas, '').length; }
+
   return {
     POR_PAGINA: POR_PAGINA, sugerir: sugerir, oQueFalta: oQueFalta,
-    temSobreposicao: temSobreposicao, chaveDe: chaveDe, rotuloDaOcasiao: rotuloDaOcasiao
+    temSobreposicao: temSobreposicao, chaveDe: chaveDe, rotuloDaOcasiao: rotuloDaOcasiao,
+    looksCom: looksCom, totalDeLooks: totalDeLooks
   };
 })();

@@ -390,6 +390,8 @@ function acao_excluir(): void
     consultar('DELETE FROM alimentacao WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM apps_dados WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM lembretes_enviados WHERE usuario_id = ?', [$id]);
+    consultar('DELETE FROM sessoes_lembradas WHERE usuario_id = ?', [$id]);
+    consultar('DELETE FROM pedidos_exclusivos WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM eventos WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM redefinicoes_senha WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM confirmacoes_email WHERE usuario_id = ?', [$id]);

@@ -15,7 +15,7 @@ window.AR_COLECAO = (function () {
     { id: 'solta', rotulo: 'Mais solta', texto: 'Caimento amplo e relaxado.' }
   ];
   var SITUACOES = [
-    { id: 'rascunho', rotulo: 'Rascunho' }, { id: 'publicado', rotulo: 'No ar' }, { id: 'esgotado', rotulo: 'Esgotado' }
+    { id: 'rascunho', rotulo: 'Rascunho (só você vê)' }, { id: 'publicado', rotulo: 'No ar' }, { id: 'esgotado', rotulo: 'Esgotado' }
   ];
 
   /* --- Pedido exclusivo ------------------------------------------------------------------- */

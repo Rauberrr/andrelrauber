@@ -238,6 +238,9 @@ Em `/apps/alimentacao/`, a pessoa informa sexo, idade, altura, peso, rotina, obj
 - o gasto calórico, pela fórmula de Mifflin-St Jeor, e uma meta com déficit ou superávit moderado;
 - um plano, com trocas saudáveis no que ela já come ou montado do zero;
 - a lista de compras, com quanto dura cada embalagem, de quanto em quanto tempo comprar e o custo por mês, comparando o plano com o que ela come hoje.
+- **5 opções completas para cada refeição** (café, almoço, lanche e jantar), em `OPCOES`, no `assets/js/alimentacao-calculo.js`. A porção acompanha a energia da refeição no plano, e cada alimento ainda pode ser trocado.
+- **Hoje:** a pessoa registra o que comeu (a refeição do plano com um toque, ou outro alimento) e vê na hora quanto ainda cabe, a proteína e o que pode ou é melhor evitar.
+- **Dia com e sem treino:** o gasto do dia já conta os treinos da semana como uma média. Por isso a meta é dividida: nos dias de treino ela sobe o que o treino gasta (cerca de 5 vezes o gasto em repouso pelo tempo do treino), e nos outros fica um pouco menor, para a semana fechar igual. O dia de treino vem do app Treino ou da chave **Treinei hoje**.
 
 Os dados ficam no navegador da pessoa. Quem tem conta pode autorizar que também fiquem na conta, na tabela `alimentacao`, para abrir em qualquer aparelho. Como são dados de saúde, o servidor só guarda com essa autorização, aceita apenas os campos que a página usa e não mostra nada disso no painel, só o fato de a pessoa ter autorizado. Depois de terminar as perguntas, a pessoa cai num resumo, de onde altera qualquer parte. Os valores nutricionais são aproximados da Tabela Brasileira de Composição de Alimentos (TACO).
 
@@ -250,6 +253,10 @@ Os preços ficam em `assets/js/alimentacao-dados.js`.
 3. **Salário mínimo:** atualize `SALARIO_MINIMO` todo começo de ano.
 
 Entre uma atualização e outra, os preços são corrigidos sozinhos pela inflação dos alimentos. Todo mês, `api/precos.php` consulta no IBGE o IPCA da alimentação no domicílio e multiplica os preços pela variação desde o mês dos preços. Ao trocar os preços do DIEESE, mude também `PRECOS_BASE`, no começo de `api/precos.php`, para o mesmo mês, no formato `202609`.
+
+## Continuar conectado
+
+A hospedagem apaga as sessões paradas depois de alguns minutos. Para a pessoa não precisar entrar toda vez, cada login cria um token de "manter conectado", guardado no cookie `ar_lembrar` por 90 dias e renovado a cada dia de uso. O banco guarda só o resumo (hash) do segredo, na tabela `sessoes_lembradas`, um por aparelho. Sair apaga o token daquele aparelho, e trocar a senha desconecta todos.
 
 ## E-mail das contas
 
@@ -272,7 +279,7 @@ Os mesmos dados ficam no phpMyAdmin, nas tabelas `usuarios`, `cadastros` e `even
 | Exercícios do Treino | `assets/js/treino-dados.js` |
 | Visual dos apps | `assets/css/apps.css` |
 | Opções do pedido exclusivo e categorias da coleção | `assets/js/colecao-dados.js` |
-| Fita métrica e camiseta 3D da página inicial | `assets/js/home-animacoes.js` |
+| Fita métrica da página inicial | `assets/js/home-animacoes.js` |
 | Textos de convite dos apps para quem não tem conta | `PORTOES`, em `assets/js/apps.js` |
 | Medidas, faixas de valores e textos do guia | `assets/js/medidas-dados.js` |
 | Perguntas e ordem da tabela | `assets/js/medidas-form.js` |

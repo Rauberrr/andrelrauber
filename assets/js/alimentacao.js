@@ -9,7 +9,7 @@
   var app = window.AR_APP;
   var CHAVE = 'ar-alimentacao-v1';
   var ENDERECO = 'api/alimentacao.php';
-  var PASSOS = ['resumo', 'voce', 'comida', 'plano', 'compras', 'acompanhamento'];
+  var PASSOS = ['resumo', 'hoje', 'voce', 'comida', 'plano', 'compras', 'acompanhamento'];
 
   var estado = completar(carregar() || novoEstado());
   var conta = { logado: false, temNaConta: false, salvoEm: null, situacao: '', medidas: null, emailVerificado: false };
@@ -29,6 +29,8 @@
     if (!e.trocas || typeof e.trocas !== 'object' || Array.isArray(e.trocas)) e.trocas = {};
     if (!e.despensa || typeof e.despensa !== 'object' || Array.isArray(e.despensa)) e.despensa = {};
     if (!Array.isArray(e.registros)) e.registros = [];
+    if (!e.opcoes || typeof e.opcoes !== 'object' || Array.isArray(e.opcoes)) e.opcoes = {};
+    if (!e.diario || typeof e.diario !== 'object' || Array.isArray(e.diario)) e.diario = {};
     if (typeof e.inicioPlano !== 'string') e.inicioPlano = '';
     if (typeof e.lembretes !== 'boolean') e.lembretes = false;
     return e;
@@ -338,13 +340,15 @@
       passo = 'voce';
       retorno('Preencha seus dados primeiro. Os campos que faltam estão marcados.');
     }
-    if (passo === 'resumo' && !estado.concluido) passo = 'compras';
+    if ((passo === 'resumo' || passo === 'hoje') && !estado.concluido) passo = 'compras';
     PASSOS.forEach(function (p) {
       $('passo-' + p).hidden = p !== passo;
       $('ir-' + p).setAttribute('aria-current', p === passo ? 'step' : 'false');
     });
     $('item-resumo').hidden = !estado.concluido;
+    $('item-hoje').hidden = !estado.concluido;
     if (passo === 'resumo') desenharResumo();
+    if (passo === 'hoje') desenharHoje();
     if (passo === 'plano') desenharPlano();
     if (passo === 'compras') desenharCompras();
     if (passo === 'compras' || passo === 'plano') desenharPonteTreino();
@@ -681,7 +685,7 @@
   function planoAtual(metas) {
     var itens = itensValidos();
     var base = estado.modo === 'novo' || !itens.length ? C.planoNovo(metas) : C.planoAjustado(itens, metas);
-    return C.aplicarPreferencias(base, estado.trocas);
+    return C.aplicarPreferencias(comOpcoes(base, metas), estado.trocas);
   }
 
   /* Trocar um alimento do plano por outro de calorias parecidas */
@@ -799,6 +803,10 @@
       var cab = criar('header', 'alim-plano-cab');
       cab.appendChild(criar('h3', 'titulo-s', ref.rotulo));
       cab.appendChild(criar('span', 'etiqueta', kcal(C.nutrientes(itens).kcal)));
+      if (C.OPCOES[ref.id]) {
+        bloco.appendChild(cab);
+        cab = seletorDeOpcoes(ref.id);
+      }
       bloco.appendChild(cab);
       var lista = criar('ul', 'alim-plano-itens');
       itens.forEach(function (item) {
@@ -1456,8 +1464,9 @@
     var dieta = $('alim-dieta');
     dieta.textContent = '';
     var numeros = criar('dl', 'alim-dieta-numeros');
+    var hoje = metaDoDia(c.metas, treinouHoje(diaDeHoje()));
     [
-      ['Meta do dia', kcal(c.metas.meta)],
+      ['Meta de hoje', kcal(hoje.meta)],
       ['Proteína', c.metas.proteina + ' g'],
       ['Água', String(Math.round(p.peso * 35 / 100) / 10).replace('.', ',') + ' litros']
     ].forEach(function (n) {
@@ -1491,7 +1500,7 @@
     dieta.appendChild(refeicoes);
 
     var atalhos = criar('div', 'alim-atalhos');
-    [['Trocar um alimento', 'plano'], ['Lista de compras', 'compras'], ['Registrar peso', 'acompanhamento'], ['Meus dados', 'voce']].forEach(function (a) {
+    [['O que comi hoje', 'hoje'], ['Trocar refeição ou alimento', 'plano'], ['Lista de compras', 'compras'], ['Registrar peso', 'acompanhamento'], ['Meus dados', 'voce']].forEach(function (a) {
       atalhos.appendChild(botao(a[0], 'alim-atalho', function () { irPara(a[1]); }));
     });
     dieta.appendChild(atalhos);
@@ -1604,12 +1613,294 @@
     });
   });
 
+  /* --- Opções de cada refeição ------------------------------------------------------------------- */
+
+  // Parte do dia de cada refeição, quando a pessoa ainda não tem nada nela
+  var PARTES = { cafe: 0.22, almoco: 0.33, lanche: 0.13, jantar: 0.27 };
+
+  function semOpcaoEscolhida() { return estado.modo === 'novo' || !itensValidos().length; }
+
+  // Troca as refeições pelas opções escolhidas, com a mesma energia que tinham no plano
+  function comOpcoes(base, metas) {
+    var plano = base.slice();
+    Object.keys(estado.opcoes).forEach(function (ref) {
+      var i = estado.opcoes[ref];
+      if (!C.OPCOES[ref] || !C.OPCOES[ref][i]) return;
+      var daRefeicao = plano.filter(function (x) { return x.refeicao === ref; });
+      var alvo = C.nutrientes(daRefeicao).kcal || Math.round(metas.meta * PARTES[ref]);
+      plano = plano.filter(function (x) { return x.refeicao !== ref; }).concat(C.opcaoDaRefeicao(ref, i, alvo));
+    });
+    return plano;
+  }
+
+  function opcaoAtual(ref) {
+    if (estado.opcoes[ref] !== undefined) return estado.opcoes[ref];
+    return semOpcaoEscolhida() ? 0 : -1;
+  }
+
+  function seletorDeOpcoes(ref) {
+    var caixa = criar('div', 'alim-opcoes');
+    caixa.setAttribute('role', 'group');
+    caixa.setAttribute('aria-label', 'Opções para ' + C.REFEICOES.filter(function (r) { return r.id === ref; })[0].rotulo.toLowerCase());
+    var atual = opcaoAtual(ref);
+    function chip(texto, ativo, aoEscolher) {
+      var b = botao(texto, 'alim-opcao', aoEscolher);
+      b.setAttribute('aria-pressed', String(ativo));
+      caixa.appendChild(b);
+    }
+    if (!semOpcaoEscolhida()) {
+      chip('Como eu já como', atual === -1, function () {
+        delete estado.opcoes[ref];
+        salvar();
+        desenharPlano();
+        retorno('Esta refeição voltou a partir do que você já come.');
+      });
+    }
+    C.OPCOES[ref].forEach(function (o, i) {
+      chip((i + 1) + '. ' + o.nome, atual === i, function () {
+        estado.opcoes[ref] = i;
+        salvar();
+        desenharPlano();
+        retorno('Opção escolhida: ' + minusculo(o.nome) + '. Ainda dá para trocar cada alimento.');
+      });
+    });
+    return caixa;
+  }
+
+  /* --- Hoje: o que a pessoa comeu, em tempo real ---------------------------------------------------- */
+
+  var DIAS_DE_TREINO = { sedentario: 0, leve: 2, moderado: 4, intenso: 6 };
+  var DIAS_GUARDADOS = 31;
+
+  function diaDeHoje() {
+    var hoje = C.hojeISO();
+    if (!estado.diario[hoje]) estado.diario[hoje] = { treinou: null, itens: [] };
+    // Guarda só o último mês
+    var dias = Object.keys(estado.diario).sort();
+    while (dias.length > DIAS_GUARDADOS) delete estado.diario[dias.shift()];
+    return estado.diario[hoje];
+  }
+
+  function treinoDoApp() {
+    var t = app && app.lerLocal('ar-treino-v1');
+    return t && t.perfil && t.perfil.dias ? t : null;
+  }
+
+  function treinouHoje(dia) {
+    if (dia.treinou !== null && dia.treinou !== undefined) return dia.treinou;
+    var t = treinoDoApp();
+    return Boolean(t && (t.sessoes || []).some(function (s) { return s.data === C.hojeISO(); }));
+  }
+
+  // Quanto um treino gasta e quantos treinos por semana a meta já conta
+  function sobreOTreino() {
+    var p = estado.perfil;
+    var t = treinoDoApp();
+    var minutos = t ? t.perfil.tempo : 45;
+    return {
+      dias: t ? t.perfil.dias : DIAS_DE_TREINO[p.atividade] || 0,
+      minutos: minutos,
+      gasto: Math.round(5 * p.peso * minutos / 60 / 10) * 10,
+      doApp: Boolean(t)
+    };
+  }
+
+  // A meta do dia já conta os treinos da semana, como uma média. Por isso ela é dividida:
+  // nos dias de treino sobe o que o treino gasta, nos outros desce um pouco, e a semana fecha igual.
+  function metaDoDia(metas, treinou) {
+    var t = sobreOTreino();
+    if (!t.dias) return { meta: metas.meta + (treinou ? t.gasto : 0), descanso: metas.meta, treino: metas.meta + t.gasto, t: t };
+    var descanso = Math.max(metas.basal, Math.round(metas.meta - t.gasto * t.dias / 7));
+    return { meta: treinou ? descanso + t.gasto : descanso, descanso: descanso, treino: descanso + t.gasto, t: t };
+  }
+
+  function desenharHoje() {
+    var p = estado.perfil;
+    var metas = C.gasto(p);
+    var dia = diaDeHoje();
+    var treinou = treinouHoje(dia);
+    var m = metaDoDia(metas, treinou);
+    var comido = C.nutrientes(dia.itens);
+    var falta = m.meta - comido.kcal;
+    var faltaProteina = metas.proteina - comido.p;
+
+    $('hoje-data').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^./, function (l) { return l.toUpperCase(); });
+    $('hoje-treinou').checked = treinou;
+    $('hoje-treino-texto').textContent = treinou
+      ? 'A meta de hoje sobe cerca de ' + kcal(m.t.gasto) + ', o que um treino de ' + m.t.minutos + ' minutos gasta.'
+      : (dia.treinou === null && m.t.doApp ? 'Nenhum treino registrado hoje no app Treino.' : 'Dia de descanso: a meta fica um pouco menor.');
+
+    var painel = $('hoje-painel');
+    painel.textContent = '';
+    var grande = criar('div', 'alim-hoje-grande' + (falta < 0 ? ' passou' : ''));
+    grande.appendChild(criar('span', '', falta >= 0 ? 'Ainda cabem' : 'Passou da meta'));
+    grande.appendChild(criar('strong', '', kcal(Math.abs(falta))));
+    grande.appendChild(criar('span', '', 'Meta de hoje: ' + kcal(m.meta) + (treinou ? ', com treino' : '')));
+    painel.appendChild(grande);
+    function barra(rotulo, valor, total, texto) {
+      var b = criar('div', 'alim-hoje-barra');
+      var cab = criar('div');
+      cab.appendChild(criar('span', '', rotulo));
+      cab.appendChild(criar('span', '', texto));
+      b.appendChild(cab);
+      var trilho = criar('div', 'alim-hoje-trilho');
+      var cheio = criar('i');
+      cheio.style.width = Math.min(100, Math.round(valor / Math.max(total, 1) * 100)) + '%';
+      if (valor > total) cheio.className = 'passou';
+      trilho.appendChild(cheio);
+      b.appendChild(trilho);
+      return b;
+    }
+    painel.appendChild(barra('Energia', comido.kcal, m.meta, kcal(comido.kcal) + ' de ' + kcal(m.meta)));
+    painel.appendChild(barra('Proteína', comido.p, metas.proteina, comido.p + ' de ' + metas.proteina + ' g'));
+
+    // O conselho muda a cada alimento registrado
+    var plano = planoAtual(metas);
+    var feitas = {};
+    dia.itens.forEach(function (i) { feitas[i.refeicao] = true; });
+    var restantesDoPlano = plano.filter(function (i) { return !feitas[i.refeicao] && i.refeicao !== 'outros'; });
+    var kcalRestantes = C.nutrientes(restantesDoPlano).kcal;
+    var conselho = [];
+    var pode = [];
+    var evitar = [];
+    if (!dia.itens.length) {
+      conselho.push('Registre o que comer ao longo do dia e veja na hora quanto ainda cabe.');
+      pode.push('as refeições do seu plano');
+    } else if (falta >= 0) {
+      if (kcalRestantes && kcalRestantes <= falta + 120) {
+        conselho.push('Dá para seguir o plano normalmente: o que falta dele soma ' + kcal(kcalRestantes) + '.');
+        pode.push('o plano como está');
+      } else if (kcalRestantes) {
+        conselho.push('O que falta do plano soma ' + kcal(kcalRestantes) + ', mais do que cabe. Nas próximas refeições, diminua um pouco o arroz, o pão ou a massa.');
+        pode.push('salada, legumes e uma proteína magra');
+        evitar.push('repetir o prato', 'doces');
+      } else {
+        conselho.push(falta > 250 ? 'Ainda cabe um lanche leve hoje.' : 'Você está perto da meta. Se der fome, prefira algo leve.');
+        pode.push(falta > 250 ? 'iogurte, fruta ou ovos' : 'fruta, chá ou café sem açúcar');
+      }
+      if (faltaProteina > 25) conselho.push('Ainda faltam ' + Math.round(faltaProteina) + ' g de proteína: priorize ovos, frango, peixe, carne ou iogurte.');
+    } else {
+      conselho.push('Você passou ' + kcal(-falta) + ' da meta de hoje. Sem culpa: no que falta do dia, fique com salada, legumes e uma proteína magra. Amanhã é outro dia, e o que conta é a semana.');
+      pode.push('salada, legumes, água, café ou chá sem açúcar');
+      evitar.push('doces', 'frituras', 'bebidas com açúcar ou álcool');
+    }
+    $('hoje-conselho').textContent = conselho.join(' ');
+    $('hoje-pode').textContent = pode.length ? 'Pode: ' + pode.join(', ') + '.' : '';
+    $('hoje-evitar').textContent = evitar.length ? 'Melhor evitar hoje: ' + evitar.join(', ') + '.' : '';
+    $('hoje-evitar').hidden = !evitar.length;
+
+    // As refeições do dia, com o que foi registrado
+    var caixa = $('hoje-refeicoes');
+    caixa.textContent = '';
+    C.REFEICOES.forEach(function (ref) {
+      var bloco = criar('section', 'alim-hoje-refeicao');
+      var doDia = dia.itens.filter(function (i) { return i.refeicao === ref.id; });
+      var cab = criar('header');
+      cab.appendChild(criar('h3', '', ref.rotulo));
+      cab.appendChild(criar('span', '', doDia.length ? kcal(C.nutrientes(doDia).kcal) : 'Nada ainda'));
+      bloco.appendChild(cab);
+      if (doDia.length) {
+        var ul = criar('ul');
+        doDia.forEach(function (item) {
+          var li = criar('li');
+          li.appendChild(criar('span', '', C.descreverItem(item) + ' · ' + kcal(C.nutrientes([item]).kcal)));
+          var tirar = botao('Tirar', 'texto-botao', function () {
+            var indice = dia.itens.indexOf(item);
+            dia.itens.splice(indice, 1);
+            salvar();
+            desenharHoje();
+            retorno('Tirado: ' + minusculo(C.descreverItem(item)) + '.', function () { dia.itens.splice(indice, 0, item); salvar(); desenharHoje(); });
+          });
+          tirar.setAttribute('aria-label', 'Tirar ' + C.descreverItem(item));
+          li.appendChild(tirar);
+          ul.appendChild(li);
+        });
+        bloco.appendChild(ul);
+      }
+      var acoes = criar('div', 'alim-hoje-acoes');
+      var doPlano = plano.filter(function (i) { return i.refeicao === ref.id; });
+      if (doPlano.length) {
+        acoes.appendChild(botao('Comi o do plano', 'alim-atalho', function () {
+          doPlano.forEach(function (i) { dia.itens.push({ refeicao: ref.id, alimento: i.alimento, qtd: i.qtd, medida: i.medida || 0 }); });
+          salvar();
+          desenharHoje();
+          retorno(ref.rotulo + ' do plano registrado.');
+        }));
+      }
+      acoes.appendChild(botao('Outro alimento', 'alim-atalho', function () { abrirRegistro(ref.id, bloco); }));
+      bloco.appendChild(acoes);
+      caixa.appendChild(bloco);
+    });
+
+    $('hoje-explica').textContent = m.t.dias
+      ? 'Seu gasto do dia já conta ' + m.t.dias + (m.t.dias === 1 ? ' treino' : ' treinos') + ' por semana, como uma média. Por isso o app divide a meta: nos dias de treino ela vai a cerca de ' +
+        kcal(m.treino) + ', somando o que o treino gasta, e nos dias sem treino fica em cerca de ' + kcal(m.descanso) +
+        '. No fim da semana, a média é a mesma do plano. A proteína não muda: é a mesma todos os dias. Um dia acima ou abaixo não estraga nada; o que conta é a semana.'
+      : 'Sua rotina foi marcada sem treinos. Se treinar num dia, a meta desse dia sobe cerca de ' + kcal(m.t.gasto) +
+        ', o que o treino gasta. A proteína é a mesma todos os dias, e o que conta é a semana, não um dia isolado.';
+  }
+
+  // Um alimento fora do plano: escolhe o alimento, a medida e a quantidade
+  function abrirRegistro(refeicao, bloco) {
+    var aberto = document.querySelector('.alim-hoje-novo');
+    if (aberto) aberto.remove();
+    var form = criar('form', 'alim-hoje-novo');
+    var tipo = document.createElement('select');
+    tipo.setAttribute('aria-label', 'Alimento');
+    D.GRUPOS.forEach(function (g) {
+      var grupo = document.createElement('optgroup');
+      grupo.label = g.rotulo;
+      D.ALIMENTOS.filter(function (a) { return a.grupo === g.id; }).forEach(function (a) { grupo.appendChild(new Option(a.nome, a.id)); });
+      if (grupo.children.length) tipo.appendChild(grupo);
+    });
+    var medida = document.createElement('select');
+    medida.setAttribute('aria-label', 'Medida');
+    var qtd = document.createElement('input');
+    qtd.type = 'number';
+    qtd.min = '0.5';
+    qtd.max = '30';
+    qtd.step = '0.5';
+    qtd.value = '1';
+    qtd.setAttribute('aria-label', 'Quantidade');
+    opcoesDeMedidas(medida, tipo.value, 0);
+    tipo.addEventListener('change', function () { opcoesDeMedidas(medida, tipo.value, 0); });
+    form.appendChild(tipo);
+    var linha = criar('div', 'alim-hoje-novo-linha');
+    linha.appendChild(qtd);
+    linha.appendChild(medida);
+    form.appendChild(linha);
+    var acoes = criar('div', 'alim-hoje-acoes');
+    var incluir = criar('button', 'botao botao-cheio', 'Incluir');
+    incluir.type = 'submit';
+    acoes.appendChild(incluir);
+    acoes.appendChild(botao('Cancelar', 'texto-botao', function () { form.remove(); }));
+    form.appendChild(acoes);
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var q = Math.round(Number(String(qtd.value).replace(',', '.')) * 2) / 2;
+      if (!(q >= 0.5 && q <= 30)) { qtd.focus(); return; }
+      diaDeHoje().itens.push({ refeicao: refeicao, alimento: tipo.value, qtd: q, medida: Number(medida.value) || 0 });
+      salvar();
+      desenharHoje();
+      retorno('Registrado: ' + minusculo(D.porAlimento[tipo.value].nome) + '.');
+    });
+    bloco.appendChild(form);
+    tipo.focus();
+  }
+
+  $('hoje-treinou').addEventListener('change', function () {
+    diaDeHoje().treinou = $('hoje-treinou').checked;
+    salvar();
+    desenharHoje();
+  });
+
   /* --- Início ---------------------------------------------------------------------------------------- */
 
   function mostrarTudo() {
     mostrarPerfil();
     desenharItens();
     $('item-resumo').hidden = !estado.concluido;
+    $('item-hoje').hidden = !estado.concluido;
     var aberto = PASSOS.filter(function (p) { return !$('passo-' + p).hidden; })[0];
     if (estado.concluido && perfilValido()) irPara(aberto && aberto !== 'voce' ? aberto : 'resumo');
   }
@@ -1627,7 +1918,7 @@
   mostrarPerfil();
   desenharItens();
   if (estado.concluido && perfilValido()) irPara('resumo');
-  else $('item-resumo').hidden = true;
+  else { $('item-resumo').hidden = true; $('item-hoje').hidden = true; }
   mostrarSituacao('');
   mostrarLembrete();
   avisarAoAbrir();

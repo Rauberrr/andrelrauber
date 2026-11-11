@@ -325,3 +325,16 @@ CREATE TABLE IF NOT EXISTS pedidos_exclusivos (
   KEY idx_exclusivo_usuario (usuario_id, id),
   CONSTRAINT fk_exclusivo_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Manter conectado: um token por aparelho. O banco guarda só o resumo (hash) do segredo.
+CREATE TABLE IF NOT EXISTS sessoes_lembradas (
+  seletor CHAR(24) NOT NULL,
+  segredo_hash CHAR(64) NOT NULL,
+  usuario_id INT UNSIGNED NOT NULL,
+  sessao_versao INT UNSIGNED NOT NULL DEFAULT 0,
+  expira_em DATETIME NOT NULL,
+  criado_em DATETIME NOT NULL,
+  PRIMARY KEY (seletor),
+  KEY idx_lembrada_usuario (usuario_id),
+  CONSTRAINT fk_lembrada_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

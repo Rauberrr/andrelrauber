@@ -17,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261110a">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261110a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261110b">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261110b">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -39,6 +39,7 @@
 
     <ol class="alim-passos" id="alim-topo" aria-label="Passos">
       <li id="item-resumo" hidden><button type="button" id="ir-resumo"><span>★</span> Minha dieta</button></li>
+      <li id="item-hoje" hidden><button type="button" id="ir-hoje"><span>✓</span> Hoje</button></li>
       <li><button type="button" id="ir-voce" aria-current="step"><span>1</span> Você</button></li>
       <li><button type="button" id="ir-comida"><span>2</span> O que você come</button></li>
       <li><button type="button" id="ir-plano"><span>3</span> Seu plano</button></li>
@@ -54,6 +55,26 @@
       <details class="alim-tudo">
         <summary>Ver todos os números: seus dados, energia, custo e acompanhamento</summary>
         <div class="alim-cartoes" id="alim-cartoes"></div>
+      </details>
+    </section>
+
+    <section class="alim-passo" id="passo-hoje" tabindex="-1" hidden>
+      <h2 class="titulo-m">O que comi hoje</h2>
+      <p class="alim-suave" id="hoje-data"></p>
+      <div class="alim-hoje-treino">
+        <label class="app-interruptor"><span><strong>Treinei hoje</strong></span><input id="hoje-treinou" type="checkbox"><span class="app-interruptor-trilho" aria-hidden="true"></span></label>
+        <p class="app-suave" id="hoje-treino-texto"></p>
+      </div>
+      <div class="alim-hoje-painel" id="hoje-painel"></div>
+      <div class="alim-hoje-conselho" role="status">
+        <p id="hoje-conselho"></p>
+        <p class="alim-hoje-pode" id="hoje-pode"></p>
+        <p class="alim-hoje-evitar" id="hoje-evitar" hidden></p>
+      </div>
+      <div class="alim-hoje-refeicoes" id="hoje-refeicoes"></div>
+      <details class="alim-tudo">
+        <summary>Treinou, come mais? Como funciona a meta nos dias de treino</summary>
+        <p class="alim-explica" id="hoje-explica"></p>
       </details>
     </section>
 
@@ -244,11 +265,11 @@
     <a href="apps/treino/"><svg data-icone="haltere"></svg>Treino</a>
   </nav>
 
-  <script src="assets/js/config.js?v=20261110a"></script>
-  <script src="assets/js/conta-api.js?v=20261110a"></script>
-  <script src="assets/js/apps.js?v=20261110a"></script>
-  <script src="assets/js/alimentacao-dados.js?v=20261110a"></script>
-  <script src="assets/js/alimentacao-calculo.js?v=20261110a"></script>
-  <script src="assets/js/alimentacao.js?v=20261110a"></script>
+  <script src="assets/js/config.js?v=20261110b"></script>
+  <script src="assets/js/conta-api.js?v=20261110b"></script>
+  <script src="assets/js/apps.js?v=20261110b"></script>
+  <script src="assets/js/alimentacao-dados.js?v=20261110b"></script>
+  <script src="assets/js/alimentacao-calculo.js?v=20261110b"></script>
+  <script src="assets/js/alimentacao.js?v=20261110b"></script>
 </body>
 </html>
