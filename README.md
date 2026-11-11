@@ -228,6 +228,61 @@ Nunca envie esses valores por mensagem nem os coloque no GitHub.
 - **Exclusão de conta:** quem tem pedido pago, em análise ou em disputa, com movimento nos últimos 90 dias, precisa falar com você para excluir a conta.
 - **Condições:** o texto fica em `condicoes-de-compra.html`. Peça a um advogado para revisar antes de vender.
 
+## Publicar vídeos (painel)
+
+Em **Painel → Vídeos** (`painel-videos.html`, só para administrador), você sobe um vídeo, escreve uma descrição para todas as redes, marca onde publicar e clica em **Publicar** ou **Agendar**. O painel publica no Instagram (Reels), no Facebook (Reels da Página), no YouTube (Shorts) e no TikTok.
+
+- O vídeo sobe em pedaços de 4 MB assim que é escolhido, então funciona com vídeos grandes (até 500 MB) e conexão instável. Use MP4 ou MOV vertical (9:16). Para virar Short no YouTube, até 3 minutos.
+- O que é "agora" o próprio painel publica enquanto a página está aberta. O agendado sai pela tarefa do Cron, com até 5 minutos de diferença. Se fechar a página no meio, o Cron termina.
+- Cada rede aparece separada na lista, com o link do post, o erro que a rede deu (com **Tentar de novo**) e **Cancelar** para o que ainda está agendado.
+- Os vídeos ficam em `api/privado/videos` e saem do servidor 3 dias depois de publicados em todas as redes. As contas ficam na tabela `redes_contas`, com os tokens cifrados pelo `segredo` do `config.php`. As senhas das redes nunca passam pelo site: você entra na página da própria rede.
+
+### O que cada rede permite hoje
+
+| Rede | Funciona | Antes de ficar público |
+| --- | --- | --- |
+| Instagram | Na hora, com o app da Meta em modo de desenvolvimento (vale para você, que é o dono do app). Conta Profissional ligada a uma Página do Facebook. | Nada. Limite da Meta: cerca de 50 a 100 publicações por dia. |
+| Facebook | Na hora, nas mesmas condições. | Nada. Limite: 30 Reels por dia. |
+| YouTube | Na hora, mas o vídeo sai **privado**. | Pedir a auditoria do Google (gratuita, algumas semanas). Depois disso sai como `youtube_privacidade`. A cota gratuita dá uns 6 vídeos por dia. |
+| TikTok | Depois de o TikTok aprovar o app; até lá, só em modo de teste e **privado**. | Pedir a análise do app (algumas semanas). Depois, mude `tiktok_privacidade` para `PUBLIC_TO_EVERYONE`. |
+
+### Ligar as redes
+
+Em todos os apps, o endereço de retorno (redirect URI) é o mesmo: `https://andrerauber.com/api/conectar.php`. As chaves vão só no `config.php` do servidor (veja `config.exemplo.php`); nunca no GitHub nem em mensagens.
+
+**Instagram e Facebook (um app da Meta para os dois)**
+
+1. Confira que o Instagram da marca é conta **Profissional** e está ligado à Página do Facebook (no Instagram: Configurações → Central de Contas, ou na Página: Configurações → Contas vinculadas).
+2. Em developers.facebook.com, **Meus apps → Criar app**, do tipo **Empresa**.
+3. Adicione os produtos **Login do Facebook para Empresas** e **Instagram** (na opção de configurar a API com o login do Facebook).
+4. Em Login do Facebook → Configurações, ponha o endereço de retorno em **URIs de redirecionamento do OAuth válidos**.
+5. Em **Configurações do app → Básico**, copie o ID do app e a Chave secreta para `meta_app_id` e `meta_app_secret`.
+6. No painel, em Vídeos, clique em **Conectar** no cartão Instagram e Facebook e autorize as permissões e a Página.
+
+O app pode ficar em modo de desenvolvimento: ele funciona para quem é administrador do app. Só é preciso pedir a análise da Meta se um dia outras pessoas forem usar.
+
+**YouTube (um projeto no Google Cloud)**
+
+1. Em console.cloud.google.com, crie um projeto e ative a **YouTube Data API v3** (APIs e serviços → Biblioteca).
+2. Em **Tela de consentimento OAuth**, escolha Externo, preencha o nome e o e-mail e depois clique em **Publicar app**. Em modo de teste, o Google desconecta a cada 7 dias. Ao conectar, vai aparecer "app não verificado": clique em Avançado e continue, porque o app é seu.
+3. Em **Credenciais → Criar credenciais → ID do cliente OAuth**, tipo **Aplicativo da Web**, com o endereço de retorno. Copie o ID e a chave secreta para `youtube_client_id` e `youtube_client_secret`.
+4. Para os vídeos saírem públicos, preencha o formulário **YouTube API Services – Audit and Quota Extension**, explicando que é para publicar os vídeos da própria marca.
+
+**TikTok**
+
+1. Em developers.tiktok.com, **Manage apps → Connect an app**, com o site e os links da política de privacidade e dos termos.
+2. Adicione os produtos **Login Kit** (com o endereço de retorno) e **Content Posting API**, com **Direct Post** ligado. Os escopos são `user.info.basic` e `video.publish`.
+3. Copie o Client key e o Client secret para `tiktok_client_key` e `tiktok_client_secret`.
+4. Envie o app para análise. Até a aprovação, adicione a sua conta como usuária de teste (Sandbox) para testar; os vídeos saem privados. Aprovado, mude `tiktok_privacidade` para `PUBLIC_TO_EVERYONE`.
+
+### Tarefa do Cron
+
+Importe o `api/banco.sql` de novo (cria `redes_contas`, `videos` e `publicacoes`) e crie no cPanel, em **Cron Jobs**, uma tarefa **a cada 5 minutos** (ou 15, se a hospedagem não deixar menos):
+
+```
+/usr/local/bin/php /home2/and63667/public_html/api/tarefas/videos.php >/dev/null 2>&1
+```
+
 ## Ocasiões
 
 Em `/apps/ocasioes/`, a pessoa anota um evento, como casamento, formatura, entrevista ou viagem, e recebe:
@@ -318,6 +373,7 @@ Os mesmos dados ficam no phpMyAdmin, nas tabelas `usuarios`, `cadastros` e `even
 | Prazos de confecção usados em Ocasiões | `assets/js/ocasioes-dados.js` |
 | Exercícios do Treino | `assets/js/treino-dados.js` |
 | Modelos de hábitos | `assets/js/habitos.js` |
+| Publicar vídeos (redes, envio, etapas) | `api/redes.php`, `api/videos.php`, `assets/js/painel-videos.js` |
 | Visual dos apps | `assets/css/apps.css` |
 | Opções do pedido exclusivo e categorias da coleção | `assets/js/colecao-dados.js` |
 | Fita métrica da página inicial | `assets/js/home-animacoes.js` |

@@ -502,6 +502,28 @@ function enviar_email(string $para, string $assunto, string $corpo): bool
     return $enviado;
 }
 
+/* --- Pasta privada ------------------------------------------------------------ */
+
+// Chaves dos lembretes, tokens das redes e vídeos esperando publicação.
+// Fica bloqueada ao acesso pelo navegador e fora do repositório.
+function pasta_privada(): string
+{
+    $pasta = (string) (config()['pasta_privada'] ?? (__DIR__ . '/privado'));
+    if (!is_dir($pasta) && !mkdir($pasta, 0700, true) && !is_dir($pasta)) {
+        throw new RuntimeException('Não foi possível criar a pasta privada.');
+    }
+    $bloqueio = $pasta . '/.htaccess';
+    if (!is_file($bloqueio)) {
+        file_put_contents($bloqueio, "Require all denied\n");
+    }
+    return $pasta;
+}
+
+function base64url(string $bytes): string
+{
+    return rtrim(strtr(base64_encode($bytes), '+/', '-_'), '=');
+}
+
 /* --- Dados públicos de outros serviços ---------------------------------------------- */
 
 // Pasta para guardar respostas de outros serviços por um tempo. Fica bloqueada ao acesso direto.

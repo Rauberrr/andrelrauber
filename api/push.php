@@ -20,24 +20,6 @@ if (!defined('AR_API')) {
 const PUSH_HOSTS = ['fcm.googleapis.com', 'updates.push.services.mozilla.com', 'push.services.mozilla.com', 'web.push.apple.com'];
 const PUSH_SUFIXOS = ['.push.apple.com', '.notify.windows.com'];
 
-function pasta_privada(): string
-{
-    $pasta = (string) (config()['pasta_privada'] ?? (__DIR__ . '/privado'));
-    if (!is_dir($pasta) && !mkdir($pasta, 0700, true) && !is_dir($pasta)) {
-        throw new RuntimeException('Não foi possível criar a pasta privada.');
-    }
-    $bloqueio = $pasta . '/.htaccess';
-    if (!is_file($bloqueio)) {
-        file_put_contents($bloqueio, "Require all denied\n");
-    }
-    return $pasta;
-}
-
-function base64url(string $bytes): string
-{
-    return rtrim(strtr(base64_encode($bytes), '+/', '-_'), '=');
-}
-
 // Opções do OpenSSL: no Windows, ele precisa do arquivo de configuração para criar chaves
 function opcoes_openssl(array $extra = []): array
 {

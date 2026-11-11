@@ -1,5 +1,5 @@
 # Protege a senha do banco, a estrutura das tabelas e os arquivos internos
-<FilesMatch "^(config\.php|config\.exemplo\.php|nucleo\.php|mercadopago\.php|banco\.sql)$">
+<FilesMatch "^(config\.php|config\.exemplo\.php|nucleo\.php|mercadopago\.php|push\.php|redes\.php|banco\.sql)$">
   Require all denied
 </FilesMatch>
 Options -Indexes

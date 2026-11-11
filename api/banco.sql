@@ -367,3 +367,45 @@ CREATE TABLE IF NOT EXISTS avisos_push (
   KEY idx_aviso_usuario (usuario_id, entregue_em),
   CONSTRAINT fk_aviso_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Vídeos do painel: contas ligadas em cada rede, com os tokens cifrados pelo segredo do config.php
+CREATE TABLE IF NOT EXISTS redes_contas (
+  rede VARCHAR(20) NOT NULL,
+  nome VARCHAR(120) NOT NULL,
+  dados TEXT NOT NULL,
+  conectado_em DATETIME NOT NULL,
+  PRIMARY KEY (rede)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Vídeos enviados pelo painel. O arquivo fica em api/privado/videos e sai depois de publicado.
+CREATE TABLE IF NOT EXISTS videos (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  arquivo VARCHAR(80) NOT NULL,
+  nome VARCHAR(160) NOT NULL,
+  tamanho BIGINT UNSIGNED NOT NULL,
+  recebido BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  tipo VARCHAR(40) NOT NULL,
+  criado_em DATETIME NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Uma linha por vídeo e por rede: agendada, enviando, processando, publicada, erro ou cancelada
+CREATE TABLE IF NOT EXISTS publicacoes (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  video_id INT UNSIGNED NOT NULL,
+  rede VARCHAR(20) NOT NULL,
+  titulo VARCHAR(100) NOT NULL,
+  legenda TEXT NOT NULL,
+  agendado_para DATETIME NOT NULL,
+  situacao VARCHAR(20) NOT NULL,
+  estado TEXT NOT NULL,
+  link VARCHAR(300) NOT NULL,
+  erro VARCHAR(300) NOT NULL,
+  tentativas INT UNSIGNED NOT NULL DEFAULT 0,
+  travada_em DATETIME NULL,
+  criado_em DATETIME NOT NULL,
+  atualizado_em DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_publicacao_fila (situacao, agendado_para),
+  CONSTRAINT fk_publicacao_video FOREIGN KEY (video_id) REFERENCES videos (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

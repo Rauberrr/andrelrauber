@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vídeos | Painel | Rauber</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png?v=20261109c">
+  <link rel="icon" type="image/png" sizes="64x64" href="assets/img/favicon-64.png?v=20261109c">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20261109d">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261111b">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <header class="topo rolou">
+    <div class="conteudo topo-interno">
+      <a class="topo-logo" href="index.html" aria-label="Rauber, página inicial">
+        <img class="logo-preta" src="assets/img/logo-preta.png?v=20261109c" alt="" width="453" height="91">
+      </a>
+      <a class="link-seta" href="painel.html">Voltar ao painel</a>
+    </div>
+  </header>
+
+  <main id="principal" class="conteudo painel-admin">
+    <span class="etiqueta">Painel</span>
+    <h1 class="titulo-m">Publicar vídeos</h1>
+    <p class="painel-ajuda">Um vídeo, uma descrição e um clique: o painel publica no Instagram, no Facebook, no YouTube e no TikTok de uma vez, agora ou na data que você escolher.</p>
+
+    <p class="carregando" id="pv-carregando">Carregando...</p>
+    <p class="painel-aviso" id="pv-aviso" role="status" hidden></p>
+
+    <div id="pv-conteudo" hidden>
+      <h2 class="titulo-s painel-subtitulo">Contas</h2>
+      <p class="painel-ajuda">Conecte cada rede uma vez. O login acontece na página da própria rede: a sua senha não passa por aqui.</p>
+      <div class="pv-contas" id="pv-contas"></div>
+
+      <h2 class="titulo-s painel-subtitulo">Nova publicação</h2>
+      <form class="pv-form" id="pv-form" novalidate>
+        <div class="pv-video">
+          <label class="pv-escolher" id="pv-escolher">
+            <input type="file" id="pv-arquivo" accept="video/mp4,video/quicktime,.mp4,.mov">
+            <span class="pv-escolher-texto"><strong>Escolher o vídeo</strong><span>MP4 ou MOV, vertical (9:16), até 500 MB</span></span>
+          </label>
+          <video class="pv-previa" id="pv-previa" controls muted playsinline hidden></video>
+          <div class="pv-progresso" id="pv-progresso" hidden>
+            <div class="pv-barra"><i id="pv-barra"></i></div>
+            <p class="painel-ajuda" id="pv-progresso-texto" role="status"></p>
+          </div>
+          <p class="erro" id="pv-erro-video" role="alert"></p>
+        </div>
+
+        <div class="pv-campos">
+          <fieldset class="pv-redes">
+            <legend>Publicar em</legend>
+            <div id="pv-redes"></div>
+            <p class="erro" id="pv-erro-redes" role="alert"></p>
+          </fieldset>
+
+          <div class="campo" id="pv-titulo-campo">
+            <label for="pv-titulo">Título no YouTube</label>
+            <div class="campo-entrada"><input id="pv-titulo" maxlength="100" placeholder="Em branco: a primeira linha da descrição"></div>
+            <p class="erro" id="pv-erro-titulo" role="alert"></p>
+          </div>
+
+          <div class="campo">
+            <label for="pv-legenda">Descrição para todas as redes</label>
+            <div class="campo-entrada"><textarea id="pv-legenda" rows="7" maxlength="2200" placeholder="O texto do vídeo, as marcações (@perfil) e as hashtags."></textarea></div>
+            <p class="pv-contador" id="pv-contador">0 de 2.200</p>
+            <p class="erro" id="pv-erro-legenda" role="alert"></p>
+          </div>
+
+          <div class="campo">
+            <label for="pv-hashtags">Hashtags (opcional)</label>
+            <div class="campo-entrada"><input id="pv-hashtags" maxlength="400" placeholder="alfaiataria sobmedida rauber"></div>
+            <p class="painel-ajuda">Separe por espaço, com ou sem #. Elas vão no fim da descrição.</p>
+          </div>
+
+          <fieldset class="pv-quando">
+            <legend>Quando</legend>
+            <label class="campo-marcar"><input type="radio" name="pv-quando" value="agora" checked> <span>Publicar agora</span></label>
+            <label class="campo-marcar"><input type="radio" name="pv-quando" value="agendar"> <span>Agendar</span></label>
+            <div class="campo pv-data" id="pv-data-campo" hidden>
+              <label for="pv-data">Data e hora</label>
+              <div class="campo-entrada"><input id="pv-data" type="datetime-local"></div>
+              <p class="painel-ajuda">O vídeo sai no horário marcado, com até 5 minutos de diferença.</p>
+              <p class="erro" id="pv-erro-quando" role="alert"></p>
+            </div>
+          </fieldset>
+
+          <p class="erro" id="pv-erro" role="alert"></p>
+          <div class="painel-form-botoes">
+            <button class="botao botao-cheio" type="submit" id="pv-publicar">Publicar</button>
+          </div>
+        </div>
+      </form>
+
+      <h2 class="titulo-s painel-subtitulo">Publicações</h2>
+      <p class="painel-ajuda">Agendadas, em andamento e publicadas. O que está em andamento continua mesmo que você feche esta página.</p>
+      <ul class="pv-lista" id="pv-lista"></ul>
+      <p class="carregando" id="pv-vazio" hidden>Nenhuma publicação ainda.</p>
+    </div>
+  </main>
+
+  <script src="assets/js/config.js?v=20261111a"></script>
+  <script src="assets/js/conta-api.js?v=20261111b"></script>
+  <script src="assets/js/painel-videos.js?v=20261111b"></script>
+</body>
+</html>

@@ -32,4 +32,18 @@ return [
 
     // Máximo de parcelas oferecidas. Com 0, valem as opções do próprio Mercado Pago.
     'mercadopago_parcelas' => 0,
+
+    // Publicar vídeos (painel do gestor). Cada rede tem um app de desenvolvedor criado por você;
+    // o passo a passo está no README. Vazio deixa a rede desligada. Nunca compartilhe esses valores.
+    // Endereço de retorno para cadastrar em todos os apps: https://andrerauber.com/api/conectar.php
+    'meta_app_id' => '',
+    'meta_app_secret' => '',
+    'youtube_client_id' => '',
+    'youtube_client_secret' => '',
+    'tiktok_client_key' => '',
+    'tiktok_client_secret' => '',
+    // Até o TikTok aprovar o app, só SELF_ONLY (privado). Depois: PUBLIC_TO_EVERYONE.
+    'tiktok_privacidade' => 'SELF_ONLY',
+    // public, unlisted ou private. Até o YouTube aprovar o app, os vídeos ficam privados mesmo assim.
+    'youtube_privacidade' => 'public',
 ];

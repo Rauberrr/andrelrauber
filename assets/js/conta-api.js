@@ -75,7 +75,7 @@ window.AR_API = (function () {
   var DESTINOS = [
     'medidas.html', 'minha-conta.html', 'painel.html', 'guarda-roupa.html', 'alimentacao.html',
     'apps/', 'apps/guarda-roupa/', 'apps/alimentacao/', 'apps/ocasioes/', 'apps/treino/', 'apps/habitos/',
-    'colecao.html', 'pedido-exclusivo.html'
+    'colecao.html', 'pedido-exclusivo.html', 'painel-videos.html'
   ];
   function destino(padrao) {
     var pedido = new URLSearchParams(location.search).get('voltar');
