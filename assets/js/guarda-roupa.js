@@ -1276,6 +1276,7 @@
     var lista;
 
     $('gr-looks-filtros').hidden = falta.length > 0;
+    $('gr-montar-chamada').hidden = pecas.length < 2;
     var soSugestoes = mostrar === 'sugeridos';
     $('gr-filtro-nivel').closest('.campo').hidden = !soSugestoes;
     $('gr-filtro-clima').closest('.campo').hidden = !soSugestoes;
@@ -1370,6 +1371,215 @@
     }
   }
 
+  /* --- Escolher peças: filtros por tipo, busca e só as escolhidas ------------------------------------ */
+
+  function semAcento(texto) {
+    return String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function grupoDaPeca(p) { return (gr.porTipo[p.tipo] || {}).grupo || 'acessorio'; }
+
+  // Monta a grade de peças com filtros em cima. Quem tem muita roupa filtra pelo tipo
+  // (parte de cima, de baixo, calçados...) ou procura pela cor e pelo nome.
+  function seletorDePecas(filtros, grade, aoMudar) {
+    var filtro = 'todas';
+    var busca = '';
+    filtros.textContent = '';
+    grade.textContent = '';
+    var itens = [];
+
+    pecas.forEach(function (p) {
+      var rotulo = criar('label');
+      var caixa = document.createElement('input');
+      caixa.type = 'checkbox';
+      caixa.value = String(p.id);
+      caixa.setAttribute('aria-label', gr.descrever(p));
+      caixa.addEventListener('change', function () { contar(); if (aoMudar) aoMudar(); });
+      rotulo.appendChild(caixa);
+      rotulo.appendChild(figuraDaPeca(p));
+      var marca = criar('span', 'gr-escolher-marca');
+      marca.appendChild(app.icone('check'));
+      rotulo.appendChild(marca);
+      grade.appendChild(rotulo);
+      itens.push({ peca: p, rotulo: rotulo, caixa: caixa, texto: semAcento(gr.descrever(p) + ' ' + (p.nome || '') + ' ' + (p.marca || '')), grupo: grupoDaPeca(p) });
+    });
+
+    // Só os grupos que a pessoa tem, na ordem do guarda-roupa
+    var chips = criar('div', 'gr-filtro-chips');
+    chips.setAttribute('role', 'group');
+    chips.setAttribute('aria-label', 'Filtrar peças');
+    var opcoes = [{ id: 'todas', rotulo: 'Todas' }].concat(gr.GRUPOS.filter(function (g) {
+      return itens.some(function (i) { return i.grupo === g.id; });
+    })).concat([{ id: 'escolhidas', rotulo: 'Escolhidas' }]);
+    var botoes = {};
+    opcoes.forEach(function (o) {
+      var b = criar('button', 'gr-chip', o.rotulo);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(o.id === filtro));
+      b.addEventListener('click', function () {
+        filtro = o.id;
+        Object.keys(botoes).forEach(function (k) { botoes[k].setAttribute('aria-pressed', String(k === filtro)); });
+        aplicar();
+      });
+      botoes[o.id] = b;
+      chips.appendChild(b);
+    });
+    filtros.appendChild(chips);
+
+    if (pecas.length > 8) {
+      var procura = document.createElement('input');
+      procura.type = 'search';
+      procura.className = 'gr-filtro-busca';
+      procura.placeholder = 'Procurar: cor, tipo, tecido';
+      procura.setAttribute('aria-label', 'Procurar peça');
+      procura.addEventListener('input', function () { busca = semAcento(procura.value.trim()); aplicar(); });
+      filtros.appendChild(procura);
+    }
+    var vazio = criar('p', 'gr-suave gr-filtro-nada', 'Nenhuma peça com esse filtro.');
+    vazio.hidden = true;
+    filtros.appendChild(vazio);
+
+    function aplicar() {
+      var palavras = busca ? busca.split(/\s+/) : [];
+      var algum = false;
+      itens.forEach(function (i) {
+        var ok = (filtro === 'todas' || (filtro === 'escolhidas' ? i.caixa.checked : i.grupo === filtro)) &&
+          palavras.every(function (w) { return i.texto.indexOf(w) !== -1; });
+        i.rotulo.hidden = !ok;
+        if (ok) algum = true;
+      });
+      vazio.hidden = algum;
+    }
+
+    function contar() {
+      var n = itens.filter(function (i) { return i.caixa.checked; }).length;
+      botoes.escolhidas.textContent = n ? 'Escolhidas (' + n + ')' : 'Escolhidas';
+    }
+
+    return {
+      escolhidas: function () { return itens.filter(function (i) { return i.caixa.checked; }).map(function (i) { return i.peca.id; }); },
+      marcar: function (ids) {
+        itens.forEach(function (i) { i.caixa.checked = ids.indexOf(i.peca.id) !== -1; });
+        filtro = 'escolhidas';
+        Object.keys(botoes).forEach(function (k) { botoes[k].setAttribute('aria-pressed', String(k === filtro)); });
+        aplicar();
+        contar();
+        if (aoMudar) aoMudar();
+      }
+    };
+  }
+
+  // Looks prontos para o diário: os salvos e os que a pessoa já usou, sem repetir
+  function desenharProntos(seletor) {
+    var lista = $('uso-prontos-lista');
+    lista.textContent = '';
+    var mapa = porId();
+    var vistos = {};
+    var prontos = [];
+    looksComDecisao('salvo').forEach(function (l) {
+      if (!l.completo || vistos[l.chave]) return;
+      vistos[l.chave] = true;
+      prontos.push({ nome: (notas[l.chave] || {}).nome || 'Look salvo', pecas: l.pecas });
+    });
+    usos.slice().sort(function (a, b) { return a.data < b.data ? 1 : -1; }).forEach(function (u) {
+      var ids = u.pecas.filter(function (id) { return mapa[id]; });
+      var chave = ids.slice().sort(function (a, b) { return a - b; }).join('-');
+      if (ids.length < 2 || vistos[chave]) return;
+      vistos[chave] = true;
+      prontos.push({ nome: 'Usado em ' + app.dataCurta(u.data), pecas: ids.map(function (id) { return mapa[id]; }) });
+    });
+    prontos = prontos.slice(0, 12);
+    $('uso-prontos').hidden = !prontos.length;
+    prontos.forEach(function (l) {
+      var b = criar('button', 'gr-pronto');
+      b.type = 'button';
+      var fotos = criar('span', 'gr-pronto-fotos');
+      l.pecas.slice(0, 4).forEach(function (p) { fotos.appendChild(figuraDaPeca(p)); });
+      b.appendChild(fotos);
+      b.appendChild(criar('span', 'gr-pronto-nome', l.nome));
+      b.setAttribute('aria-label', l.nome + ': ' + l.pecas.map(function (p) { return gr.descrever(p); }).join(', '));
+      b.addEventListener('click', function () {
+        seletor.marcar(l.pecas.map(function (p) { return p.id; }));
+        lista.querySelectorAll('.gr-pronto').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      });
+      lista.appendChild(b);
+    });
+  }
+
+  /* --- Montar um look à mão ------------------------------------------------------------------------- */
+
+  var montador = null;
+
+  function abrirMontar() {
+    $('montar-erro').textContent = '';
+    $('montar-erro-pecas').textContent = '';
+    $('montar-nome').value = '';
+    $('montar-obs').value = '';
+    montador = seletorDePecas($('montar-filtro'), $('montar-pecas'), previaDoMontado);
+    previaDoMontado();
+    $('montar-modal').showModal();
+  }
+
+  function previaDoMontado() {
+    var ids = montador.escolhidas();
+    var mapa = porId();
+    var caixa = $('montar-previa');
+    caixa.textContent = '';
+    if (!ids.length) { caixa.appendChild(criar('p', 'gr-suave', 'As peças escolhidas aparecem aqui.')); return; }
+    var fila = criar('div', 'gr-montado-fila');
+    ids.forEach(function (id) { fila.appendChild(figuraDaPeca(mapa[id])); });
+    caixa.appendChild(fila);
+    var grupos = ids.map(function (id) { return grupoDaPeca(mapa[id]); });
+    var falta = [];
+    if (grupos.indexOf('conjunto') === -1) {
+      if (grupos.indexOf('cima') === -1 && grupos.indexOf('camada') === -1) falta.push('uma peça de cima');
+      if (grupos.indexOf('baixo') === -1) falta.push('uma de baixo');
+    }
+    var texto = ids.length + (ids.length === 1 ? ' peça' : ' peças') + (falta.length ? '. Falta ' + falta.join(' e ') + '?' : '. Look completo.');
+    caixa.appendChild(criar('p', 'gr-suave', texto));
+  }
+
+  function salvarMontado(usouHoje) {
+    var ids = montador.escolhidas();
+    $('montar-erro').textContent = '';
+    $('montar-erro-pecas').textContent = '';
+    if (ids.length < 2 || ids.length > 6) { $('montar-erro-pecas').textContent = 'Escolha de 2 a 6 peças.'; return; }
+    var nome = $('montar-nome').value.trim();
+    var obs = $('montar-obs').value.trim();
+    var botoes = [$('montar-salvar'), $('montar-usei')];
+    botoes.forEach(function (b) { b.disabled = true; });
+    api.post(ENDERECO + '?acao=look', { pecas: ids, situacao: 'salvo' }).then(function (r) {
+      if (!r.ok || (!nome && !obs)) return r;
+      return api.post(ENDERECO + '?acao=look-nota', { pecas: ids, nome: nome, observacao: obs }).then(function (n) {
+        if (n.ok && (n.dados.nome || n.dados.observacao)) notas[n.dados.chave] = { nome: n.dados.nome, observacao: n.dados.observacao };
+        return n.ok ? r : n;
+      });
+    }).then(function (r) {
+      botoes.forEach(function (b) { b.disabled = false; });
+      if (!r.ok) {
+        if (r.status === 401) { irParaLogin(); return; }
+        $('montar-erro').textContent = r.erro || 'Não foi possível salvar. Tente de novo.';
+        return;
+      }
+      decisoes[r.dados.chave] = 'salvo';
+      $('montar-modal').close();
+      $('gr-filtro-mostrar').value = 'salvos';
+      paginaLooks = 1;
+      desenharLooks();
+      if (usouHoje) {
+        var mapa = porId();
+        abrirUso({ pecas: ids.map(function (id) { return mapa[id]; }) });
+      } else {
+        avisar('Look salvo. Ele está em Salvos e aparece no Diário como look pronto.');
+      }
+    });
+  }
+
+  $('gr-montar').addEventListener('click', abrirMontar);
+  $('montar-fechar').addEventListener('click', function () { $('montar-modal').close(); });
+  $('montar-form').addEventListener('submit', function (e) { e.preventDefault(); salvarMontado(false); });
+  $('montar-usei').addEventListener('click', function () { salvarMontado(true); });
+
   function abrirUso(opcoes) {
     usoAtual = opcoes || {};
     $('uso-erro').textContent = '';
@@ -1395,20 +1605,8 @@
       });
       $('uso-titulo').textContent = 'Anotar este look';
     } else {
-      pecas.forEach(function (p) {
-        var rotulo = criar('label');
-        var caixa = document.createElement('input');
-        caixa.type = 'checkbox';
-        caixa.value = String(p.id);
-        caixa.setAttribute('aria-label', gr.descrever(p));
-        caixa.addEventListener('change', conferirRepeticao);
-        rotulo.appendChild(caixa);
-        rotulo.appendChild(figuraDaPeca(p));
-        var marca = criar('span', 'gr-escolher-marca');
-        marca.appendChild(app.icone('check'));
-        rotulo.appendChild(marca);
-        escolha.appendChild(rotulo);
-      });
+      var seletor = seletorDePecas($('uso-filtro'), escolha, conferirRepeticao);
+      desenharProntos(seletor);
       $('uso-titulo').textContent = 'O que você usou?';
     }
     previa.hidden = !usoAtual.pecas;

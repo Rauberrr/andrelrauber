@@ -1,21 +1,28 @@
 <?php
 /**
- * Ocasiões e Treino: guarda na conta o que a pessoa anotou em cada app.
+ * Ocasiões, Treino e Hábitos: guarda na conta o que a pessoa anotou em cada app.
  *
- * GET  ?app=ocasioes|treino                 devolve os dados guardados, ou null
- * POST ?app=ocasioes|treino&acao=salvar     guarda os dados
- * POST ?app=ocasioes|treino&acao=apagar     apaga os dados da conta
+ * GET  ?app=ocasioes|treino|habitos                 devolve os dados guardados, ou null
+ * POST ?app=ocasioes|treino|habitos&acao=salvar     guarda os dados
+ * POST ?app=ocasioes|treino|habitos&acao=apagar     apaga os dados da conta
  *
- * O Treino fala do corpo e da rotina da pessoa: só é guardado com a autorização dela,
- * como a Alimentação. O servidor só aceita os campos e valores que cada página usa.
+ * O Treino e os Hábitos falam do corpo e da rotina da pessoa: só são guardados com a
+ * autorização dela, como a Alimentação. O servidor só aceita os campos e valores que cada
+ * página usa.
  */
 declare(strict_types=1);
 
 define('AR_API', true);
 require __DIR__ . '/nucleo.php';
 
-const APPS = ['ocasioes', 'treino'];
-const APPS_COM_AUTORIZACAO = ['treino'];
+const APPS = ['ocasioes', 'treino', 'habitos'];
+const APPS_COM_AUTORIZACAO = ['treino', 'habitos'];
+
+// Acompanham assets/js/habitos.js
+const HB_MAXIMO = 20;
+const HB_DIAS_GUARDADOS = 400;
+const HB_SITUACOES = ['feito', 'minimo', 'pulado'];
+const HB_CORES = ['bordo', 'ouro', 'oliva', 'azul', 'grafite'];
 const APPS_UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 
 // Acompanham as listas de assets/js/ocasioes-dados.js
@@ -37,6 +44,8 @@ const TR_FOCOS = ['peito', 'costas', 'ombros', 'bracos', 'pernas', 'gluteos', 'a
 const TR_MAXIMO_FOCOS = 2;
 const TR_VARIACOES = 3;
 const TR_MAXIMO_SESSOES = 500;
+const TR_GRUPOS = ['peito', 'costas', 'ombros', 'biceps', 'triceps', 'quadriceps', 'posterior', 'panturrilha', 'abdomen'];
+const TR_MAXIMO_PERSONALIZADOS = 30;
 
 $app = $_GET['app'] ?? '';
 if (!in_array($app, APPS, true)) {
@@ -266,6 +275,30 @@ function limpar_treino($d): ?array
                 $cargas[(string) $ex] = round((float) $kg, 1);
             }
         }
+        // Séries de cada exercício: [carga em kg ou null, repetições ou null]
+        $series = [];
+        foreach ((is_array($s['series'] ?? null) ? array_slice($s['series'], 0, 15, true) : []) as $ex => $lista) {
+            if (!codigo_valido((string) $ex) || !is_array($lista)) {
+                continue;
+            }
+            $limpas = [];
+            foreach (array_slice(array_values($lista), 0, 10) as $serie) {
+                if (!is_array($serie)) {
+                    continue;
+                }
+                $serie = array_values($serie);
+                $kg = $serie[0] ?? null;
+                $reps = $serie[1] ?? null;
+                $kg = (is_int($kg) || is_float($kg)) && $kg >= 0 && $kg <= 500 ? round((float) $kg, 1) : null;
+                $reps = is_int($reps) && $reps >= 0 && $reps <= 300 ? $reps : null;
+                if ($kg !== null || $reps !== null) {
+                    $limpas[] = [$kg, $reps];
+                }
+            }
+            if ($limpas) {
+                $series[(string) $ex] = $limpas;
+            }
+        }
         $feitos = $s['feitos'] ?? 0;
         $sessao = [
             'data' => $data,
@@ -273,12 +306,34 @@ function limpar_treino($d): ?array
             'esforco' => uma_de($s['esforco'] ?? '', TR_ESFORCOS, 'ok'),
             'feitos' => is_int($feitos) && $feitos >= 0 && $feitos <= 15 ? $feitos : 0,
             'cargas' => (object) $cargas,
+            'series' => (object) $series,
         ];
         $variacao = $s['variacao'] ?? null;
         if (is_int($variacao) && $variacao >= 0 && $variacao < TR_VARIACOES) {
             $sessao['variacao'] = $variacao;
         }
         $sessoes[] = $sessao;
+    }
+
+    // Exercícios criados pela pessoa: nome, músculo e se usa peso
+    $personalizados = [];
+    $vistos = [];
+    foreach ((is_array($d['personalizados'] ?? null) ? array_slice($d['personalizados'], 0, TR_MAXIMO_PERSONALIZADOS) : []) as $e) {
+        if (!is_array($e) || !is_string($e['id'] ?? null) || preg_match('/^p_[a-z0-9]{3,16}$/', $e['id']) !== 1 || isset($vistos[$e['id']])) {
+            continue;
+        }
+        $nome = trim(linha_de_texto($e, 'nome', 50));
+        if (mb_strlen($nome) < 2 || !in_array($e['grupo'] ?? '', TR_GRUPOS, true)) {
+            continue;
+        }
+        $vistos[$e['id']] = true;
+        $personalizados[] = [
+            'id' => $e['id'],
+            'nome' => $nome,
+            'grupo' => $e['grupo'],
+            'carga' => ($e['carga'] ?? true) !== false,
+            'tempo' => ($e['tempo'] ?? false) === true,
+        ];
     }
 
     // Trocas de exercício: treino, opção e movimento, como a0-peito
@@ -302,10 +357,87 @@ function limpar_treino($d): ?array
             'medidas' => (object) $medidas,
         ],
         'sessoes' => $sessoes,
+        'personalizados' => $personalizados,
         'trocas' => (object) $trocas,
         'variacoes' => (object) $variacoes,
         'alternar' => ($d['alternar'] ?? false) === true,
         'resumo' => ['proximo' => linha_de_texto($resumo, 'proximo', 60)],
+        'guardarNaConta' => true,
+        'alteradoEm' => momento($d['alteradoEm'] ?? 0),
+    ];
+}
+
+/* --- Hábitos ---------------------------------------------------------------------------------- */
+
+function limpar_habitos($d): ?array
+{
+    if (!is_array($d) || !is_array($d['habitos'] ?? null) || count($d['habitos']) > HB_MAXIMO) {
+        return null;
+    }
+    $habitos = [];
+    $ids = [];
+    foreach ($d['habitos'] as $h) {
+        if (!is_array($h) || !is_string($h['id'] ?? null) || preg_match('/^h_[a-z0-9]{3,16}$/', $h['id']) !== 1 || isset($ids[$h['id']])) {
+            return null;
+        }
+        $nome = trim(linha_de_texto($h, 'nome', 60));
+        if (mb_strlen($nome) < 2) {
+            return null;
+        }
+        $dias = [];
+        foreach ((is_array($h['dias'] ?? null) ? $h['dias'] : []) as $dia) {
+            if (is_int($dia) && $dia >= 0 && $dia <= 6 && !in_array($dia, $dias, true)) {
+                $dias[] = $dia;
+            }
+        }
+        sort($dias);
+        $hora = $h['hora'] ?? '';
+        $criado = data_ou_vazia($h['criadoEm'] ?? '');
+        $ids[$h['id']] = true;
+        $habitos[] = [
+            'id' => $h['id'],
+            'nome' => $nome,
+            'identidade' => trim(linha_de_texto($h, 'identidade', 80)),
+            'minima' => trim(linha_de_texto($h, 'minima', 80)),
+            'ancora' => trim(linha_de_texto($h, 'ancora', 80)),
+            'dias' => $dias ?: [0, 1, 2, 3, 4, 5, 6],
+            'hora' => is_string($hora) && preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $hora) === 1 ? $hora : '',
+            'lembrete' => ($h['lembrete'] ?? false) === true,
+            'cor' => uma_de($h['cor'] ?? '', HB_CORES, 'bordo'),
+            'criadoEm' => $criado ?: date('Y-m-d'),
+        ];
+    }
+
+    // Registros por dia, só dos últimos dias e dos hábitos que existem
+    $registros = [];
+    $origem = is_array($d['registros'] ?? null) ? $d['registros'] : [];
+    $datas = array_filter(array_keys($origem), function ($data) {
+        $limpa = data_ou_vazia((string) $data);
+        return $limpa !== null && $limpa !== '' && $limpa <= date('Y-m-d', time() + 86400);
+    });
+    rsort($datas);
+    foreach (array_slice($datas, 0, HB_DIAS_GUARDADOS) as $data) {
+        if (!is_array($origem[$data])) {
+            continue;
+        }
+        $dia = [];
+        foreach ($origem[$data] as $hid => $situacao) {
+            if (isset($ids[(string) $hid]) && in_array($situacao, HB_SITUACOES, true)) {
+                $dia[(string) $hid] = $situacao;
+            }
+        }
+        if ($dia) {
+            $registros[(string) $data] = $dia;
+        }
+    }
+    ksort($registros);
+
+    $fuso = $d['fuso'] ?? '';
+    return [
+        'habitos' => $habitos,
+        'registros' => (object) $registros,
+        'fuso' => is_string($fuso) && in_array($fuso, timezone_identifiers_list(), true) ? $fuso : 'America/Sao_Paulo',
+        'avisos' => ($d['avisos'] ?? false) === true,
         'guardarNaConta' => true,
         'alteradoEm' => momento($d['alteradoEm'] ?? 0),
     ];
@@ -325,7 +457,8 @@ function salvar_app(int $id, string $app): void
     if ($precisaAutorizar && !$existe && ($entrada['consentimento'] ?? null) !== true) {
         falhar(403, 'Para guardar na sua conta, é preciso autorizar.');
     }
-    $dados = $app === 'ocasioes' ? limpar_ocasioes($entrada['dados'] ?? null) : limpar_treino($entrada['dados'] ?? null);
+    $limpar = ['ocasioes' => 'limpar_ocasioes', 'treino' => 'limpar_treino', 'habitos' => 'limpar_habitos'][$app];
+    $dados = $limpar($entrada['dados'] ?? null);
     if ($dados === null) {
         falhar(422, 'Algumas informações vieram num formato inesperado. Atualize a página e tente de novo.');
     }
@@ -342,7 +475,7 @@ function salvar_app(int $id, string $app): void
             'INSERT INTO apps_dados (usuario_id, app, dados, consentiu_em, atualizado_em) VALUES (?, ?, ?, ?, ?)',
             [$id, $app, $json, $precisaAutorizar ? $momento : null, $momento]
         );
-        registrar_evento($id, $app === 'treino' ? 'treino_autorizado' : 'ocasioes_comecou');
+        registrar_evento($id, ['treino' => 'treino_autorizado', 'habitos' => 'habitos_autorizado', 'ocasioes' => 'ocasioes_comecou'][$app]);
     }
     responder(200, ['atualizadoEm' => $momento]);
 }

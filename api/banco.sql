@@ -338,3 +338,32 @@ CREATE TABLE IF NOT EXISTS sessoes_lembradas (
   KEY idx_lembrada_usuario (usuario_id),
   CONSTRAINT fk_lembrada_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Hábitos: aparelhos que recebem lembretes no navegador (Web Push).
+-- Guarda só o endereço que o navegador entrega; o aviso em si fica em avisos_push.
+CREATE TABLE IF NOT EXISTS push_inscricoes (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  usuario_id INT UNSIGNED NOT NULL,
+  endpoint VARCHAR(800) NOT NULL,
+  endpoint_hash CHAR(64) NOT NULL,
+  criado_em DATETIME NOT NULL,
+  usado_em DATETIME NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uniq_push_endpoint (endpoint_hash),
+  KEY idx_push_usuario (usuario_id),
+  CONSTRAINT fk_push_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Avisos esperando o navegador buscar (o toque do Web Push vai sem conteúdo)
+CREATE TABLE IF NOT EXISTS avisos_push (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  usuario_id INT UNSIGNED NOT NULL,
+  titulo VARCHAR(80) NOT NULL,
+  texto VARCHAR(200) NOT NULL,
+  marca VARCHAR(40) NOT NULL,
+  criado_em DATETIME NOT NULL,
+  entregue_em DATETIME NULL,
+  PRIMARY KEY (id),
+  KEY idx_aviso_usuario (usuario_id, entregue_em),
+  CONSTRAINT fk_aviso_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

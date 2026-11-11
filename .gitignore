@@ -12,5 +12,8 @@ imagens-guarda-roupa/
 # Respostas guardadas do clima e dos preços: o servidor refaz sozinho
 api/cache/
 
+# Chaves dos lembretes no navegador (Web Push): criadas no servidor, nunca no repositório
+api/privado/
+
 # Fotos dos produtos da coleção, enviadas pelo painel
 api/fotos-produtos/*

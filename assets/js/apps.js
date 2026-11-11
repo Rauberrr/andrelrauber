@@ -34,7 +34,8 @@ window.AR_APP = (function () {
     sino: ['M6 16.5V11a6 6 0 1 1 12 0v5.5l1.5 2h-15Z', 'M10 21h4'],
     diario: ['M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14.5A1.5 1.5 0 0 1 17 21H6Z', 'M6 3.5v17.5', 'M9.5 8h5.5', 'M9.5 11.5h5.5'],
     conversa: ['M4 19.5l1.3-3.7A7.5 7.5 0 1 1 8.4 18.6Z'],
-    fechar: ['M6.5 6.5l11 11', 'M17.5 6.5l-11 11']
+    fechar: ['M6.5 6.5l11 11', 'M17.5 6.5l-11 11'],
+    chama: ['M12 21c-3.9 0-6.5-2.7-6.5-6.3 0-3.4 2.3-5.4 3.6-7.7.5 1.8 1.4 2.8 2.4 3.3.3-3.3 1.6-5.8 3.8-7.3-.2 2.8 3.2 5.6 3.2 11 0 4.4-2.7 7-6.5 7Z', 'M12 21c-1.6 0-2.7-1.1-2.7-2.7 0-1.7 1.5-2.7 2.7-4.3 1.2 1.6 2.7 2.6 2.7 4.3 0 1.6-1.1 2.7-2.7 2.7Z']
   };
 
   function icone(nome, classe) {
@@ -235,12 +236,13 @@ window.AR_APP = (function () {
     'apps/': {
       classe: 'app-icone-portao', icone: 'apps', nome: 'Apps',
       titulo: 'Vista-se melhor, coma melhor e chegue pronto a cada ocasião',
-      texto: 'Quatro apps que trabalham juntos para você. Crie sua conta grátis em menos de um minuto e libere todos eles agora.',
+      texto: 'Cinco apps que trabalham juntos para você. Crie sua conta grátis em menos de um minuto e libere todos eles agora.',
       itens: [
         ['cabide', 'Guarda-roupa', 'Seu armário no celular, com looks prontos para o clima do dia e o custo de cada peça.', 'app-icone-guarda-roupa'],
         ['folha', 'Alimentação', 'Um plano para o seu objetivo, com a lista de compras e quanto custa no mercado da sua região.', 'app-icone-alimentacao'],
         ['calendario', 'Ocasiões', 'O traje certo para cada evento, montado com as suas próprias peças, e a mala da viagem pronta.', 'app-icone-ocasioes'],
-        ['haltere', 'Treino', 'Um treino para o seu objetivo e o seu foco, na academia ou em casa, no tempo que você tem.', 'app-icone-treino']
+        ['haltere', 'Treino', 'Um treino para o seu objetivo e o seu foco, na academia ou em casa, no tempo que você tem.', 'app-icone-treino'],
+        ['chama', 'Hábitos', 'Hábitos que ficam, com lembretes no celular e o resgate antes de você desistir.', 'app-icone-habitos']
       ]
     },
     'apps/guarda-roupa/': {
@@ -285,6 +287,17 @@ window.AR_APP = (function () {
         ['pessoa', 'Foco onde você quer', 'Escolha até dois grupos musculares para receberem mais atenção.'],
         ['girar', 'Três opções por treino', 'Varie os exercícios sem perder o rumo e troque o que não gostar.'],
         ['relogio', 'Tudo sob controle', 'Descanso cronometrado, histórico das cargas e a sua semana à vista.']
+      ]
+    },
+    'apps/habitos/': {
+      classe: 'app-icone-habitos', icone: 'chama', nome: 'Hábitos',
+      titulo: 'Para quem já tentou mudar um hábito e desistiu no meio',
+      texto: 'Comece pequeno, prenda o hábito novo a algo que você já faz e receba o aviso na hora certa.',
+      itens: [
+        ['check', 'Dois minutos bastam', 'Cada hábito tem a sua versão mínima. Nos dias difíceis, ela conta e mantém a sequência.'],
+        ['sino', 'Lembretes no celular', 'O aviso chega na hora marcada, mesmo com o navegador fechado.'],
+        ['chama', 'Nunca falhe duas vezes', 'Ficou para trás? O app destaca o hábito e chama você à noite, antes de virar desistência.'],
+        ['calendario', 'A sua consistência', 'Sequências, recordes e um mapa de 12 semanas para ver o quanto você já mudou.']
       ]
     }
   };

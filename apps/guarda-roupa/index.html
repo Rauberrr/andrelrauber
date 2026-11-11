@@ -17,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261110b">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261110b">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261111a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261111a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -97,6 +97,11 @@
           <button class="botao botao-cheio" type="submit">Ver</button>
         </form>
         <p class="erro" id="gr-tempo-erro" role="alert"></p>
+
+        <div class="gr-montar-chamada" id="gr-montar-chamada">
+          <p>Já sabe o que quer vestir? Junte as peças e guarde o look.</p>
+          <button class="botao" id="gr-montar" type="button">Montar um look</button>
+        </div>
 
         <div class="gr-filtros" id="gr-looks-filtros">
           <div class="campo">
@@ -324,6 +329,11 @@
       <div id="uso-look" class="oc-look-pecas" hidden></div>
       <fieldset class="app-grupo" id="uso-escolha" hidden>
         <legend>Toque nas peças que você vestiu</legend>
+        <div class="gr-prontos" id="uso-prontos" hidden>
+          <p class="gr-prontos-titulo">Usou um look pronto? Toque nele</p>
+          <div class="gr-prontos-lista" id="uso-prontos-lista"></div>
+        </div>
+        <div class="gr-filtro-pecas" id="uso-filtro"></div>
         <div class="gr-escolher" id="uso-pecas"></div>
       </fieldset>
       <p class="erro" id="uso-erro-pecas" role="alert"></p>
@@ -347,6 +357,37 @@
       <p class="erro" id="uso-erro" role="alert"></p>
       <div class="gr-botoes-empilhados">
         <button class="botao botao-cheio" id="uso-salvar" type="submit">Anotar no diário</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal-figura gr-modal" id="montar-modal" aria-labelledby="montar-titulo">
+    <button class="modal-fechar" id="montar-fechar" type="button" aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+    <form class="gr-modal-corpo app-formulario" id="montar-form" novalidate>
+      <h2 class="titulo-m" id="montar-titulo">Montar um look</h2>
+      <fieldset class="app-grupo">
+        <legend>Escolha de 2 a 6 peças</legend>
+        <div class="gr-filtro-pecas" id="montar-filtro"></div>
+        <div class="gr-escolher" id="montar-pecas"></div>
+      </fieldset>
+      <div class="gr-montado" id="montar-previa" aria-live="polite"></div>
+      <p class="erro" id="montar-erro-pecas" role="alert"></p>
+      <div class="campos">
+        <div class="campo campo-inteiro">
+          <label for="montar-nome">Nome do look (opcional)</label>
+          <div class="campo-entrada"><input id="montar-nome" type="text" maxlength="60" placeholder="Ex.: Reunião de segunda" autocomplete="off"></div>
+        </div>
+        <div class="campo campo-inteiro">
+          <label for="montar-obs">Observação (opcional)</label>
+          <div class="campo-entrada"><input id="montar-obs" type="text" maxlength="300" placeholder="Ex.: Com o relógio de couro" autocomplete="off"></div>
+        </div>
+      </div>
+      <p class="erro" id="montar-erro" role="alert"></p>
+      <div class="gr-botoes-empilhados">
+        <button class="botao botao-cheio" id="montar-salvar" type="submit">Salvar look</button>
+        <button class="botao" id="montar-usei" type="button">Salvar e anotar que usei hoje</button>
       </div>
     </form>
   </dialog>
@@ -444,15 +485,16 @@
     <a href="apps/alimentacao/"><svg data-icone="folha"></svg>Alimentação</a>
     <a href="apps/ocasioes/"><svg data-icone="calendario"></svg>Ocasiões</a>
     <a href="apps/treino/"><svg data-icone="haltere"></svg>Treino</a>
+    <a href="apps/habitos/"><svg data-icone="chama"></svg>Hábitos</a>
   </nav>
 
-  <script src="assets/js/config.js?v=20261110b"></script>
-  <script src="assets/js/conta-api.js?v=20261110b"></script>
-  <script src="assets/js/apps.js?v=20261110b"></script>
-  <script src="assets/js/guarda-roupa-dados.js?v=20261110b"></script>
-  <script src="assets/js/guarda-roupa-foto.js?v=20261110b"></script>
-  <script src="assets/js/guarda-roupa-looks.js?v=20261110b"></script>
-  <script src="assets/js/guarda-roupa.js?v=20261110b"></script>
-  <script src="assets/js/guarda-roupa-lote.js?v=20261110b"></script>
+  <script src="assets/js/config.js?v=20261111a"></script>
+  <script src="assets/js/conta-api.js?v=20261111a"></script>
+  <script src="assets/js/apps.js?v=20261111a"></script>
+  <script src="assets/js/guarda-roupa-dados.js?v=20261111a"></script>
+  <script src="assets/js/guarda-roupa-foto.js?v=20261111a"></script>
+  <script src="assets/js/guarda-roupa-looks.js?v=20261111a"></script>
+  <script src="assets/js/guarda-roupa.js?v=20261111a"></script>
+  <script src="assets/js/guarda-roupa-lote.js?v=20261111a"></script>
 </body>
 </html>

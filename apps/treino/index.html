@@ -17,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261110b">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261110b">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261111a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261111a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -132,6 +132,20 @@
         <div class="tr-treinos" id="tr-treinos"></div>
       </section>
 
+      <section class="app-secao" aria-labelledby="tr-busca-titulo">
+        <h2 class="app-secao-titulo" id="tr-busca-titulo">Procurar ou criar exercício</h2>
+        <p class="app-secao-texto">Quer fazer um exercício que não está no plano? Procure pelo nome. Se ele não estiver na lista, crie o seu: o app descobre o músculo pelo nome e mostra onde ele encaixa no seu treino.</p>
+        <div class="app-cartao">
+          <div class="campo">
+            <label for="tr-busca">Nome do exercício</label>
+            <div class="campo-entrada"><input id="tr-busca" type="search" maxlength="50" placeholder="Ex.: rosca spider" autocomplete="off" enterkeyhint="search"></div>
+          </div>
+          <div class="tr-busca-resultados" id="tr-busca-resultados" aria-live="polite"></div>
+        </div>
+        <p class="oc-subtitulo" id="tr-personalizados-titulo" style="margin-top:1rem" hidden>Criados por você</p>
+        <ul class="app-lista" id="tr-personalizados" hidden></ul>
+      </section>
+
       <section class="app-secao" aria-labelledby="tr-estrategia-titulo">
         <h2 class="app-secao-titulo" id="tr-estrategia-titulo">Por que este treino funciona</h2>
         <p class="app-secao-texto">A estratégia montada para você, e o motivo de cada escolha.</p>
@@ -155,6 +169,22 @@
           <p class="app-suave" id="tr-historico-resumo" style="margin-top:.5rem"></p>
         </div>
         <ul class="app-lista" id="tr-historico" style="margin-top:.85rem"></ul>
+      </section>
+
+      <section class="app-secao" aria-labelledby="tr-evolucao-titulo">
+        <h2 class="app-secao-titulo" id="tr-evolucao-titulo">Sua evolução</h2>
+        <p class="app-secao-texto">A melhor série de cada treino, exercício por exercício. A melhor série é a de maior força estimada, que junta carga e repetições numa conta só: 50 kg × 10 conta mais que 50 kg × 6.</p>
+        <div class="app-cartao" id="tr-evolucao-caixa" hidden>
+          <div class="campo">
+            <label for="tr-evolucao-ex">Exercício</label>
+            <div class="campo-entrada"><select id="tr-evolucao-ex"></select></div>
+          </div>
+          <div class="tr-numeros" id="tr-evolucao-numeros"></div>
+          <p class="app-suave" id="tr-evolucao-resumo"></p>
+          <div class="tr-grafico" id="tr-evolucao-grafico"></div>
+          <ul class="tr-evolucao-lista" id="tr-evolucao-lista"></ul>
+        </div>
+        <p class="app-suave" id="tr-evolucao-vazio">Anote a carga e as repetições de cada série durante o treino. A evolução de cada exercício aparece aqui.</p>
       </section>
 
       <section class="app-secao" aria-labelledby="tr-ajustes-titulo">
@@ -199,13 +229,14 @@
     <a href="apps/alimentacao/"><svg data-icone="folha"></svg>Alimentação</a>
     <a href="apps/ocasioes/"><svg data-icone="calendario"></svg>Ocasiões</a>
     <a href="apps/treino/" aria-current="page"><svg data-icone="haltere"></svg>Treino</a>
+    <a href="apps/habitos/"><svg data-icone="chama"></svg>Hábitos</a>
   </nav>
   <p class="app-aviso" id="app-aviso" role="status" aria-live="polite"></p>
 
-  <script src="assets/js/config.js?v=20261110b"></script>
-  <script src="assets/js/conta-api.js?v=20261110b"></script>
-  <script src="assets/js/apps.js?v=20261110b"></script>
-  <script src="assets/js/treino-dados.js?v=20261110b"></script>
-  <script src="assets/js/treino.js?v=20261110b"></script>
+  <script src="assets/js/config.js?v=20261111a"></script>
+  <script src="assets/js/conta-api.js?v=20261111a"></script>
+  <script src="assets/js/apps.js?v=20261111a"></script>
+  <script src="assets/js/treino-dados.js?v=20261111a"></script>
+  <script src="assets/js/treino.js?v=20261111a"></script>
 </body>
 </html>

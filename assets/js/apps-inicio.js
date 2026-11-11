@@ -7,7 +7,7 @@
   var api = app.api;
   var criar = app.criar;
   var hoje = app.hojeISO();
-  var ORDEM = ['ocasioes', 'alimentacao', 'guarda-roupa', 'treino'];
+  var ORDEM = ['habitos', 'ocasioes', 'alimentacao', 'guarda-roupa', 'treino'];
   var widgets = {};
 
   function $(id) { return document.getElementById(id); }
@@ -120,13 +120,36 @@
     widget('guarda-roupa', 'Guarda-roupa', 'cabide', dados.pecas.length ? 'Escolha o look de hoje' : 'Comece pelas suas peças', contagem, endereco + '#looks');
   }
 
+  // Hábitos de hoje: quantos já foram feitos e quantos faltam
+  function resumirHabitos(estado) {
+    var endereco = 'apps/habitos/';
+    var habitos = estado && Array.isArray(estado.habitos) ? estado.habitos : [];
+    if (!habitos.length) {
+      widget('habitos', 'Hábitos', 'chama', 'Comece com um só', 'Dois minutos por dia, com lembrete no celular.', endereco);
+      return;
+    }
+    var dia = new Date().getDay();
+    var registro = (estado.registros || {})[hoje] || {};
+    var deHoje = habitos.filter(function (h) { return (h.criadoEm || '') <= hoje && (h.dias || []).indexOf(dia) !== -1; });
+    var feitos = deHoje.filter(function (h) { return registro[h.id] === 'feito' || registro[h.id] === 'minimo'; }).length;
+    if (!deHoje.length) {
+      widget('habitos', 'Hábitos', 'chama', 'Dia livre', 'Nenhum hábito marcado para hoje.', endereco);
+      return;
+    }
+    var falta = deHoje.filter(function (h) { return registro[h.id] !== 'feito' && registro[h.id] !== 'minimo'; });
+    widget('habitos', 'Hábitos', 'chama', feitos === deHoje.length ? 'Dia completo' : feitos + ' de ' + deHoje.length + ' hoje',
+      falta.length ? 'Falta: ' + falta.slice(0, 3).map(function (h) { return h.nome; }).join(', ') + (falta.length > 3 ? '…' : '') : 'Cada um foi um voto para quem você quer ser.', endereco);
+  }
+
   /* --- Início ---------------------------------------------------------------------- */
 
   var locais = {
     alimentacao: app.lerLocal('ar-alimentacao-v1'),
     ocasioes: app.lerLocal('ar-ocasioes-v1'),
-    treino: app.lerLocal('ar-treino-v1')
+    treino: app.lerLocal('ar-treino-v1'),
+    habitos: app.lerLocal('ar-habitos-v1')
   };
+  resumirHabitos(locais.habitos);
   resumirAlimentacao(locais.alimentacao);
   resumirOcasioes(locais.ocasioes);
   resumirTreino(locais.treino);
@@ -153,8 +176,10 @@
       api.get(enderecoClima),
       api.get('api/alimentacao.php'),
       api.get('api/apps.php?app=ocasioes'),
-      api.get('api/apps.php?app=treino')
+      api.get('api/apps.php?app=treino'),
+      api.get('api/apps.php?app=habitos')
     ]).then(function (r) {
+      if (r[5].ok && r[5].dados.dados) resumirHabitos(maisRecente(locais.habitos, r[5].dados.dados));
       resumirGuardaRoupa(r[0].ok ? r[0].dados : null, r[1].ok ? r[1].dados : null);
       if (r[2].ok && r[2].dados.dados) resumirAlimentacao(maisRecente(locais.alimentacao, r[2].dados.dados));
       if (r[3].ok && r[3].dados.dados) resumirOcasioes(maisRecente(locais.ocasioes, r[3].dados.dados));

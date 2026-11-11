@@ -74,7 +74,7 @@ window.AR_API = (function () {
   // Só volta para páginas do próprio site, para o link não levar a outro lugar
   var DESTINOS = [
     'medidas.html', 'minha-conta.html', 'painel.html', 'guarda-roupa.html', 'alimentacao.html',
-    'apps/', 'apps/guarda-roupa/', 'apps/alimentacao/', 'apps/ocasioes/', 'apps/treino/',
+    'apps/', 'apps/guarda-roupa/', 'apps/alimentacao/', 'apps/ocasioes/', 'apps/treino/', 'apps/habitos/',
     'colecao.html', 'pedido-exclusivo.html'
   ];
   function destino(padrao) {

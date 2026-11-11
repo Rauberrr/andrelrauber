@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Hábitos | Rauber</title>
+  <meta name="description" content="Hábitos que ficam: comece pequeno, prenda num hábito que já existe e nunca falhe duas vezes. Com lembretes no celular, mesmo com o navegador fechado.">
+  <link rel="canonical" href="https://andrerauber.com/apps/habitos/">
+  <meta name="theme-color" content="#f4f1ea">
+  <link rel="manifest" href="assets/apps.webmanifest?v=20261111a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Rauber">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png?v=20261109c">
+  <link rel="icon" type="image/png" sizes="64x64" href="assets/img/favicon-64.png?v=20261109c">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20261109d">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261111a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261111a">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body class="app">
+  <a class="pular" href="apps/habitos/#principal">Pular para o conteúdo</a>
+
+  <header class="app-barra">
+    <a class="app-voltar" href="apps/"><svg data-icone="voltar"></svg>Apps</a>
+    <p class="app-barra-titulo" aria-hidden="true">Hábitos</p>
+    <a class="app-conta app-conta-visitante" id="app-conta" href="entrar.html?voltar=apps%2Fhabitos%2F" aria-label="Entrar na minha conta"></a>
+  </header>
+
+  <main id="principal" class="app-conteudo">
+    <div class="app-cabeca">
+      <h1 class="app-titulo">Hábitos</h1>
+      <p class="app-subtitulo">Pequeno, todo dia. Cada vez que você cumpre, é um voto para quem você quer ser.</p>
+    </div>
+
+    <!-- Sem hábitos ainda -->
+    <section class="hb-comeco" id="hb-vazio" aria-labelledby="hb-vazio-titulo" hidden>
+      <span class="hb-comeco-selo" aria-hidden="true"><svg data-icone="chama"></svg></span>
+      <h2 class="hb-comeco-titulo" id="hb-vazio-titulo">Comece com um só.</h2>
+      <p class="hb-comeco-texto">Força de vontade acaba no meio da semana. O que funciona é deixar o hábito tão fácil que não dá para dizer não.</p>
+      <ol class="hb-regras">
+        <li><strong>Ridiculamente pequeno.</strong> Ler uma página, não um capítulo. Dois minutos bastam para começar.</li>
+        <li><strong>Preso a algo que você já faz.</strong> “Depois de passar o café, eu leio.” O hábito antigo vira o gatilho do novo.</li>
+        <li><strong>Nunca falhe duas vezes.</strong> Esquecer um dia acontece. Dois seguidos é o começo de desistir. O app avisa antes.</li>
+      </ol>
+      <button class="botao botao-cheio" id="hb-primeiro" type="button">Criar meu primeiro hábito</button>
+    </section>
+
+    <!-- Painel -->
+    <div id="hb-painel" hidden>
+      <section class="hb-hoje" aria-labelledby="hb-hoje-titulo">
+        <div class="hb-anel" aria-hidden="true">
+          <svg viewBox="0 0 120 120"><circle class="hb-anel-fundo" cx="60" cy="60" r="52"/><circle class="hb-anel-valor" id="hb-anel" cx="60" cy="60" r="52"/></svg>
+          <span id="hb-anel-texto">0/0</span>
+        </div>
+        <div class="hb-hoje-texto">
+          <p class="oc-subtitulo" id="hb-data"></p>
+          <h2 class="app-titulo hb-hoje-titulo" id="hb-hoje-titulo">Hoje</h2>
+          <p class="app-suave" id="hb-frase"></p>
+        </div>
+      </section>
+
+      <div class="hb-lista" id="hb-lista"></div>
+
+      <div class="app-botoes" style="margin-top:.4rem">
+        <button class="botao" id="hb-novo" type="button"><svg data-icone="mais"></svg>Novo hábito</button>
+      </div>
+
+      <section class="app-secao" id="hb-outros-secao" aria-labelledby="hb-outros-titulo" hidden>
+        <h2 class="app-secao-titulo" id="hb-outros-titulo">Em outros dias</h2>
+        <ul class="app-lista" id="hb-outros"></ul>
+      </section>
+
+      <section class="app-secao" aria-labelledby="hb-consistencia-titulo">
+        <h2 class="app-secao-titulo" id="hb-consistencia-titulo">Sua consistência</h2>
+        <p class="app-secao-texto">As últimas 12 semanas. Quanto mais escuro, mais hábitos cumpridos no dia. Não precisa ser perfeito: precisa ser quase sempre.</p>
+        <div class="app-cartao">
+          <div class="hb-mapa-caixa">
+            <div class="hb-mapa-dias" aria-hidden="true"><span>D</span><span></span><span>T</span><span></span><span>Q</span><span></span><span>S</span></div>
+            <div class="hb-mapa" id="hb-mapa" role="img"></div>
+          </div>
+          <p class="hb-mapa-legenda" aria-hidden="true">Menos <i class="n0"></i><i class="n1"></i><i class="n2"></i><i class="n3"></i> Mais</p>
+        </div>
+        <ul class="app-lista" id="hb-numeros" style="margin-top:.85rem"></ul>
+      </section>
+
+      <section class="app-secao" aria-labelledby="hb-lembretes-titulo">
+        <h2 class="app-secao-titulo" id="hb-lembretes-titulo">Lembretes no celular</h2>
+        <div class="app-cartao hb-lembretes">
+          <span class="hb-lembretes-icone" aria-hidden="true"><svg data-icone="sino"></svg></span>
+          <div>
+            <p class="hb-lembretes-estado" id="hb-lembretes-estado"></p>
+            <p class="app-suave" id="hb-lembretes-texto"></p>
+            <div class="app-botoes" id="hb-lembretes-botoes"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="app-secao" aria-labelledby="hb-ajustes-titulo">
+        <h2 class="app-secao-titulo" id="hb-ajustes-titulo">Ajustes</h2>
+        <div class="app-cartao">
+          <label class="app-interruptor"><span><strong>Guardar na minha conta</strong></span><input id="hb-guardar" type="checkbox"><span class="app-interruptor-trilho" aria-hidden="true"></span></label>
+          <p class="app-suave" id="hb-guardar-texto" style="margin-top:.4rem"></p>
+        </div>
+        <div class="app-botoes">
+          <button class="texto-botao" type="button" id="hb-apagar" style="color:var(--erro)">Apagar meus hábitos</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <dialog class="modal-figura gr-modal" id="hb-modal" aria-labelledby="hb-modal-titulo">
+    <button class="modal-fechar" id="hb-fechar" type="button" aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+    <form class="gr-modal-corpo app-formulario" id="hb-form" novalidate>
+      <h2 class="titulo-m" id="hb-modal-titulo">Novo hábito</h2>
+      <div id="hb-modelos-caixa">
+        <p class="app-suave" style="margin-bottom:.5rem">Comece por um modelo ou escreva o seu.</p>
+        <div class="hb-modelos" id="hb-modelos"></div>
+      </div>
+      <p class="gr-alerta" id="hb-dica" hidden></p>
+      <div class="campo">
+        <label for="hb-nome">O hábito</label>
+        <div class="campo-entrada"><input id="hb-nome" type="text" maxlength="60" placeholder="Ex.: Ler" autocomplete="off" required></div>
+        <p class="erro" id="hb-erro-nome" role="alert"></p>
+      </div>
+      <div class="campo">
+        <label for="hb-identidade">Quero ser alguém que…</label>
+        <div class="campo-entrada"><input id="hb-identidade" type="text" maxlength="80" placeholder="Ex.: lê todos os dias" autocomplete="off"></div>
+      </div>
+      <div class="campo">
+        <label for="hb-minima">A versão de 2 minutos</label>
+        <div class="campo-entrada"><input id="hb-minima" type="text" maxlength="80" placeholder="Ex.: Ler uma página" autocomplete="off"></div>
+        <p class="app-suave hb-ajuda">Nos dias difíceis, fazer só isso já conta e mantém a sequência.</p>
+      </div>
+      <div class="campo">
+        <label for="hb-ancora">Logo depois de…</label>
+        <div class="campo-entrada"><input id="hb-ancora" type="text" maxlength="80" placeholder="Ex.: passar o café" autocomplete="off"></div>
+        <p class="app-suave hb-ajuda">Um hábito que você já tem vira o gatilho do novo.</p>
+      </div>
+      <fieldset class="app-grupo">
+        <legend>Em quais dias</legend>
+        <div class="app-escolhas hb-dias" id="hb-dias"></div>
+        <p class="erro" id="hb-erro-dias" role="alert"></p>
+      </fieldset>
+      <div class="campos">
+        <div class="campo">
+          <label for="hb-hora">Que horas</label>
+          <div class="campo-entrada"><input id="hb-hora" type="time" step="300"></div>
+        </div>
+        <div class="campo hb-campo-lembrete">
+          <label class="campo-marcar"><input id="hb-lembrete" type="checkbox" checked> <span>Lembrar nessa hora</span></label>
+        </div>
+      </div>
+      <p class="erro" id="hb-erro-hora" role="alert"></p>
+      <fieldset class="app-grupo">
+        <legend>Cor</legend>
+        <div class="hb-cores" id="hb-cores"></div>
+      </fieldset>
+      <p class="erro" id="hb-erro" role="alert"></p>
+      <div class="gr-botoes-empilhados">
+        <button class="botao botao-cheio" id="hb-salvar" type="submit">Criar hábito</button>
+        <button class="texto-botao" id="hb-excluir" type="button" style="color:var(--erro)" hidden>Apagar este hábito</button>
+      </div>
+    </form>
+  </dialog>
+
+  <nav class="app-abas" aria-label="Apps">
+    <a href="apps/"><svg data-icone="apps"></svg>Apps</a>
+    <a href="apps/guarda-roupa/"><svg data-icone="cabide"></svg>Guarda-roupa</a>
+    <a href="apps/alimentacao/"><svg data-icone="folha"></svg>Alimentação</a>
+    <a href="apps/ocasioes/"><svg data-icone="calendario"></svg>Ocasiões</a>
+    <a href="apps/treino/"><svg data-icone="haltere"></svg>Treino</a>
+    <a href="apps/habitos/" aria-current="page"><svg data-icone="chama"></svg>Hábitos</a>
+  </nav>
+  <p class="app-aviso" id="app-aviso" role="status" aria-live="polite"></p>
+
+  <script src="assets/js/config.js?v=20261111a"></script>
+  <script src="assets/js/conta-api.js?v=20261111a"></script>
+  <script src="assets/js/apps.js?v=20261111a"></script>
+  <script src="assets/js/habitos.js?v=20261111a"></script>
+</body>
+</html>

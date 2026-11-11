@@ -1,163 +1,134 @@
-/* Home: uma fita métrica de costura, enrolada em espiral sobre a mesa, que desenrola
-   conforme a página rola. Vista de cima: as marcas de centímetro acompanham a fita,
-   inclusive nas voltas do rolo. A seção fica presa na tela enquanto a rolagem avança. */
+/* Home: a cena do molde. Conforme a página rola, o molde da peça se desenha no papel,
+   as medidas aparecem, a tesoura corta o contorno e o tecido surge por trás do corte,
+   em câmera lenta. Tudo desenhado em código, sem imagens. A seção fica presa na tela
+   enquanto a rolagem avança. Também cuida do botão "Cadastrar minhas medidas". */
 (function () {
   'use strict';
 
-  var secao = document.querySelector('.fita-secao');
-  var tela = document.getElementById('fita-canvas');
-  if (!secao || !tela || !tela.getContext) return;
-  var ctx = tela.getContext('2d');
+  var secao = document.querySelector('.molde-secao');
+  var svg = document.getElementById('molde-svg');
+  if (secao && svg) cena();
+  botaoDeMedidas();
 
-  var COMPRIMENTO_CM = 150;
-  // A fita termina de desenrolar na primeira metade da seção: a outra metade é para ler
-  var ATE = 0.55;
-  var largura = 0;
-  var altura = 0;
-  var ultimo = -1;
+  function cena() {
+    var tracos = [].slice.call(svg.querySelectorAll('.molde-traco'));
+    var guias = [].slice.call(svg.querySelectorAll('.molde-guia'));
+    var notas = [].slice.call(svg.querySelectorAll('.molde-notas text'));
+    var frente = document.getElementById('molde-frente');
+    var varrida = document.getElementById('molde-varrida');
+    var tesoura = document.getElementById('molde-tesoura');
+    var zoom = document.getElementById('molde-tecido-zoom');
+    var luz = document.getElementById('molde-tecido-luz');
 
-  function progresso() {
-    var r = secao.getBoundingClientRect();
-    var total = r.height - window.innerHeight;
-    if (total <= 0) return 1;
-    return Math.max(0, Math.min(1, -r.top / total));
-  }
-
-  function suave(t) { return 1 - Math.pow(1 - t, 3); }
-
-  function medir() {
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    largura = tela.clientWidth;
-    altura = tela.clientHeight;
-    tela.width = Math.round(largura * dpr);
-    tela.height = Math.round(altura * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ultimo = -1;
-  }
-
-  // O caminho da fita, da ponta solta (0 cm) até o miolo do rolo, com um ponto a cada 2 px.
-  // A origem é onde a fita sai do rolo. Cada ponto guarda a posição, a direção da fita
-  // e quantos pixels de fita já foram percorridos desde a ponta.
-  function caminho(aberta, total, banda) {
+    var comprimentos = tracos.map(function (p) {
+      var c = p.getTotalLength();
+      p.style.strokeDasharray = p.classList.contains('molde-fino') ? '' : c + ' ' + c;
+      return c;
+    });
+    var contorno = frente.getTotalLength();
+    // Pontos do contorno, para a tesoura seguir e o tecido aparecer atrás dela
+    var AMOSTRAS = 160;
     var pontos = [];
-    var passo = 2;
-    var s;
-    // A parte aberta, reta, à direita do rolo
-    for (s = 0; s <= aberta; s += passo) pontos.push({ x: aberta - s, y: 0, ang: Math.PI, s: s });
-    // O rolo: uma espiral que começa no fundo e vai para a esquerda e para cima, até o miolo
-    var volta = banda + 2.5;
-    var miolo = banda * 0.9;
-    var restante = total - aberta;
-    var raio = Math.sqrt(miolo * miolo + restante * volta / Math.PI);
-    var phi = 0;
-    for (var feito = 0; feito < restante; feito += passo) {
-      var r = raio - volta * phi / (Math.PI * 2);
-      if (r < miolo) break;
-      var a = Math.PI / 2 + phi;
-      pontos.push({ x: Math.cos(a) * r, y: -raio + Math.sin(a) * r, ang: a + Math.PI / 2, s: aberta + feito });
-      phi += passo / r;
-    }
-    return { pontos: pontos, raio: raio };
-  }
+    for (var i = 0; i <= AMOSTRAS; i++) pontos.push(frente.getPointAtLength(contorno * i / AMOSTRAS));
+    var CENTRO = { x: 300, y: 330 };
 
-  function tracar(pontos) {
-    ctx.beginPath();
-    pontos.forEach(function (p, i) { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
-  }
+    function trecho(p, ini, fim) { return Math.max(0, Math.min(1, (p - ini) / (fim - ini))); }
+    function suave(t) { return t * t * (3 - 2 * t); }
 
-  function desenhar(p) {
-    ctx.clearRect(0, 0, largura, altura);
-    var cm = Math.max(3.4, Math.min(6.2, largura / 190));
-    var banda = Math.max(17, Math.min(26, cm * 4.2));
-    var margem = Math.max(16, largura * 0.05);
-    var total = COMPRIMENTO_CM * cm;
-    // Um pedacinho aberto no começo; quase toda a fita no fim
-    var maximo = Math.min(total - 18 * cm, largura - margem * 2 - banda * 7);
-    var aberta = 5 * cm + Math.max(0, maximo - 5 * cm) * suave(Math.min(1, p / ATE));
-    var rolo = caminho(aberta, total, banda);
-    // O rolo fica parado à esquerda; a fita corre para a direita
-    var cx = margem + rolo.raio + banda / 2;
-    var cy = Math.min(altura * 0.72, altura - banda * 2);
-    var pontos = rolo.pontos.map(function (q) { return { x: q.x + cx, y: q.y + cy, ang: q.ang, s: q.s }; });
-
-    ctx.lineCap = 'butt';
-    ctx.lineJoin = 'round';
-
-    // Sombra macia, como sobre uma mesa, e a borda da fita
-    ctx.save();
-    ctx.shadowColor = 'rgba(11, 11, 10, .2)';
-    ctx.shadowBlur = 12;
-    ctx.shadowOffsetY = 5;
-    ctx.strokeStyle = 'rgba(92, 76, 38, .6)';
-    ctx.lineWidth = banda + 1.6;
-    tracar(pontos);
-    ctx.stroke();
-    ctx.restore();
-
-    // O corpo: amarelo-claro de fita de costura, um pouco mais claro no meio
-    ctx.strokeStyle = '#efd98f';
-    ctx.lineWidth = banda;
-    tracar(pontos);
-    ctx.stroke();
-    ctx.strokeStyle = 'rgba(255, 252, 238, .5)';
-    ctx.lineWidth = banda * 0.42;
-    tracar(pontos);
-    ctx.stroke();
-
-    // Marcas e números ao longo da fita, também nas voltas do rolo
-    ctx.fillStyle = '#1d1a14';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = '500 ' + Math.round(Math.max(8.5, banda * 0.4)) + 'px Jost, system-ui, sans-serif';
-    var i = 0;
-    for (var marca = 0; marca <= COMPRIMENTO_CM; marca += 1) {
-      var alvo = marca * cm;
-      while (i < pontos.length - 1 && pontos[i + 1].s <= alvo) i += 1;
-      var q = pontos[i];
-      if (!q || Math.abs(q.s - alvo) > 3) continue;
-      var tamanho = marca % 10 === 0 ? 0.42 : (marca % 5 === 0 ? 0.3 : 0.19);
-      ctx.save();
-      ctx.translate(q.x, q.y);
-      ctx.rotate(q.ang + Math.PI);
-      ctx.fillRect(-0.5, -banda / 2, 1, banda * tamanho);
-      if (marca % 10 === 0 && marca > 0) ctx.fillText(String(marca), 0, banda * 0.17);
-      ctx.restore();
+    function progresso() {
+      var r = secao.getBoundingClientRect();
+      var total = r.height - window.innerHeight;
+      if (total <= 0) return 1;
+      return Math.max(0, Math.min(1, -r.top / total));
     }
 
-    // A ponta de metal no começo da fita, com o furinho
-    var ponta = pontos[0];
-    ctx.save();
-    ctx.translate(ponta.x, ponta.y);
-    var metal = ctx.createLinearGradient(0, -banda / 2, 0, banda / 2);
-    metal.addColorStop(0, '#dcc48d');
-    metal.addColorStop(0.5, '#a9874a');
-    metal.addColorStop(1, '#7d6232');
-    ctx.fillStyle = metal;
-    ctx.fillRect(-1, -banda / 2 - 0.5, cm * 1.4, banda + 1);
-    ctx.fillStyle = 'rgba(30, 24, 12, .55)';
-    ctx.beginPath();
-    ctx.arc(cm * 0.75, 0, Math.max(1.4, banda * 0.08), 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    var tempo = 0;
+
+    function desenhar(p) {
+      // 1. O molde se desenha: contornos primeiro, depois as linhas finas
+      tracos.forEach(function (traco, n) {
+        var fino = traco.classList.contains('molde-fino');
+        var t = suave(trecho(p, n * 0.03, fino ? 0.38 : 0.3));
+        if (fino) traco.style.opacity = (0.55 * t).toFixed(3);
+        else traco.style.strokeDashoffset = (comprimentos[n] * (1 - t)).toFixed(1);
+      });
+      // 2. As medidas aparecem, uma a uma
+      guias.forEach(function (g, n) { g.style.opacity = (0.8 * suave(trecho(p, 0.22 + n * 0.04, 0.36 + n * 0.04))).toFixed(3); });
+      notas.forEach(function (t, n) { t.style.opacity = suave(trecho(p, 0.24 + n * 0.04, 0.38 + n * 0.04)).toFixed(3); });
+
+      // 3. A tesoura corta o contorno e o tecido aparece atrás do corte
+      var corte = trecho(p, 0.38, 0.72);
+      var ate = Math.round(suave(corte) * AMOSTRAS);
+      if (ate <= 0) {
+        varrida.setAttribute('d', 'M0 0Z');
+      } else {
+        var d = 'M' + CENTRO.x + ' ' + CENTRO.y;
+        for (var k = 0; k <= ate; k++) d += 'L' + pontos[k].x.toFixed(1) + ' ' + pontos[k].y.toFixed(1);
+        varrida.setAttribute('d', d + 'Z');
+      }
+      var cortando = corte > 0 && corte < 1;
+      tesoura.style.opacity = cortando ? Math.min(1, corte * 8, (1 - corte) * 8).toFixed(3) : '0';
+      if (cortando) {
+        var a = pontos[Math.max(0, ate - 1)];
+        var b = pontos[Math.min(AMOSTRAS, ate + 1)];
+        var angulo = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI + 90;
+        var aqui = pontos[ate];
+        tesoura.setAttribute('transform', 'translate(' + aqui.x.toFixed(1) + ' ' + aqui.y.toFixed(1) + ') rotate(' + angulo.toFixed(1) + ')');
+      }
+
+      // 4. O tecido em câmera lenta: aproxima devagar e a luz corre pela sarja
+      var t4 = suave(trecho(p, 0.5, 1));
+      var escala = 1 + 0.06 * t4 + 0.008 * Math.sin(tempo / 2600);
+      zoom.setAttribute('transform', 'translate(300 300) scale(' + escala.toFixed(4) + ') translate(-300 -300)');
+      luz.setAttribute('x', (40 + 300 * t4 + 30 * Math.sin(tempo / 3400)).toFixed(1));
+    }
+
+    var visivel = true;
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (e) { visivel = e[0].isIntersecting; }).observe(secao);
+    }
+
+    function quadro(agora) {
+      tempo = agora || 0;
+      if (visivel) {
+        var p = progresso();
+        // Redesenha a cada quadro: o tecido balança devagar mesmo com a página parada
+        desenhar(p);
+      }
+      requestAnimationFrame(quadro);
+    }
+    // A rolagem também redesenha, para a cena seguir o dedo mesmo sem quadros de animação
+    window.addEventListener('scroll', function () { if (visivel) desenhar(progresso()); }, { passive: true });
+    window.addEventListener('resize', function () { desenhar(progresso()); });
+    desenhar(progresso());
+    requestAnimationFrame(quadro);
   }
 
-  function quadro() {
-    var p = progresso();
-    if (Math.abs(p - ultimo) < 0.0008) return;
-    ultimo = p;
-    desenhar(p);
-  }
+  // "Cadastrar minhas medidas": quem já preencheu vê o aviso e o caminho para a coleção
+  function botaoDeMedidas() {
+    var botao = document.getElementById('molde-medidas');
+    var aviso = document.getElementById('medidas-ok');
+    if (!botao) return;
+    var texto = botao.textContent;
 
-  var agendado = false;
-  function aoRolar() {
-    if (agendado) return;
-    agendado = true;
-    window.requestAnimationFrame(function () { agendado = false; quadro(); });
-  }
+    botao.addEventListener('click', function () {
+      if (!window.AR_API) { location.href = 'medidas.html'; return; }
+      botao.disabled = true;
+      botao.textContent = 'Verificando…';
+      window.AR_API.get('api/perfil.php').then(function (r) {
+        botao.disabled = false;
+        botao.textContent = texto;
+        if (r.status === 401) { location.href = 'criar-conta.html?voltar=medidas.html'; return; }
+        if (r.ok && r.dados.cadastro && r.dados.cadastro.concluido_em && aviso && aviso.showModal) {
+          aviso.showModal();
+          return;
+        }
+        location.href = 'medidas.html';
+      });
+    });
 
-  medir();
-  quadro();
-  window.addEventListener('resize', function () { medir(); quadro(); });
-  window.addEventListener('scroll', aoRolar, { passive: true });
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { ultimo = -1; quadro(); });
+    if (!aviso) return;
+    document.getElementById('medidas-ok-fechar').addEventListener('click', function () { aviso.close(); });
+    aviso.addEventListener('click', function (e) { if (e.target === aviso) aviso.close(); });
+  }
 })();

@@ -11,6 +11,8 @@ window.AR_TREINO_DADOS = (function () {
     { id: 'agachamento_livre', grupo: 'quadriceps', nome: 'Agachamento livre com barra', locais: ['academia'], carga: true, evitar: ['joelho', 'lombar'], dica: 'Pés na largura dos ombros. Desça como se fosse sentar, com o peito aberto e os joelhos na direção dos pés.' },
     { id: 'leg_press', grupo: 'quadriceps', nome: 'Leg press', locais: ['academia'], carga: true, evitar: [], dica: 'Lombar sempre encostada. Desça até onde os joelhos dobram sem a lombar sair do banco.' },
     { id: 'hack', grupo: 'quadriceps', nome: 'Agachamento no hack', locais: ['academia'], carga: true, evitar: ['joelho'], dica: 'Costas apoiadas e pés no meio da plataforma. Desça devagar e suba sem travar os joelhos.' },
+    { id: 'agachamento_smith', grupo: 'quadriceps', nome: 'Agachamento no Smith', locais: ['academia'], carga: true, evitar: ['joelho'], dica: 'Pés um pouco à frente da barra. Desça com o tronco reto até as coxas ficarem paralelas ao chão.' },
+    { id: 'passada', grupo: 'quadriceps', nome: 'Passada andando com halteres', locais: ['academia', 'halteres'], carga: true, evitar: ['joelho'], dica: 'Passos longos, alternando as pernas. O joelho de trás quase encosta no chão.' },
     { id: 'cadeira_extensora', grupo: 'quadriceps', nome: 'Cadeira extensora', locais: ['academia'], carga: true, evitar: ['joelho'], dica: 'Estenda as pernas até o fim, segure 1 segundo e desça devagar.' },
     { id: 'agachamento_goblet', grupo: 'quadriceps', nome: 'Agachamento com halter na frente do peito', locais: ['academia', 'halteres'], carga: true, evitar: ['lombar'], dica: 'Segure o halter junto ao peito e desça com a coluna reta.' },
     { id: 'agachamento_sumo', grupo: 'quadriceps', nome: 'Agachamento sumô com halter', locais: ['academia', 'halteres'], carga: true, evitar: [], dica: 'Pés bem afastados e pontas para fora. Segure o halter entre as pernas e desça com o tronco reto.' },
@@ -24,6 +26,8 @@ window.AR_TREINO_DADOS = (function () {
 
     /* Glúteos e posterior da coxa */
     { id: 'stiff', grupo: 'posterior', nome: 'Stiff com halteres', locais: ['academia', 'halteres'], carga: true, evitar: ['lombar'], dica: 'Joelhos levemente dobrados. Leve o quadril para trás e desça os halteres rente às pernas.' },
+    { id: 'levantamento_terra', grupo: 'posterior', nome: 'Levantamento terra', locais: ['academia'], carga: true, evitar: ['lombar'], dica: 'Barra rente às canelas e coluna reta. Empurre o chão com os pés e suba levando o quadril à frente.' },
+    { id: 'cadeira_adutora', grupo: 'posterior', nome: 'Cadeira adutora', locais: ['academia'], carga: true, evitar: [], dica: 'Feche as pernas contra o apoio, segure 1 segundo e volte devagar.' },
     { id: 'mesa_flexora', grupo: 'posterior', nome: 'Mesa flexora', locais: ['academia'], carga: true, evitar: [], dica: 'Suba e desça devagar, sem tirar o quadril do banco.' },
     { id: 'cadeira_flexora', grupo: 'posterior', nome: 'Cadeira flexora', locais: ['academia'], carga: true, evitar: [], dica: 'Costas apoiadas. Dobre os joelhos puxando o apoio para baixo e volte devagar.' },
     { id: 'elevacao_pelvica', grupo: 'posterior', nome: 'Elevação de quadril com barra', locais: ['academia'], carga: true, evitar: [], dica: 'Costas apoiadas no banco e barra sobre o quadril, com proteção. Suba apertando o glúteo.' },
@@ -47,6 +51,8 @@ window.AR_TREINO_DADOS = (function () {
     { id: 'supino_halteres', grupo: 'peito', nome: 'Supino com halteres', locais: ['academia'], carga: true, evitar: [], dica: 'Desça os halteres devagar até a linha do peito e suba juntando-os no alto.' },
     { id: 'supino_maquina', grupo: 'peito', nome: 'Supino na máquina', locais: ['academia'], carga: true, evitar: [], dica: 'Ajuste o banco para as pegadas ficarem na linha do peito. Empurre sem travar os cotovelos.' },
     { id: 'supino_inclinado', grupo: 'peito', nome: 'Supino inclinado com halteres', locais: ['academia'], carga: true, evitar: ['ombro'], dica: 'Banco um pouco inclinado. Desça os halteres até a parte de cima do peito.' },
+    { id: 'supino_declinado', grupo: 'peito', nome: 'Supino declinado', locais: ['academia'], carga: true, evitar: [], dica: 'Banco declinado, pés presos. Desça a barra até a parte de baixo do peito.' },
+    { id: 'crucifixo_halteres', grupo: 'peito', nome: 'Crucifixo com halteres no banco', locais: ['academia'], carga: true, evitar: ['ombro'], dica: 'Braços abertos e cotovelos levemente dobrados. Desça até a linha do peito e junte no alto.' },
     { id: 'crucifixo_maquina', grupo: 'peito', nome: 'Voador (crucifixo na máquina)', locais: ['academia'], carga: true, evitar: [], dica: 'Cotovelos levemente dobrados. Junte os braços à frente e volte devagar, sem passar da linha do corpo.' },
     { id: 'crossover', grupo: 'peito', nome: 'Crossover na polia', locais: ['academia'], carga: true, evitar: [], dica: 'Um passo à frente, tronco um pouco inclinado. Traga as mãos para a frente do peito num arco.' },
     { id: 'supino_chao', grupo: 'peito', nome: 'Supino no chão com halteres', locais: ['halteres'], carga: true, evitar: [], dica: 'Deitado no chão, desça até os cotovelos encostarem de leve e suba.' },
@@ -67,6 +73,9 @@ window.AR_TREINO_DADOS = (function () {
     { id: 'remada_curvada_halteres', grupo: 'costas', nome: 'Remada curvada com halteres', locais: ['academia', 'halteres'], carga: true, evitar: ['lombar'], dica: 'Tronco inclinado, costas retas. Puxe os dois halteres junto ao corpo.' },
     { id: 'pullover', grupo: 'costas', nome: 'Pullover com halter', locais: ['academia', 'halteres'], carga: true, evitar: ['ombro'], dica: 'Deitado, segure um halter com as duas mãos acima do peito e leve-o para trás da cabeça, devagar.' },
     { id: 'remada_mesa', grupo: 'costas', nome: 'Remada deitado embaixo da mesa', locais: ['casa', 'halteres'], carga: false, evitar: [], dica: 'Só numa mesa pesada e firme. Segure a beira e puxe o peito em direção a ela, com o corpo reto.' },
+    { id: 'barra_fixa', grupo: 'costas', nome: 'Barra fixa', locais: ['academia'], carga: false, evitar: [], dica: 'Pegada um pouco mais aberta que os ombros. Puxe até o queixo passar a barra. Use o graviton ou um elástico se precisar.' },
+    { id: 'remada_cavalinho', grupo: 'costas', nome: 'Remada cavalinho', locais: ['academia'], carga: true, evitar: ['lombar'], dica: 'Tronco inclinado e coluna reta. Puxe a barra até a barriga, juntando as escápulas.' },
+    { id: 'encolhimento', grupo: 'costas', nome: 'Encolhimento de ombros', locais: ['academia', 'halteres'], carga: true, evitar: [], dica: 'Braços estendidos. Suba os ombros em direção às orelhas, segure 1 segundo e desça.' },
     { id: 'remada_mochila', grupo: 'costas', nome: 'Remada com mochila', locais: ['casa'], carga: false, evitar: [], dica: 'Coloque livros numa mochila. Incline o tronco, costas retas, e puxe a mochila até a barriga.' },
     { id: 'remada_mochila_um', grupo: 'costas', nome: 'Remada com mochila, um braço', locais: ['casa'], carga: false, evitar: [], dica: 'Mão livre apoiada numa cadeira. Puxe a mochila até o quadril e desça devagar.' },
     { id: 'superman_y', grupo: 'costas', nome: 'Elevação em Y deitado de bruços', locais: ['casa', 'halteres', 'academia'], carga: false, evitar: [], dica: 'De bruços, braços em Y. Tire os braços do chão juntando as escápulas, sem forçar o pescoço.' },
@@ -74,6 +83,7 @@ window.AR_TREINO_DADOS = (function () {
     /* Ombros */
     { id: 'desenvolvimento', grupo: 'ombros', nome: 'Desenvolvimento com halteres', locais: ['academia', 'halteres'], carga: true, evitar: ['ombro'], dica: 'Sentado, suba os halteres acima da cabeça sem travar os cotovelos.' },
     { id: 'desenvolvimento_maquina', grupo: 'ombros', nome: 'Desenvolvimento na máquina', locais: ['academia'], carga: true, evitar: ['ombro'], dica: 'Costas apoiadas. Empurre para cima sem arquear a lombar.' },
+    { id: 'desenvolvimento_arnold', grupo: 'ombros', nome: 'Desenvolvimento Arnold', locais: ['academia', 'halteres'], carga: true, evitar: ['ombro'], dica: 'Comece com as palmas viradas para você e gire enquanto sobe os halteres.' },
     { id: 'elevacao_lateral', grupo: 'ombros', nome: 'Elevação lateral', locais: ['academia', 'halteres'], carga: true, evitar: [], dica: 'Peso leve. Suba os braços para os lados até a altura dos ombros.' },
     { id: 'elevacao_lateral_polia', grupo: 'ombros', nome: 'Elevação lateral na polia', locais: ['academia'], carga: true, evitar: [], dica: 'De lado para a polia, puxe o cabo para o lado até a altura do ombro.' },
     { id: 'elevacao_frontal', grupo: 'ombros', nome: 'Elevação frontal', locais: ['academia', 'halteres'], carga: true, evitar: [], dica: 'Suba os halteres à frente até a altura dos ombros, sem balançar o tronco.' },
@@ -91,6 +101,12 @@ window.AR_TREINO_DADOS = (function () {
     { id: 'rosca_polia', grupo: 'biceps', nome: 'Rosca na polia', locais: ['academia'], carga: true, evitar: [], dica: 'Cotovelos parados ao lado do corpo. Suba a barra até o peito.' },
     { id: 'rosca_mochila', grupo: 'biceps', nome: 'Rosca com mochila ou galão', locais: ['casa'], carga: false, evitar: [], dica: 'Segure pela alça e dobre os cotovelos, mantendo-os junto ao corpo.' },
     { id: 'rosca_martelo_garrafa', grupo: 'biceps', nome: 'Rosca martelo com garrafas', locais: ['casa'], carga: false, evitar: [], dica: 'Garrafas cheias, palmas viradas para o corpo. Suba e desça devagar.' },
+    { id: 'rosca_alternada', grupo: 'biceps', nome: 'Rosca alternada', locais: ['academia', 'halteres'], carga: true, evitar: [], dica: 'Um braço de cada vez, girando a palma para cima enquanto sobe.' },
+    { id: 'rosca_scott', grupo: 'biceps', nome: 'Rosca Scott', locais: ['academia'], carga: true, evitar: [], dica: 'Braços apoiados no banco Scott. Desça até quase estender e suba sem tirar os cotovelos do apoio.' },
+    { id: 'rosca_spider', grupo: 'biceps', nome: 'Rosca spider', locais: ['academia', 'halteres'], carga: true, evitar: [], dica: 'Peito apoiado num banco inclinado, braços pendurados. Suba os halteres sem levar os cotovelos para a frente.' },
+    { id: 'rosca_inclinada', grupo: 'biceps', nome: 'Rosca no banco inclinado', locais: ['academia'], carga: true, evitar: ['ombro'], dica: 'Costas no banco inclinado e braços para trás do corpo. Suba devagar, sentindo o alongamento.' },
+    { id: 'rosca_barra_w', grupo: 'biceps', nome: 'Rosca com barra W', locais: ['academia'], carga: true, evitar: [], dica: 'Pegada na curva da barra. Cotovelos parados ao lado do corpo.' },
+    { id: 'rosca_inversa', grupo: 'biceps', nome: 'Rosca inversa', locais: ['academia', 'halteres'], carga: true, evitar: [], dica: 'Palmas viradas para baixo. Trabalha o antebraço junto com o bíceps.' },
     { id: 'rosca_toalha', grupo: 'biceps', nome: 'Rosca parada com toalha', locais: ['casa'], carga: false, tempo: true, evitar: [], dica: 'Pise no meio de uma toalha e puxe as pontas, com os cotovelos dobrados a 90 graus. Segure firme.' },
 
     /* Tríceps */
@@ -99,6 +115,8 @@ window.AR_TREINO_DADOS = (function () {
     { id: 'triceps_testa', grupo: 'triceps', nome: 'Tríceps testa com halteres', locais: ['academia', 'halteres'], carga: true, evitar: [], dica: 'Deitado, cotovelos apontando para cima. Desça os halteres ao lado da cabeça e estenda.' },
     { id: 'triceps_coice', grupo: 'triceps', nome: 'Tríceps coice com halter', locais: ['academia', 'halteres'], carga: true, evitar: [], dica: 'Tronco inclinado, cotovelo colado ao corpo. Estenda o braço para trás.' },
     { id: 'triceps_frances', grupo: 'triceps', nome: 'Tríceps francês com halter', locais: ['academia', 'halteres'], carga: true, evitar: ['ombro'], dica: 'Halter atrás da cabeça, cotovelos apontando para cima.' },
+    { id: 'supino_fechado', grupo: 'triceps', nome: 'Supino com pegada fechada', locais: ['academia'], carga: true, evitar: [], dica: 'Mãos na largura dos ombros e cotovelos junto ao corpo. Desça a barra até a parte de baixo do peito.' },
+    { id: 'mergulho_paralelas', grupo: 'triceps', nome: 'Mergulho nas paralelas', locais: ['academia'], carga: false, evitar: ['ombro'], dica: 'Tronco reto e cotovelos para trás. Desça até os braços ficarem a 90 graus e suba.' },
     { id: 'triceps_cadeira', grupo: 'triceps', nome: 'Tríceps na cadeira', locais: ['casa', 'halteres'], carga: false, evitar: ['ombro'], dica: 'Mãos na beira de uma cadeira firme. Desça dobrando os cotovelos para trás.' },
     { id: 'triceps_fechada', grupo: 'triceps', nome: 'Flexão com as mãos juntas', locais: ['casa', 'halteres', 'academia'], carga: false, evitar: [], dica: 'Como a flexão, com as mãos mais próximas. Apoie os joelhos se precisar.' },
     { id: 'triceps_garrafa', grupo: 'triceps', nome: 'Tríceps acima da cabeça com garrafa', locais: ['casa'], carga: false, evitar: ['ombro'], dica: 'Segure uma garrafa com as duas mãos atrás da cabeça e estenda os braços para cima.' },
@@ -112,6 +130,9 @@ window.AR_TREINO_DADOS = (function () {
     { id: 'abdominal_curto', grupo: 'abdomen', nome: 'Abdominal curto', locais: ['casa', 'halteres', 'academia'], carga: false, evitar: [], dica: 'Deitado, joelhos dobrados. Tire só os ombros do chão, sem puxar o pescoço.' },
     { id: 'abdominal_bicicleta', grupo: 'abdomen', nome: 'Abdominal bicicleta', locais: ['casa', 'halteres', 'academia'], carga: false, evitar: [], dica: 'Leve o cotovelo em direção ao joelho oposto, alternando os lados, devagar.' },
     { id: 'elevacao_pernas', grupo: 'abdomen', nome: 'Elevação de pernas deitado', locais: ['casa', 'halteres', 'academia'], carga: false, evitar: ['lombar'], dica: 'Lombar colada no chão. Suba as pernas juntas e desça sem encostar no chão.' },
+    { id: 'abdominal_infra', grupo: 'abdomen', nome: 'Abdominal infra', locais: ['casa', 'halteres', 'academia'], carga: false, evitar: ['lombar'], dica: 'Deitado, pernas dobradas. Leve os joelhos em direção ao peito tirando o quadril do chão.' },
+    { id: 'abdominal_polia', grupo: 'abdomen', nome: 'Abdominal na polia', locais: ['academia'], carga: true, evitar: [], dica: 'Ajoelhado, corda junto à cabeça. Enrole o tronco para baixo, sem puxar com os braços.' },
+    { id: 'roda_abdominal', grupo: 'abdomen', nome: 'Roda abdominal', locais: ['casa', 'halteres', 'academia'], carga: false, evitar: ['lombar'], dica: 'Ajoelhado, role a roda à frente até onde a lombar não cair, e volte.' },
     { id: 'pallof', grupo: 'abdomen', nome: 'Antirrotação na polia', locais: ['academia'], carga: true, evitar: [], dica: 'De lado para a polia, segure o cabo junto ao peito e estenda os braços sem deixar o tronco girar.' }
   ];
 
@@ -130,12 +151,12 @@ window.AR_TREINO_DADOS = (function () {
   // Cada movimento tem opções, em ordem de preferência. As 3 opções de cada treino
   // pegam a 1ª, a 2ª e a 3ª que servem para o local e os cuidados da pessoa.
   var MOVIMENTOS = {
-    pernas: ['agachamento_livre', 'leg_press', 'agachamento_goblet', 'hack', 'agachamento_sumo', 'agachamento_peso', 'agachamento_bulgaro', 'sentar_levantar', 'agachamento_parede'],
+    pernas: ['agachamento_livre', 'leg_press', 'agachamento_goblet', 'hack', 'agachamento_smith', 'agachamento_sumo', 'agachamento_peso', 'agachamento_bulgaro', 'sentar_levantar', 'agachamento_parede'],
     posterior: ['stiff', 'mesa_flexora', 'cadeira_flexora', 'ponte_halter', 'ponte_gluteo', 'stiff_unilateral', 'ponte_unilateral'],
     unilateral: ['afundo', 'agachamento_bulgaro', 'afundo_reverso', 'subida_degrau', 'ponte_unilateral', 'coice_gluteo'],
     panturrilha: ['panturrilha', 'panturrilha_sentado', 'panturrilha_leg', 'panturrilha_unilateral', 'panturrilha_degrau'],
     peito: ['supino_reto', 'supino_halteres', 'supino_maquina', 'supino_chao', 'flexao', 'flexao_pausa', 'flexao_inclinada'],
-    costas_vertical: ['puxada_frente', 'puxada_neutra', 'pulldown', 'remada_halter', 'pullover', 'remada_mesa', 'remada_mochila'],
+    costas_vertical: ['puxada_frente', 'puxada_neutra', 'pulldown', 'barra_fixa', 'remada_halter', 'pullover', 'remada_mesa', 'remada_mochila'],
     costas: ['remada_baixa', 'remada_maquina', 'remada_curvada', 'remada_halter', 'remada_curvada_halteres', 'remada_mochila', 'remada_mesa', 'remada_mochila_um', 'superman_y'],
     ombros: ['desenvolvimento', 'desenvolvimento_maquina', 'pike', 'elevacao_lateral', 'elevacao_frontal', 'elevacao_garrafa', 'elevacao_frontal_garrafa'],
     ombro_lateral: ['elevacao_lateral', 'elevacao_lateral_polia', 'crucifixo_inverso', 'elevacao_garrafa', 'crucifixo_inverso_garrafa', 'face_pull'],
@@ -144,14 +165,14 @@ window.AR_TREINO_DADOS = (function () {
     abdomen: ['prancha', 'dead_bug', 'perdigueiro', 'abdominal_curto', 'prancha_lateral', 'abdominal_bicicleta'],
 
     // Exercícios a mais para quem escolhe um foco
-    peito_extra: ['supino_inclinado', 'crucifixo_maquina', 'crossover', 'crucifixo_chao', 'flexao_inclinada', 'flexao_declinada', 'flexao_pausa'],
-    costas_extra: ['remada_maquina', 'pulldown', 'remada_curvada_halteres', 'puxada_neutra', 'remada_mochila_um', 'superman_y'],
-    ombros_extra: ['crucifixo_inverso', 'elevacao_lateral_polia', 'face_pull', 'elevacao_frontal', 'crucifixo_inverso_garrafa', 'elevacao_frontal_garrafa'],
-    biceps_extra: ['rosca_martelo', 'rosca_concentrada', 'rosca_polia', 'rosca_martelo_garrafa', 'rosca_toalha'],
-    triceps_extra: ['triceps_corda', 'triceps_coice', 'triceps_testa', 'triceps_coice_garrafa', 'triceps_fechada'],
-    pernas_extra: ['cadeira_extensora', 'agachamento_bulgaro', 'hack', 'agachamento_sumo', 'afundo_reverso', 'subida_degrau', 'agachamento_parede', 'sentar_levantar'],
-    gluteos_extra: ['elevacao_pelvica', 'abducao_maquina', 'ponte_halter', 'coice_gluteo', 'abducao_deitado', 'ponte_unilateral'],
-    abdomen_extra: ['abdominal_curto', 'abdominal_bicicleta', 'pallof', 'perdigueiro', 'elevacao_pernas']
+    peito_extra: ['supino_inclinado', 'crucifixo_maquina', 'crossover', 'crucifixo_chao', 'flexao_inclinada', 'flexao_declinada', 'flexao_pausa', 'supino_declinado', 'crucifixo_halteres'],
+    costas_extra: ['remada_maquina', 'pulldown', 'remada_curvada_halteres', 'puxada_neutra', 'remada_mochila_um', 'superman_y', 'barra_fixa', 'remada_cavalinho', 'encolhimento'],
+    ombros_extra: ['crucifixo_inverso', 'elevacao_lateral_polia', 'face_pull', 'elevacao_frontal', 'crucifixo_inverso_garrafa', 'elevacao_frontal_garrafa', 'desenvolvimento_arnold'],
+    biceps_extra: ['rosca_martelo', 'rosca_concentrada', 'rosca_polia', 'rosca_martelo_garrafa', 'rosca_toalha', 'rosca_scott', 'rosca_spider', 'rosca_alternada', 'rosca_inclinada', 'rosca_barra_w'],
+    triceps_extra: ['triceps_corda', 'triceps_coice', 'triceps_testa', 'triceps_coice_garrafa', 'triceps_fechada', 'supino_fechado', 'mergulho_paralelas'],
+    pernas_extra: ['cadeira_extensora', 'agachamento_bulgaro', 'hack', 'agachamento_sumo', 'afundo_reverso', 'subida_degrau', 'agachamento_parede', 'sentar_levantar', 'passada', 'agachamento_smith'],
+    gluteos_extra: ['elevacao_pelvica', 'abducao_maquina', 'ponte_halter', 'coice_gluteo', 'abducao_deitado', 'ponte_unilateral', 'levantamento_terra', 'cadeira_adutora'],
+    abdomen_extra: ['abdominal_curto', 'abdominal_bicicleta', 'pallof', 'perdigueiro', 'elevacao_pernas', 'abdominal_infra', 'abdominal_polia', 'roda_abdominal']
   };
 
   // O grupo de cada movimento, para saber o que cada treino trabalha
@@ -226,6 +247,39 @@ window.AR_TREINO_DADOS = (function () {
     { id: 'pesado', rotulo: 'Pesado demais' }
   ];
 
+  // Para os exercícios criados pela pessoa: o músculo sai do nome.
+  // A ordem importa: os termos mais específicos vêm antes dos gerais.
+  var PALAVRAS = [
+    ['crucifixo inverso', 'ombros'], ['voador inverso', 'ombros'], ['face pull', 'ombros'], ['elevacao lateral', 'ombros'], ['elevacao frontal', 'ombros'],
+    ['elevacao de perna', 'abdomen'], ['elevacao das perna', 'abdomen'],
+    ['gluteo', 'posterior'], ['pelvica', 'posterior'], ['quadril', 'posterior'], ['stiff', 'posterior'], ['flexora', 'posterior'], ['terra', 'posterior'],
+    ['abdutora', 'posterior'], ['adutora', 'posterior'], ['good morning', 'posterior'], ['posterior', 'posterior'], ['isquio', 'posterior'],
+    ['panturrilha', 'panturrilha'], ['gemeo', 'panturrilha'], ['soleo', 'panturrilha'],
+    ['triceps', 'triceps'], ['testa', 'triceps'], ['frances', 'triceps'], ['coice', 'triceps'], ['mergulho', 'triceps'], ['paralela', 'triceps'], ['supino fechado', 'triceps'], ['pegada fechada', 'triceps'],
+    ['rosca', 'biceps'], ['biceps', 'biceps'], ['scott', 'biceps'], ['spider', 'biceps'], ['martelo', 'biceps'], ['antebraco', 'biceps'],
+    ['abdominal', 'abdomen'], ['abdomen', 'abdomen'], ['prancha', 'abdomen'], ['crunch', 'abdomen'], ['infra', 'abdomen'], ['obliquo', 'abdomen'], ['canivete', 'abdomen'],
+    ['supino', 'peito'], ['crucifixo', 'peito'], ['voador', 'peito'], ['peck', 'peito'], ['crossover', 'peito'], ['cross over', 'peito'], ['flexao', 'peito'], ['peito', 'peito'], ['peitoral', 'peito'],
+    ['puxada', 'costas'], ['remada', 'costas'], ['pulldown', 'costas'], ['barra fixa', 'costas'], ['pullover', 'costas'], ['serrote', 'costas'], ['graviton', 'costas'],
+    ['costas', 'costas'], ['dorsal', 'costas'], ['encolhimento', 'costas'], ['trapezio', 'costas'], ['lombar', 'costas'],
+    ['desenvolvimento', 'ombros'], ['arnold', 'ombros'], ['ombro', 'ombros'], ['deltoide', 'ombros'], ['militar', 'ombros'],
+    ['agachamento', 'quadriceps'], ['leg', 'quadriceps'], ['extensora', 'quadriceps'], ['afundo', 'quadriceps'], ['passada', 'quadriceps'], ['hack', 'quadriceps'],
+    ['bulgaro', 'quadriceps'], ['sissy', 'quadriceps'], ['avanco', 'quadriceps'], ['quadriceps', 'quadriceps'], ['coxa', 'quadriceps'], ['perna', 'quadriceps']
+  ];
+  var SEM_PESO = ['prancha', 'flexao', 'barra fixa', 'sem peso', 'peso do corpo', 'abdominal', 'mergulho', 'canivete', 'perdigueiro'];
+  var POR_TEMPO = ['prancha', 'isometri', 'parado', 'segurar', 'cadeirinha'];
+
+  function normalizar(texto) {
+    return String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  // Devolve o grupo, se usa peso e se conta tempo, adivinhados pelo nome
+  function classificar(nome) {
+    var n = ' ' + normalizar(nome) + ' ';
+    var achado = PALAVRAS.filter(function (p) { return n.indexOf(p[0]) !== -1; })[0];
+    var tem = function (lista) { return lista.some(function (p) { return n.indexOf(p) !== -1; }); };
+    return { grupo: achado ? achado[1] : '', carga: !tem(SEM_PESO), tempo: tem(POR_TEMPO) };
+  }
+
   function indice(lista) {
     var mapa = {};
     lista.forEach(function (i) { mapa[i.id] = i; });
@@ -234,6 +288,7 @@ window.AR_TREINO_DADOS = (function () {
 
   return {
     EXERCICIOS: EXERCICIOS, GRUPOS: GRUPOS, MOVIMENTOS: MOVIMENTOS, GRUPO_DO_MOVIMENTO: GRUPO_DO_MOVIMENTO,
+    classificar: classificar, normalizar: normalizar,
     FOCOS: FOCOS, MAXIMO_FOCOS: MAXIMO_FOCOS, VARIACOES: VARIACOES, DIVISOES: DIVISOES,
     OBJETIVOS: OBJETIVOS, NIVEIS: NIVEIS, LOCAIS: LOCAIS, TEMPOS: TEMPOS, CUIDADOS: CUIDADOS, ESFORCOS: ESFORCOS,
     porExercicio: indice(EXERCICIOS), porGrupo: indice(GRUPOS), porFoco: indice(FOCOS),

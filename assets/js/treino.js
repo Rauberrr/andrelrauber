@@ -16,6 +16,7 @@
   var conta = { logado: false, temNaConta: false, cadastro: null };
   var sessao = null;
   var cronometro = null;
+  var MAXIMO_PERSONALIZADOS = 30;
 
   function $(id) { return document.getElementById(id); }
 
@@ -29,6 +30,11 @@
       if (!e.perfil.medidas || typeof e.perfil.medidas !== 'object') e.perfil.medidas = {};
     }
     if (!Array.isArray(e.sessoes)) e.sessoes = [];
+    if (!Array.isArray(e.personalizados)) e.personalizados = [];
+    e.personalizados = e.personalizados.filter(function (p) {
+      return p && /^p_[a-z0-9]{3,16}$/.test(p.id) && typeof p.nome === 'string' && p.nome.trim() && T.porGrupo[p.grupo];
+    }).slice(0, MAXIMO_PERSONALIZADOS);
+    registrarPersonalizados(e.personalizados);
     if (!e.trocas || typeof e.trocas !== 'object' || Array.isArray(e.trocas)) e.trocas = {};
     // Trocas do formato antigo, por movimento, não valem para as opções novas
     Object.keys(e.trocas).forEach(function (k) {
@@ -39,6 +45,22 @@
     if (!e.resumo || typeof e.resumo !== 'object') e.resumo = { proximo: '' };
     if (typeof e.guardarNaConta !== 'boolean') e.guardarNaConta = false;
     return e;
+  }
+
+  // Os exercícios criados pela pessoa entram no catálogo como os outros:
+  // aparecem nas trocas do mesmo grupo e servem em qualquer local
+  function registrarPersonalizados(lista) {
+    T.EXERCICIOS = T.EXERCICIOS.filter(function (x) { return !x.personalizado; });
+    Object.keys(T.porExercicio).forEach(function (id) { if (T.porExercicio[id].personalizado) delete T.porExercicio[id]; });
+    lista.forEach(function (p) {
+      var ex = {
+        id: p.id, grupo: p.grupo, nome: p.nome.trim(), locais: ['academia', 'halteres', 'casa'],
+        carga: p.carga !== false, tempo: p.tempo === true, evitar: [], personalizado: true,
+        dica: 'Exercício criado por você. Faça com calma e pare se sentir dor.'
+      };
+      T.EXERCICIOS.push(ex);
+      T.porExercicio[ex.id] = ex;
+    });
   }
 
   function botao(texto, classe, aoClicar, icone) {
@@ -227,6 +249,34 @@
     return null;
   }
 
+  // As séries da última vez que o exercício foi feito
+  function ultimasSeries(exId) {
+    for (var i = estado.sessoes.length - 1; i >= 0; i -= 1) {
+      var s = estado.sessoes[i].series;
+      if (s && Array.isArray(s[exId]) && s[exId].length) return { series: s[exId], data: estado.sessoes[i].data };
+    }
+    return null;
+  }
+
+  function numero(texto, maximo, inteiro) {
+    var limpo = String(texto).trim().replace(',', '.');
+    if (limpo === '') return null;
+    var n = Number(limpo);
+    if (!isFinite(n) || n < 0 || n > maximo) return undefined;
+    return inteiro ? Math.round(n) : Math.round(n * 10) / 10;
+  }
+
+  function kgTexto(kg) { return String(kg).replace('.', ','); }
+
+  function serieTexto(s, ex) {
+    var kg = s[0];
+    var reps = s[1];
+    var partes = [];
+    if (kg) partes.push(kgTexto(kg) + ' kg');
+    if (reps !== null && reps !== undefined) partes.push((kg ? '× ' : '') + reps + (ex && ex.tempo ? ' s' : ' rep'));
+    return partes.join(' ') || '—';
+  }
+
   // Duas vezes seguidas leve: hora de subir. Pesado: segurar a carga.
   function conselho(letra) {
     var desse = estado.sessoes.filter(function (s) { return s.treino === letra; }).slice(-2);
@@ -254,7 +304,8 @@
     var perfil = estado.perfil;
     var noTreino = treino.exercicios.map(function (x) { return x.exercicio.id; });
     var grupo = item.exercicio.grupo;
-    var candidatos = T.MOVIMENTOS[item.movimento].concat(
+    var proprios = estado.personalizados.filter(function (x) { return x.grupo === grupo; }).map(function (x) { return x.id; });
+    var candidatos = proprios.concat(T.MOVIMENTOS[item.movimento]).concat(
       T.EXERCICIOS.filter(function (e) { return e.grupo === grupo; }).map(function (e) { return e.id; }));
     var lista = [];
     candidatos.forEach(function (id) {
@@ -551,6 +602,9 @@
     desenharEstrategia(p);
     desenharAlimentacao();
     desenharHistorico();
+    desenharEvolucao();
+    desenharPersonalizados();
+    buscar();
     mostrarGuardar();
   }
 
@@ -736,11 +790,301 @@
     lista.hidden = !estado.sessoes.length;
   }
 
+  /* --- Evolução ----------------------------------------------------------------------------------- */
+
+  // Força estimada para 1 repetição (fórmula de Epley): junta carga e repetições num número só
+  function forcaEstimada(kg, reps) { return reps ? kg * (1 + reps / 30) : kg; }
+
+  // A melhor série de cada treino, exercício por exercício
+  function registrosDe(exId) {
+    var lista = [];
+    estado.sessoes.forEach(function (s) {
+      var series = s.series && Array.isArray(s.series[exId]) && s.series[exId].length ? s.series[exId]
+        : (s.cargas && s.cargas[exId] !== undefined ? [[s.cargas[exId], null]] : null);
+      if (!series) return;
+      var melhor = null;
+      series.forEach(function (x) {
+        var kg = x[0] || 0;
+        var reps = x[1] || 0;
+        var nota = kg ? forcaEstimada(kg, reps) : 0;
+        if (!melhor || nota > melhor.forca || (nota === melhor.forca && reps > melhor.reps)) melhor = { kg: kg, reps: reps, forca: nota };
+      });
+      var volume = series.reduce(function (t, x) { return t + (x[0] || 0) * (x[1] || 0); }, 0);
+      lista.push({ data: s.data, kg: melhor.kg, reps: melhor.reps, forca: Math.round(melhor.forca * 10) / 10, volume: volume, series: series });
+    });
+    return lista;
+  }
+
+  function nomeDoExercicio(id) { return T.porExercicio[id] ? T.porExercicio[id].nome : 'Exercício apagado'; }
+
+  function desenharEvolucao() {
+    var contagem = {};
+    estado.sessoes.forEach(function (s) {
+      Object.keys(s.series || {}).concat(Object.keys(s.cargas || {})).forEach(function (id) { contagem[id] = (contagem[id] || 0) + 1; });
+    });
+    var ids = Object.keys(contagem).sort(function (a, b) { return contagem[b] - contagem[a] || nomeDoExercicio(a).localeCompare(nomeDoExercicio(b)); });
+    var escolha = $('tr-evolucao-ex');
+    var antes = escolha.value;
+    $('tr-evolucao-caixa').hidden = !ids.length;
+    $('tr-evolucao-vazio').hidden = Boolean(ids.length);
+    if (!ids.length) return;
+    escolha.textContent = '';
+    ids.forEach(function (id) {
+      var o = document.createElement('option');
+      o.value = id;
+      o.textContent = nomeDoExercicio(id);
+      escolha.appendChild(o);
+    });
+    escolha.value = ids.indexOf(antes) !== -1 ? antes : ids[0];
+    desenharEvolucaoDe(escolha.value);
+  }
+
+  function desenharEvolucaoDe(id) {
+    var ex = T.porExercicio[id];
+    var regs = registrosDe(id);
+    var usaKg = regs.some(function (r) { return r.kg > 0; });
+    var valor = function (r) { return usaKg ? r.kg : r.reps; };
+    var unidade = usaKg ? ' kg' : (ex && ex.tempo ? ' s' : ' rep');
+    var primeiro = regs[0];
+    var ultimo = regs[regs.length - 1];
+    var recorde = regs.reduce(function (m, r) { return valor(r) > valor(m) ? r : m; }, primeiro);
+
+    var numeros = $('tr-evolucao-numeros');
+    numeros.textContent = '';
+    [['Começo', primeiro], ['Agora', ultimo], ['Recorde', recorde]].forEach(function (par) {
+      var d = criar('div', 'tr-numero');
+      d.appendChild(criar('span', '', par[0]));
+      d.appendChild(criar('strong', '', kgTexto(valor(par[1])) + unidade));
+      d.appendChild(criar('small', '', usaKg && par[1].reps ? '× ' + par[1].reps + (ex && ex.tempo ? ' s' : ' rep') + ' · ' + app.dataCurta(par[1].data) : app.dataCurta(par[1].data)));
+      numeros.appendChild(d);
+    });
+    var diferenca = valor(ultimo) - valor(primeiro);
+    var resumo = regs.length < 2
+      ? 'Faça este exercício mais vezes para ver a linha da evolução.'
+      : (diferenca > 0
+        ? '+' + kgTexto(Math.round(diferenca * 10) / 10) + unidade + (valor(primeiro) ? ' (' + Math.round(diferenca / valor(primeiro) * 100) + '%)' : '') + ' desde ' + app.dataCurta(primeiro.data) + ', em ' + regs.length + ' treinos.'
+        : (diferenca === 0 ? 'Mesma marca desde ' + app.dataCurta(primeiro.data) + '. Quando ficar leve, suba um pouco a carga ou as repetições.'
+          : 'Abaixo do começo. Normal depois de uma pausa: volte aos poucos.'));
+    if (usaKg && regs.length >= 2) {
+      var f = ultimo.forca - primeiro.forca;
+      if (f) resumo += ' Força estimada: ' + kgTexto(primeiro.forca) + ' → ' + kgTexto(ultimo.forca) + ' kg.';
+    }
+    $('tr-evolucao-resumo').textContent = resumo;
+    desenharGrafico($('tr-evolucao-grafico'), regs, valor, usaKg);
+
+    var lista = $('tr-evolucao-lista');
+    lista.textContent = '';
+    regs.slice(-6).reverse().forEach(function (r) {
+      var li = criar('li');
+      li.appendChild(criar('span', '', app.dataCurta(r.data)));
+      li.appendChild(criar('span', '', r.series.map(function (s) { return serieTexto(s, ex); }).join(' · ')));
+      lista.appendChild(li);
+    });
+  }
+
+  function desenharGrafico(caixa, regs, valor, usaKg) {
+    caixa.textContent = '';
+    if (regs.length < 2) return;
+    var NS = 'http://www.w3.org/2000/svg';
+    var L = 320;
+    var A = 130;
+    var M = 14;
+    var pontos = regs.slice(-30);
+    var series = [pontos.map(valor)];
+    if (usaKg) series.push(pontos.map(function (r) { return r.forca; }));
+    var todos = series[0].concat(series[1] || []);
+    var min = Math.min.apply(null, todos);
+    var max = Math.max.apply(null, todos);
+    if (max === min) { max += 1; min = Math.max(0, min - 1); }
+    var x = function (i) { return M + i * (L - 2 * M) / (pontos.length - 1); };
+    var y = function (v) { return A - M - (v - min) / (max - min) * (A - 2 * M); };
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + L + ' ' + A);
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Gráfico da evolução: de ' + kgTexto(series[0][0]) + ' a ' + kgTexto(series[0][series[0].length - 1]));
+    [0, 0.5, 1].forEach(function (t) {
+      var g = document.createElementNS(NS, 'line');
+      g.setAttribute('x1', M); g.setAttribute('x2', L - M);
+      g.setAttribute('y1', M + t * (A - 2 * M)); g.setAttribute('y2', M + t * (A - 2 * M));
+      g.setAttribute('class', 'tr-grafico-grade');
+      svg.appendChild(g);
+    });
+    series.forEach(function (vals, n) {
+      var linha = document.createElementNS(NS, 'polyline');
+      linha.setAttribute('points', vals.map(function (v, i) { return x(i).toFixed(1) + ',' + y(v).toFixed(1); }).join(' '));
+      linha.setAttribute('class', n ? 'tr-grafico-forca' : 'tr-grafico-linha');
+      svg.appendChild(linha);
+      if (n) return;
+      vals.forEach(function (v, i) {
+        var c = document.createElementNS(NS, 'circle');
+        c.setAttribute('cx', x(i).toFixed(1));
+        c.setAttribute('cy', y(v).toFixed(1));
+        c.setAttribute('r', i === vals.length - 1 ? 4 : 2.6);
+        c.setAttribute('class', 'tr-grafico-ponto');
+        svg.appendChild(c);
+      });
+    });
+    caixa.appendChild(svg);
+    var legenda = criar('p', 'tr-grafico-legenda');
+    legenda.appendChild(criar('span', 'tr-legenda-linha', usaKg ? 'Carga da melhor série' : 'Mais repetições do dia'));
+    if (usaKg) legenda.appendChild(criar('span', 'tr-legenda-forca', 'Força estimada'));
+    caixa.appendChild(legenda);
+  }
+
+  $('tr-evolucao-ex').addEventListener('change', function () { desenharEvolucaoDe($('tr-evolucao-ex').value); });
+
+  /* --- Procurar ou criar exercício -------------------------------------------------------------- */
+
+  function buscar() {
+    var texto = $('tr-busca').value;
+    var termo = T.normalizar(texto);
+    var caixa = $('tr-busca-resultados');
+    caixa.textContent = '';
+    if (termo.length < 2) return;
+    var palavras = termo.split(' ');
+    var achados = T.EXERCICIOS.filter(function (ex) {
+      var nome = T.normalizar(ex.nome);
+      return palavras.every(function (p) { return nome.indexOf(p) !== -1; });
+    }).slice(0, 6);
+    achados.forEach(function (ex) { caixa.appendChild(resultado(ex)); });
+    var igual = achados.some(function (ex) { return T.normalizar(ex.nome) === termo; });
+    if (!igual && termo.length >= 3) caixa.appendChild(criarExercicio(texto.trim()));
+  }
+
+  function resultado(ex) {
+    var c = criar('div', 'tr-busca-item');
+    var t = criar('div', 'tr-busca-texto');
+    t.appendChild(criar('strong', '', ex.nome));
+    var local = ex.locais.indexOf(estado.perfil.local) === -1 ? ' · pede ' + (ex.locais[0] === 'academia' ? 'academia' : 'halteres') : '';
+    t.appendChild(criar('span', '', T.porGrupo[ex.grupo].rotulo + (ex.personalizado ? ' · criado por você' : '') + local));
+    c.appendChild(t);
+    c.appendChild(botao('Onde encaixa', 'texto-botao', function () { mostrarEncaixe(ex, c); }));
+    return c;
+  }
+
+  function criarExercicio(nome) {
+    var palpite = T.classificar(nome);
+    var c = criar('form', 'tr-busca-item tr-criar');
+    c.noValidate = true;
+    var t = criar('div', 'tr-busca-texto');
+    t.appendChild(criar('strong', '', 'Criar “' + nome.slice(0, 50) + '”'));
+    t.appendChild(criar('span', '', palpite.grupo
+      ? 'Pelo nome, trabalha ' + minusculo(T.porGrupo[palpite.grupo].rotulo) + '. Se não for, troque abaixo.'
+      : 'Não reconhecemos o músculo pelo nome. Escolha abaixo.'));
+    c.appendChild(t);
+    var linha = criar('div', 'tr-criar-campos');
+    var grupo = document.createElement('select');
+    grupo.setAttribute('aria-label', 'Músculo que o exercício trabalha');
+    var vazio = document.createElement('option');
+    vazio.value = '';
+    vazio.textContent = 'Músculo…';
+    grupo.appendChild(vazio);
+    T.GRUPOS.forEach(function (g) {
+      var o = document.createElement('option');
+      o.value = g.id;
+      o.textContent = g.rotulo;
+      grupo.appendChild(o);
+    });
+    grupo.value = palpite.grupo;
+    linha.appendChild(grupo);
+    var rotuloCarga = criar('label', 'tr-criar-carga');
+    var carga = document.createElement('input');
+    carga.type = 'checkbox';
+    carga.checked = palpite.carga;
+    rotuloCarga.appendChild(carga);
+    rotuloCarga.appendChild(document.createTextNode(' Usa peso (kg)'));
+    linha.appendChild(rotuloCarga);
+    c.appendChild(linha);
+    var enviar = criar('button', 'botao botao-cheio', 'Criar e ver onde encaixa');
+    enviar.type = 'submit';
+    c.appendChild(enviar);
+    c.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!grupo.value) { app.avisar('Escolha o músculo que o exercício trabalha.'); grupo.focus(); return; }
+      if (estado.personalizados.length >= MAXIMO_PERSONALIZADOS) { app.avisar('Você chegou a ' + MAXIMO_PERSONALIZADOS + ' exercícios criados. Apague um para criar outro.'); return; }
+      var novo = { id: 'p_' + Date.now().toString(36), nome: nome.slice(0, 50), grupo: grupo.value, carga: carga.checked, tempo: palpite.tempo };
+      estado.personalizados.push(novo);
+      registrarPersonalizados(estado.personalizados);
+      salvar();
+      $('tr-busca').value = novo.nome;
+      desenharPersonalizados();
+      buscar();
+      var item = $('tr-busca-resultados').firstChild;
+      if (item) mostrarEncaixe(T.porExercicio[novo.id], item);
+      app.avisar('Exercício criado. Veja abaixo onde ele encaixa.');
+    });
+    return c;
+  }
+
+  // Onde o exercício entra: no lugar de um exercício do mesmo músculo, em cada treino e opção
+  function mostrarEncaixe(ex, depoisDe) {
+    var aberto = document.querySelector('.tr-encaixe');
+    if (aberto) aberto.remove();
+    var caixa = criar('div', 'tr-encaixe');
+    var lugares = [];
+    divisao(estado.perfil).forEach(function (m) {
+      for (var v = 0; v < T.VARIACOES; v += 1) {
+        var t = treinoDe(m.letra, v);
+        if (t.exercicios.some(function (x) { return x.exercicio.id === ex.id; })) { lugares.push({ treino: t, ja: true }); continue; }
+        t.exercicios.forEach(function (x) { if (x.exercicio.grupo === ex.grupo) lugares.push({ treino: t, item: x }); });
+      }
+    });
+    var grupo = minusculo(T.porGrupo[ex.grupo].rotulo);
+    if (!lugares.length) {
+      caixa.appendChild(criar('p', 'app-suave', 'Nenhum treino seu trabalha ' + grupo + ' agora. Para incluir, escolha esse grupo como foco em Ajustes: o treino ganha exercícios dele, e aí dá para trocar por este.'));
+    } else {
+      caixa.appendChild(criar('p', 'tr-trocas-titulo', 'Coloque no lugar de outro exercício de ' + grupo + ':'));
+      lugares.slice(0, 8).forEach(function (l) {
+        var rotulo = 'Treino ' + l.treino.letra + ', opção ' + (l.treino.variacao + 1);
+        if (l.ja) { caixa.appendChild(criar('p', 'app-suave', rotulo + ': já está no treino.')); return; }
+        var b = criar('button', 'tr-troca-opcao');
+        b.type = 'button';
+        b.appendChild(criar('strong', '', rotulo));
+        b.appendChild(criar('span', '', 'No lugar de ' + minusculo(l.item.exercicio.nome)));
+        b.addEventListener('click', function () {
+          trocar(l.item, l.treino, ex.id, desenharPainel);
+          $('tr-treinos').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        caixa.appendChild(b);
+      });
+    }
+    depoisDe.parentNode.insertBefore(caixa, depoisDe.nextSibling);
+  }
+
+  function desenharPersonalizados() {
+    var lista = $('tr-personalizados');
+    lista.textContent = '';
+    estado.personalizados.forEach(function (p) {
+      var li = criar('li');
+      var texto = criar('span', 'app-lista-texto', p.nome);
+      texto.appendChild(criar('small', '', T.porGrupo[p.grupo].rotulo + (p.carga ? ', com peso' : ', sem peso')));
+      li.appendChild(texto);
+      var apagar = criar('button', 'app-icone-botao plano perigo');
+      apagar.type = 'button';
+      apagar.setAttribute('aria-label', 'Apagar ' + p.nome);
+      apagar.appendChild(app.icone('lixeira'));
+      apagar.addEventListener('click', function () {
+        if (!window.confirm('Apagar “' + p.nome + '”? Onde ele estava no treino, volta o exercício sugerido. O histórico fica.')) return;
+        estado.personalizados = estado.personalizados.filter(function (x) { return x.id !== p.id; });
+        Object.keys(estado.trocas).forEach(function (k) { if (estado.trocas[k] === p.id) delete estado.trocas[k]; });
+        registrarPersonalizados(estado.personalizados);
+        salvar();
+        desenharPainel();
+      });
+      li.appendChild(apagar);
+      lista.appendChild(li);
+    });
+    $('tr-personalizados-titulo').hidden = !estado.personalizados.length;
+    lista.hidden = !estado.personalizados.length;
+  }
+
+  $('tr-busca').addEventListener('input', buscar);
+
   /* --- Treino do dia ---------------------------------------------------------------------------- */
 
   function comecar(letra) {
     var t = treinoDe(letra);
-    sessao = { letra: t.letra, variacao: t.variacao, marcas: {}, cargas: {}, esforco: 'ok' };
+    sessao = { letra: t.letra, variacao: t.variacao, marcas: {}, series: {}, esforco: 'ok' };
     desenharSessao();
     mostrar('sessao');
     $('tr-sessao-titulo').focus();
@@ -752,7 +1096,7 @@
     $('tr-sessao-rotulo').textContent = 'Treino ' + t.letra + ' · opção ' + (t.variacao + 1);
     $('tr-sessao-titulo').textContent = t.nome;
     var dica = conselho(t.letra);
-    $('tr-sessao-texto').textContent = 'Comece com 5 minutos de aquecimento leve. Marque cada série ao terminar: o descanso começa sozinho.' + (dica ? ' ' + dica : '');
+    $('tr-sessao-texto').textContent = 'Comece com 5 minutos de aquecimento leve. Em cada série, anote a carga e as repetições e marque ao terminar: o descanso começa sozinho. Em branco, vale o que você fez da última vez.' + (dica ? ' ' + dica : '');
     var caixa = $('tr-sessao-exercicios');
     caixa.textContent = '';
     t.exercicios.forEach(function (x) {
@@ -766,44 +1110,7 @@
       cab.appendChild(criar('span', 'tr-series', n + ' × ' + repeticoes(ex, p)));
       c.appendChild(cab);
       c.appendChild(criar('p', 'app-suave', ex.dica));
-      var marcas = sessao.marcas[ex.id] || (sessao.marcas[ex.id] = []);
-      var linha = criar('div', 'tr-marcas');
-      for (var i = 0; i < n; i += 1) {
-        (function (i) {
-          var rotulo = criar('label', 'tr-marca');
-          var caixaMarca = document.createElement('input');
-          caixaMarca.type = 'checkbox';
-          caixaMarca.checked = Boolean(marcas[i]);
-          caixaMarca.setAttribute('aria-label', ex.nome + ', série ' + (i + 1));
-          caixaMarca.addEventListener('change', function () {
-            marcas[i] = caixaMarca.checked;
-            if (caixaMarca.checked && i < n - 1) iniciarDescanso(T.porObjetivo[p.objetivo].descanso);
-          });
-          rotulo.appendChild(caixaMarca);
-          rotulo.appendChild(criar('span', '', (i + 1) + 'ª'));
-          linha.appendChild(rotulo);
-        })(i);
-      }
-      c.appendChild(linha);
-      var campo = criar('label', 'tr-carga');
-      campo.appendChild(document.createTextNode(pesoDoCorpo(ex, p) ? 'Peso extra' : 'Carga'));
-      var entrada = document.createElement('input');
-      entrada.type = 'text';
-      entrada.inputMode = 'decimal';
-      entrada.maxLength = 6;
-      var ultima = ultimaCarga(ex.id);
-      entrada.placeholder = ultima ? String(ultima.kg).replace('.', ',') : 'kg';
-      if (sessao.cargas[ex.id] !== undefined) entrada.value = String(sessao.cargas[ex.id]).replace('.', ',');
-      entrada.addEventListener('change', function () {
-        var kg = Number(entrada.value.replace(',', '.'));
-        if (entrada.value.trim() === '') { delete sessao.cargas[ex.id]; return; }
-        if (!isFinite(kg) || kg < 0 || kg > 500) { entrada.value = ''; delete sessao.cargas[ex.id]; app.avisar('Informe a carga em quilos, como 12,5.'); return; }
-        sessao.cargas[ex.id] = Math.round(kg * 10) / 10;
-      });
-      campo.appendChild(entrada);
-      campo.appendChild(document.createTextNode(ultima ? 'kg · da última vez: ' + String(ultima.kg).replace('.', ',') + ' kg'
-        : (pesoDoCorpo(ex, p) ? 'kg · 0 se for só o peso do corpo' : 'kg')));
-      c.appendChild(campo);
+      c.appendChild(linhasDeSeries(ex, n, p));
       var acoes = criar('div', 'tr-sessao-acoes');
       var trocarBotao = botao('Trocar exercício', 'texto-botao', null, 'girar');
       trocarBotao.addEventListener('click', function () { abrirTrocas(x, t, acoes, desenharSessao); });
@@ -824,6 +1131,101 @@
     $('tr-cardio').textContent = T.porObjetivo[p.objetivo].cardio;
   }
 
+  // Uma linha por série: marcar, carga em kg e repetições (ou segundos).
+  // A última vez aparece como sugestão e vale se a pessoa marcar sem preencher.
+  function linhasDeSeries(ex, n, p) {
+    var caixa = criar('div', 'tr-series-lista');
+    var marcas = sessao.marcas[ex.id] || (sessao.marcas[ex.id] = []);
+    var feitas = sessao.series[ex.id] || (sessao.series[ex.id] = []);
+    var antes = ultimasSeries(ex.id);
+    var cargaAntiga = ultimaCarga(ex.id);
+    var unidade = ex.tempo ? 's' : 'rep';
+    var cab = criar('div', 'tr-serie tr-serie-cab');
+    cab.setAttribute('aria-hidden', 'true');
+    ['Série', pesoDoCorpo(ex, p) ? 'Peso extra (kg)' : 'Carga (kg)', ex.tempo ? 'Segundos' : 'Repetições'].forEach(function (t) { cab.appendChild(criar('span', '', t)); });
+    caixa.appendChild(cab);
+
+    function sugestao(i) {
+      var s = antes && (antes.series[i] || antes.series[antes.series.length - 1]);
+      return {
+        kg: s && s[0] !== null ? s[0] : (cargaAntiga ? cargaAntiga.kg : null),
+        reps: s && s[1] !== null ? s[1] : null
+      };
+    }
+
+    for (var i = 0; i < n; i += 1) {
+      (function (i) {
+        var atual = feitas[i] || (feitas[i] = [null, null]);
+        var sug = sugestao(i);
+        var linha = criar('div', 'tr-serie');
+        var rotulo = criar('label', 'tr-marca');
+        var marca = document.createElement('input');
+        marca.type = 'checkbox';
+        marca.checked = Boolean(marcas[i]);
+        marca.setAttribute('aria-label', ex.nome + ', série ' + (i + 1) + ' feita');
+        rotulo.appendChild(marca);
+        rotulo.appendChild(criar('span', '', (i + 1) + 'ª'));
+        linha.appendChild(rotulo);
+
+        function campo(indice, maximo, inteiro, rotuloTexto, sugerido) {
+          var entrada = document.createElement('input');
+          entrada.type = 'text';
+          entrada.inputMode = inteiro ? 'numeric' : 'decimal';
+          entrada.maxLength = inteiro ? 3 : 5;
+          entrada.setAttribute('aria-label', ex.nome + ', série ' + (i + 1) + ', ' + rotuloTexto);
+          entrada.placeholder = sugerido !== null ? kgTexto(sugerido) : (indice === 0 ? 'kg' : unidade);
+          if (atual[indice] !== null) entrada.value = kgTexto(atual[indice]);
+          entrada.addEventListener('change', function () {
+            var v = numero(entrada.value, maximo, inteiro);
+            if (v === undefined) {
+              entrada.value = '';
+              atual[indice] = null;
+              app.avisar(indice === 0 ? 'Informe a carga em quilos, como 12,5.' : 'Informe um número inteiro, como 10.');
+              return;
+            }
+            atual[indice] = v;
+          });
+          return entrada;
+        }
+        var kg = campo(0, 500, false, 'carga em kg', sug.kg);
+        var reps = campo(1, 300, true, ex.tempo ? 'segundos' : 'repetições', sug.reps);
+        linha.appendChild(kg);
+        linha.appendChild(reps);
+        marca.addEventListener('change', function () {
+          marcas[i] = marca.checked;
+          if (marca.checked) {
+            // Marcou sem preencher: vale a sugestão da última vez
+            if (atual[0] === null && sug.kg !== null) { atual[0] = sug.kg; kg.value = kgTexto(sug.kg); }
+            if (atual[1] === null && sug.reps !== null) { atual[1] = sug.reps; reps.value = String(sug.reps); }
+            if (i < n - 1) iniciarDescanso(T.porObjetivo[p.objetivo].descanso);
+          }
+        });
+        caixa.appendChild(linha);
+      })(i);
+    }
+    var nota = antes
+      ? 'Da última vez (' + app.dataCurta(antes.data) + '): ' + antes.series.map(function (s) { return serieTexto(s, ex); }).join(' · ')
+      : (cargaAntiga ? 'Da última vez: ' + kgTexto(cargaAntiga.kg) + ' kg' : (pesoDoCorpo(ex, p) ? 'Peso extra: 0 se for só o peso do corpo.' : ''));
+    if (nota) caixa.appendChild(criar('p', 'tr-serie-nota', nota));
+    return caixa;
+  }
+
+  // As séries que valem: com algum número ou marcadas. A carga do exercício é a maior do dia.
+  function seriesParaGuardar() {
+    var series = {};
+    var cargas = {};
+    Object.keys(sessao.series).forEach(function (id) {
+      var marcas = sessao.marcas[id] || [];
+      var lista = sessao.series[id].filter(function (s, i) { return s[0] !== null || s[1] !== null || marcas[i]; })
+        .map(function (s) { return [s[0], s[1]]; }).filter(function (s) { return s[0] !== null || s[1] !== null; });
+      if (!lista.length) return;
+      series[id] = lista.slice(0, 10);
+      var kgs = lista.map(function (s) { return s[0]; }).filter(function (k) { return k !== null; });
+      if (kgs.length) cargas[id] = Math.max.apply(null, kgs);
+    });
+    return { series: series, cargas: cargas };
+  }
+
   $('tr-comecar').addEventListener('click', function () { comecar(proximoTreino().letra); });
   $('tr-escolher-outro').addEventListener('click', function () {
     $('tr-treinos').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -835,9 +1237,10 @@
       var m = sessao.marcas[x.exercicio.id] || [];
       return m.filter(Boolean).length >= seriesDe(x, estado.perfil);
     }).length;
-    var algum = Object.keys(sessao.marcas).some(function (k) { return sessao.marcas[k].some(Boolean); });
+    var guardar = seriesParaGuardar();
+    var algum = Object.keys(sessao.marcas).some(function (k) { return sessao.marcas[k].some(Boolean); }) || Object.keys(guardar.series).length > 0;
     if (!algum && !window.confirm('Nenhuma série marcada. Registrar o treino mesmo assim?')) return;
-    estado.sessoes.push({ data: app.hojeISO(), treino: sessao.letra, variacao: sessao.variacao, esforco: sessao.esforco, feitos: feitos, cargas: sessao.cargas });
+    estado.sessoes.push({ data: app.hojeISO(), treino: sessao.letra, variacao: sessao.variacao, esforco: sessao.esforco, feitos: feitos, cargas: guardar.cargas, series: guardar.series });
     if (estado.sessoes.length > 500) estado.sessoes = estado.sessoes.slice(-500);
     var mudou = '';
     if (estado.alternar) {
@@ -853,7 +1256,8 @@
   });
 
   $('tr-sair').addEventListener('click', function () {
-    var algum = sessao && Object.keys(sessao.marcas).some(function (k) { return sessao.marcas[k].some(Boolean); });
+    var algum = sessao && (Object.keys(sessao.marcas).some(function (k) { return sessao.marcas[k].some(Boolean); }) ||
+      Object.keys(seriesParaGuardar().series).length > 0);
     if (algum && !window.confirm('Sair sem salvar este treino?')) return;
     pararDescanso();
     sessao = null;

@@ -1,7 +1,7 @@
 {
   "name": "Rauber Apps",
   "short_name": "Rauber",
-  "description": "Guarda-roupa, Alimentação, Ocasiões e Treino da Rauber.",
+  "description": "Guarda-roupa, Alimentação, Ocasiões, Treino e Hábitos da Rauber.",
   "lang": "pt-BR",
   "start_url": "/apps/",
   "scope": "/",

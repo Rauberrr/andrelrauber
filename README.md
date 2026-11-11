@@ -89,6 +89,7 @@ Os apps ficam em `/apps/`, com cara de aplicativo: barra translúcida, título g
 | `/apps/alimentacao/` | Alimentação |
 | `/apps/ocasioes/` | Ocasiões |
 | `/apps/treino/` | Treino |
+| `/apps/habitos/` | Hábitos |
 
 - Os endereços antigos, `guarda-roupa.html` e `alimentacao.html`, levam para os novos.
 - Cada página dos apps tem `<base href="/">`, então todos os caminhos partem da raiz do site.
@@ -110,6 +111,30 @@ A Alimentação avisa quando um item da lista de compras vai acabar, e Ocasiões
 4. Clique em **Adicionar novo trabalho Cron**.
 
 O cPanel manda para o e-mail da conta o que a tarefa escrever, como `Lembretes enviados: 2`. Para não receber essas mensagens, apague o e-mail no campo **E-mail do Cron** no alto da página. A pasta `api/tarefas` é bloqueada ao acesso pelo navegador.
+
+### Lembretes no navegador (Hábitos)
+
+O app Hábitos avisa no celular ou no computador na hora de cada hábito, mesmo com o navegador fechado (Web Push). Funciona no Chrome, Edge, Firefox e Safari. No iPhone, só depois de colocar o site na Tela de Início e abrir por lá; a página explica isso à pessoa.
+
+Para os avisos saírem, crie mais uma tarefa no cPanel, a cada 15 minutos:
+
+1. No cPanel, abra **Cron Jobs**.
+2. Em **Configurações comuns**, escolha **A cada 15 minutos**.
+3. Em **Comando**, cole:
+
+```
+/usr/local/bin/php /home2/and63667/public_html/api/tarefas/habitos.php
+```
+
+4. Clique em **Adicionar novo trabalho Cron**. Para não receber um e-mail a cada 15 minutos, deixe vazio o campo **E-mail do Cron** ou ponha `>/dev/null 2>&1` no fim do comando.
+
+Como funciona:
+
+- O servidor manda só um toque, sem conteúdo, para o serviço de notificações do navegador (Google, Apple ou Mozilla). Ao receber, o `sw.js`, na raiz do site, busca os avisos na conta da pessoa em `api/habitos.php?acao=avisos` e mostra cada um. Assim nada do que ela anotou passa por esses serviços.
+- Avisa na hora marcada de cada hábito que ainda não foi feito, e às 20h o resgate: o hábito ficou para trás no último dia e ainda está em aberto. A hora segue o fuso do aparelho da pessoa. Nada se repete, pela tabela `lembretes_enviados`.
+- As chaves que assinam os toques (VAPID) são criadas sozinhas no primeiro uso, em `api/privado`, uma pasta bloqueada ao navegador e fora do GitHub. Não apague essa pasta: com chaves novas, todo mundo precisa ativar os lembretes de novo.
+- Os aparelhos ficam em `push_inscricoes` e os avisos esperando o navegador, em `avisos_push` (apagados depois de 7 dias). Para criar essas tabelas num site que já está no ar, importe o `api/banco.sql` de novo no phpMyAdmin: ele só cria o que falta.
+- Com a página aberta, o próprio app também avisa na hora, inclusive nos navegadores sem Web Push.
 
 ### Clima
 
@@ -229,7 +254,22 @@ Em `/apps/treino/`, a pessoa escolhe o objetivo, a experiência, o local (academ
 - **Trocar um exercício:** o botão de troca mostra até 3 exercícios do mesmo grupo muscular que servem para o local e os cuidados da pessoa. Com restrições fortes, como em casa e com dor no joelho, podem sobrar menos de 3. A troca vale para aquele treino e aquela opção.
 - **Ligação com a Alimentação:** os dois apps usam as mesmas medidas (sexo, idade, altura e peso), guardadas no navegador em `ar-corpo-v1`. Quem preenche num, não digita de novo no outro. Ao terminar o plano alimentar, a Alimentação convida a montar o treino; depois de montar o treino, o Treino mostra a meta de calorias e de proteína do plano, ou convida a montá-lo. Os dias de treino sugerem a rotina na Alimentação, e o objetivo passa de um app para o outro.
 
+- **Carga e repetições por série:** durante o treino, cada série tem os campos de carga (kg) e repetições (ou segundos, nos exercícios de tempo). O que foi feito da última vez aparece como sugestão e vale se a pessoa marcar a série sem preencher.
+- **Sua evolução:** para cada exercício, a melhor série de cada treino num gráfico, com o começo, o atual e o recorde. A melhor série é a de maior força estimada (fórmula de Epley: carga × (1 + repetições ÷ 30)), que junta carga e repetições numa conta só.
+- **Procurar ou criar exercício:** a pessoa procura pelo nome em todo o catálogo e vê onde o exercício encaixa no plano dela: no lugar de outro do mesmo músculo, em cada treino e opção. Se ele não existir, ela cria o seu (até 30). O músculo é adivinhado pelo nome, por palavras como rosca, supino, remada ou agachamento (`PALAVRAS`, em `treino-dados.js`), e ela pode trocar. Os exercícios criados entram nas trocas como os outros. Para incluir mais exercícios para todo mundo, basta acrescentar em `EXERCICIOS` e no movimento certo de `MOVIMENTOS`.
+
 O treino fica no navegador e só vai para a conta, na tabela `apps_dados`, se a pessoa autorizar. A página avisa que é uma sugestão geral e recomenda um médico e um profissional de educação física.
+
+## Hábitos
+
+Em `/apps/habitos/`, para quem já tentou mudar um hábito e desistiu. O app segue três regras: começar ridiculamente pequeno (cada hábito tem a sua **versão de 2 minutos**, que também conta), prender o hábito novo a algo que a pessoa já faz (**Logo depois de…**) e **nunca falhar duas vezes**: se o hábito ficou para trás no último dia marcado, o cartão fica em destaque e o lembrete das 20h chama a pessoa.
+
+- Cada hábito tem a identidade que a pessoa quer construir (“quero ser alguém que lê todos os dias”). Ao cumprir, o app comemora com um voto para essa identidade e marca as sequências de 3, 7, 14, 21, 30, 66 e 100 dias.
+- Hoje: um anel com quanto do dia já foi feito, e para cada hábito os botões **Fiz**, **Só o mínimo** e **Hoje não**, a sequência e os últimos 7 dias.
+- Sua consistência: o mapa das últimas 12 semanas e, para cada hábito, a sequência, o recorde e quanto foi cumprido nos últimos 30 dias.
+- Modelos prontos (ler, beber água, treinar, caminhar, meditar...) em `MODELOS`, no `assets/js/habitos.js`. Quem tenta criar mais de 3 hábitos recebe a dica de firmar os que já tem.
+
+Os hábitos ficam no navegador e só vão para a conta se a pessoa autorizar. Os lembretes com o navegador fechado precisam deles na conta, e a página pede essa autorização ao ativar.
 
 ## Alimentação
 
@@ -277,6 +317,7 @@ Os mesmos dados ficam no phpMyAdmin, nas tabelas `usuarios`, `cadastros` e `even
 | Número do WhatsApp dos links de contato | `assets/js/config.js` |
 | Prazos de confecção usados em Ocasiões | `assets/js/ocasioes-dados.js` |
 | Exercícios do Treino | `assets/js/treino-dados.js` |
+| Modelos de hábitos | `assets/js/habitos.js` |
 | Visual dos apps | `assets/css/apps.css` |
 | Opções do pedido exclusivo e categorias da coleção | `assets/js/colecao-dados.js` |
 | Fita métrica da página inicial | `assets/js/home-animacoes.js` |
