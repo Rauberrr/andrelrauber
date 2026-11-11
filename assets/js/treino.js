@@ -207,7 +207,8 @@
   }
 
   // Em casa, sem equipamento, não há peso para anotar
-  function anotaCarga(ex, perfil) { return ex.carga && perfil.local !== 'casa'; }
+  // Todo exercício tem o campo de peso. Nos de peso do corpo, é o peso extra, como uma mochila
+  function pesoDoCorpo(ex, perfil) { return !ex.carga || perfil.local === 'casa'; }
 
   function proximoTreino() {
     var p = plano();
@@ -784,26 +785,25 @@
         })(i);
       }
       c.appendChild(linha);
-      if (anotaCarga(ex, p)) {
-        var campo = criar('label', 'tr-carga');
-        campo.appendChild(document.createTextNode('Carga'));
-        var entrada = document.createElement('input');
-        entrada.type = 'text';
-        entrada.inputMode = 'decimal';
-        entrada.maxLength = 6;
-        var ultima = ultimaCarga(ex.id);
-        entrada.placeholder = ultima ? String(ultima.kg).replace('.', ',') : 'kg';
-        if (sessao.cargas[ex.id] !== undefined) entrada.value = String(sessao.cargas[ex.id]).replace('.', ',');
-        entrada.addEventListener('change', function () {
-          var kg = Number(entrada.value.replace(',', '.'));
-          if (entrada.value.trim() === '') { delete sessao.cargas[ex.id]; return; }
-          if (!isFinite(kg) || kg < 0 || kg > 500) { entrada.value = ''; delete sessao.cargas[ex.id]; app.avisar('Informe a carga em quilos, como 12,5.'); return; }
-          sessao.cargas[ex.id] = Math.round(kg * 10) / 10;
-        });
-        campo.appendChild(entrada);
-        campo.appendChild(document.createTextNode(ultima ? 'kg · da última vez: ' + String(ultima.kg).replace('.', ',') + ' kg' : 'kg'));
-        c.appendChild(campo);
-      }
+      var campo = criar('label', 'tr-carga');
+      campo.appendChild(document.createTextNode(pesoDoCorpo(ex, p) ? 'Peso extra' : 'Carga'));
+      var entrada = document.createElement('input');
+      entrada.type = 'text';
+      entrada.inputMode = 'decimal';
+      entrada.maxLength = 6;
+      var ultima = ultimaCarga(ex.id);
+      entrada.placeholder = ultima ? String(ultima.kg).replace('.', ',') : 'kg';
+      if (sessao.cargas[ex.id] !== undefined) entrada.value = String(sessao.cargas[ex.id]).replace('.', ',');
+      entrada.addEventListener('change', function () {
+        var kg = Number(entrada.value.replace(',', '.'));
+        if (entrada.value.trim() === '') { delete sessao.cargas[ex.id]; return; }
+        if (!isFinite(kg) || kg < 0 || kg > 500) { entrada.value = ''; delete sessao.cargas[ex.id]; app.avisar('Informe a carga em quilos, como 12,5.'); return; }
+        sessao.cargas[ex.id] = Math.round(kg * 10) / 10;
+      });
+      campo.appendChild(entrada);
+      campo.appendChild(document.createTextNode(ultima ? 'kg · da última vez: ' + String(ultima.kg).replace('.', ',') + ' kg'
+        : (pesoDoCorpo(ex, p) ? 'kg · 0 se for só o peso do corpo' : 'kg')));
+      c.appendChild(campo);
       var acoes = criar('div', 'tr-sessao-acoes');
       var trocarBotao = botao('Trocar exercício', 'texto-botao', null, 'girar');
       trocarBotao.addEventListener('click', function () { abrirTrocas(x, t, acoes, desenharSessao); });

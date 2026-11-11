@@ -72,6 +72,14 @@
 
   /* --- Coleções ---------------------------------------------------------------------------------- */
 
+  // O que o cliente vê: rascunho nunca aparece; peça de coleção futura espera o lançamento
+  function situacaoParaCliente(p, porColecao) {
+    if (p.situacao === 'rascunho') return 'Rascunho: não aparece no site';
+    var c = p.colecaoId && porColecao[p.colecaoId];
+    if (c && c.lancaEm > dados.agora) return 'Agendada para ' + quando(c.lancaEm);
+    return p.situacao === 'esgotado' ? 'Esgotada, aparece sem compra' : 'No ar';
+  }
+
   function desenharColecoes() {
     var lista = $('painel-colecoes');
     lista.textContent = '';
@@ -81,15 +89,20 @@
       var texto = criar('div');
       texto.appendChild(criar('strong', '', c.nome));
       var noAr = c.lancaEm <= dados.agora;
-      texto.appendChild(criar('span', '', (noAr ? 'No ar desde ' : 'Lança em ') + quando(c.lancaEm) + ' · ' + c.total + (c.total === 1 ? ' peça' : ' peças')));
+      var visiveis = dados.produtos.filter(function (p) { return p.colecaoId === c.id && p.situacao !== 'rascunho'; }).length;
+      var rascunhos = dados.produtos.filter(function (p) { return p.colecaoId === c.id && p.situacao === 'rascunho'; }).length;
+      texto.appendChild(criar('span', '', (noAr ? 'No ar desde ' : 'Lança em ') + quando(c.lancaEm) + ' · ' + visiveis + (visiveis === 1 ? ' peça no lançamento' : ' peças no lançamento') +
+        (rascunhos ? ' · ' + rascunhos + (rascunhos === 1 ? ' em rascunho, que não aparece' : ' em rascunho, que não aparecem') : '')));
       li.appendChild(texto);
       li.appendChild(botao('Editar', 'texto-botao', function () { abrirColecao(c); }));
       lista.appendChild(li);
     });
     var sel = $('pf-colecao');
+    var escolhida = sel.value;
     sel.textContent = '';
     sel.appendChild(new Option('Nenhuma, aparece quando estiver no ar', ''));
     dados.colecoes.forEach(function (c) { sel.appendChild(new Option(c.nome + ' (' + quando(c.lancaEm) + ')', String(c.id))); });
+    sel.value = escolhida;
   }
 
   function abrirColecao(c) {
@@ -143,7 +156,7 @@
       nome.appendChild(texto);
       tr.appendChild(nome);
       tr.appendChild(criar('td', '', C.reais(p.precoCentavos)));
-      tr.appendChild(criar('td', 'painel-situacao-' + p.situacao, (C.porSituacao[p.situacao] || {}).rotulo || p.situacao));
+      tr.appendChild(criar('td', 'painel-situacao-' + p.situacao, situacaoParaCliente(p, porColecao)));
       tr.appendChild(criar('td', '', p.colecaoId && porColecao[p.colecaoId] ? porColecao[p.colecaoId].nome : '—'));
       tr.appendChild(criar('td', '', String(p.fotos.length)));
       var acoes = criar('td');
@@ -182,6 +195,20 @@
   }
   $('pf-cor-mais').addEventListener('click', function () { linhaDeCor(null).focus(); });
 
+  function avisoDaSituacao() {
+    var colecao = $('pf-colecao').value;
+    var situacao = $('pf-situacao').value;
+    var aviso = $('pf-situacao-aviso');
+    if (situacao === 'rascunho') aviso.textContent = colecao ? 'Em rascunho, a peça não aparece nem depois do lançamento da coleção.' : 'Em rascunho, só você vê a peça.';
+    else if (colecao) aviso.textContent = 'A peça aparece no site junto com o lançamento da coleção.';
+    else aviso.textContent = situacao === 'esgotado' ? 'A peça aparece no site, sem o botão de compra.' : 'A peça aparece no site assim que você salvar.';
+  }
+  $('pf-colecao').addEventListener('change', function () {
+    if ($('pf-colecao').value && $('pf-situacao').value === 'rascunho') $('pf-situacao').value = 'publicado';
+    avisoDaSituacao();
+  });
+  $('pf-situacao').addEventListener('change', avisoDaSituacao);
+
   function centavosParaTexto(c) { return c ? (c / 100).toFixed(2).replace('.', ',') : ''; }
 
   function abrirProduto(p) {
@@ -197,6 +224,7 @@
     $('pf-prazo').value = p ? p.prazoDias : 20;
     $('pf-modelagem').value = p ? p.modelagem : 'regular';
     $('pf-colecao').value = p && p.colecaoId ? String(p.colecaoId) : '';
+    avisoDaSituacao();
     $('pf-ordem').value = p ? p.ordem : 0;
     $('pf-resumo').value = p ? p.resumo : '';
     $('pf-descricao').value = p ? p.descricao : '';
@@ -255,6 +283,7 @@
     var i = dados.produtos.map(function (x) { return x.id; }).indexOf(novo.id);
     if (i === -1) dados.produtos.unshift(novo); else dados.produtos[i] = novo;
     desenharProdutos();
+    desenharColecoes();
     desenharFotos();
   }
 
@@ -325,6 +354,7 @@
       editando = null;
       $('produto-modal').close();
       desenharProdutos();
+      desenharColecoes();
     });
   });
 

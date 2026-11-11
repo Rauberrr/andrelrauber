@@ -21,6 +21,10 @@ const ALIM_OBJETIVOS = ['perder', 'manter', 'ganhar'];
 const ALIM_UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 const ALIM_MAXIMO_ITENS = 150;
 const ALIM_MAXIMO_REGISTROS = 200;
+const ALIM_OPCOES_REFEICOES = ['cafe', 'almoco', 'lanche', 'jantar'];
+const ALIM_OPCOES_POR_REFEICAO = 5;
+const ALIM_DIAS_DO_DIARIO = 31;
+const ALIM_MAXIMO_POR_DIA = 80;
 const ALIM_MEDIDAS = ['peso' => [40, 250], 'cintura' => [40, 200], 'torax' => [50, 200], 'braco' => [15, 70], 'coxa' => [30, 100]];
 
 $usuario = exigir_login();
@@ -235,6 +239,15 @@ function limpar_dados($d): ?array
         ];
     }
 
+    // A opção escolhida em cada refeição, de 0 a 4
+    $opcoes = [];
+    foreach ((is_array($d['opcoes'] ?? null) ? $d['opcoes'] : []) as $refeicao => $indice) {
+        if (in_array($refeicao, ALIM_OPCOES_REFEICOES, true) && is_int($indice) && $indice >= 0 && $indice < ALIM_OPCOES_POR_REFEICAO) {
+            $opcoes[$refeicao] = $indice;
+        }
+    }
+    $diario = limpar_diario($d['diario'] ?? null);
+
     $trocas = limpar_trocas($d['trocas'] ?? null);
     $despensa = limpar_despensa($d['despensa'] ?? null);
     $registros = limpar_registros($d['registros'] ?? null);
@@ -267,7 +280,43 @@ function limpar_dados($d): ?array
         'registros' => $registros,
         'lembretes' => ($d['lembretes'] ?? false) === true,
         'resumoLista' => limpar_resumo_lista($d['resumoLista'] ?? null),
+        'opcoes' => (object) $opcoes,
+        'diario' => (object) $diario,
     ];
+}
+
+// O que a pessoa comeu em cada dia do último mês, e se treinou
+function limpar_diario($diario): array
+{
+    $dias = [];
+    foreach (is_array($diario) ? $diario : [] as $data => $dia) {
+        $data = (string) $data;
+        $valida = DateTime::createFromFormat('Y-m-d', $data);
+        if (!$valida || $valida->format('Y-m-d') !== $data || !is_array($dia)) {
+            continue;
+        }
+        $itens = [];
+        foreach ((is_array($dia['itens'] ?? null) ? array_slice($dia['itens'], 0, ALIM_MAXIMO_POR_DIA) : []) as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $alimento = $item['alimento'] ?? '';
+            $qtd = $item['qtd'] ?? 0;
+            $medida = $item['medida'] ?? 0;
+            if (!is_string($alimento) || preg_match('/^[a-z_]{1,30}$/', $alimento) !== 1
+                || (!is_int($qtd) && !is_float($qtd)) || $qtd < 0.5 || $qtd > 30
+                || !is_int($medida) || $medida < 0 || $medida > 9
+                || !in_array($item['refeicao'] ?? '', ALIM_REFEICOES, true)) {
+                continue;
+            }
+            $itens[] = ['refeicao' => $item['refeicao'], 'alimento' => $alimento, 'qtd' => round((float) $qtd * 2) / 2, 'medida' => $medida];
+        }
+        $treinou = $dia['treinou'] ?? null;
+        $dias[$data] = ['treinou' => is_bool($treinou) ? $treinou : null, 'itens' => $itens];
+    }
+    // Só o último mês
+    krsort($dias);
+    return array_slice($dias, 0, ALIM_DIAS_DO_DIARIO, true);
 }
 
 function salvar(int $id): void

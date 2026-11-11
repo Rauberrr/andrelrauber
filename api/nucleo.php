@@ -212,7 +212,12 @@ function usuario_logado(): ?array
     iniciar_sessao();
     $id = (int) ($_SESSION['usuario_id'] ?? 0);
     if ($id === 0) {
-        return null;
+        // A hospedagem apaga as sessões paradas depois de alguns minutos.
+        // O token de "manter conectado" abre uma sessão nova sem pedir a senha.
+        $id = entrar_pelo_token();
+        if ($id === 0) {
+            return null;
+        }
     }
     $usuario = consultar('SELECT * FROM usuarios WHERE id = ?', [$id])->fetch();
     // A versão muda quando a senha é trocada: derruba as sessões antigas
@@ -232,17 +237,124 @@ function exigir_login(): array
     return $usuario;
 }
 
-function abrir_sessao(array $usuario): void
+function abrir_sessao(array $usuario, bool $lembrar = true): void
 {
     iniciar_sessao();
     session_regenerate_id(true);
     $_SESSION['usuario_id'] = (int) $usuario['id'];
     $_SESSION['sessao_versao'] = (int) $usuario['sessao_versao'];
     consultar('UPDATE usuarios SET ultimo_acesso_em = ? WHERE id = ?', [agora(), $usuario['id']]);
+    if ($lembrar) {
+        criar_token((int) $usuario['id'], (int) $usuario['sessao_versao']);
+    }
+}
+
+/* --- Manter conectado -------------------------------------------------------- */
+
+// O cookie leva um seletor e um segredo. O banco guarda só o resumo (hash) do segredo:
+// quem ler o banco não consegue entrar na conta de ninguém.
+const TOKEN_COOKIE = 'ar_lembrar';
+const TOKEN_DIAS = 90;
+
+function cookie_do_token(string $valor, int $expira): void
+{
+    setcookie(TOKEN_COOKIE, $valor, [
+        'expires' => $expira,
+        'path' => '/',
+        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+}
+
+function criar_token(int $usuarioId, int $versao): void
+{
+    try {
+        $seletor = bin2hex(random_bytes(12));
+        $segredo = bin2hex(random_bytes(32));
+        $expira = time() + TOKEN_DIAS * 86400;
+        consultar(
+            'INSERT INTO sessoes_lembradas (seletor, segredo_hash, usuario_id, sessao_versao, expira_em, criado_em) VALUES (?, ?, ?, ?, ?, ?)',
+            [$seletor, hash('sha256', $segredo), $usuarioId, $versao, date('Y-m-d H:i:s', $expira), agora()]
+        );
+        // De vez em quando, limpa os tokens vencidos
+        if (random_int(1, 20) === 1) {
+            consultar('DELETE FROM sessoes_lembradas WHERE expira_em < ?', [agora()]);
+        }
+        cookie_do_token($seletor . '.' . $segredo, $expira);
+    } catch (Throwable $e) {
+        // Sem a tabela, o login segue funcionando como antes
+        error_log('Andre Rauber: token de manter conectado não criado: ' . $e->getMessage());
+    }
+}
+
+function token_do_cookie(): ?array
+{
+    $valor = (string) ($_COOKIE[TOKEN_COOKIE] ?? '');
+    if (preg_match('/^([a-f0-9]{24})\.([a-f0-9]{64})$/', $valor, $partes) !== 1) {
+        return null;
+    }
+    return ['seletor' => $partes[1], 'segredo' => $partes[2]];
+}
+
+// Devolve o id da pessoa e abre a sessão, ou 0 quando o token não vale
+function entrar_pelo_token(): int
+{
+    $token = token_do_cookie();
+    if ($token === null) {
+        return 0;
+    }
+    try {
+        $linha = consultar(
+            'SELECT t.*, u.sessao_versao AS versao_atual FROM sessoes_lembradas t JOIN usuarios u ON u.id = t.usuario_id WHERE t.seletor = ?',
+            [$token['seletor']]
+        )->fetch();
+    } catch (Throwable $e) {
+        return 0;
+    }
+    $valido = $linha
+        && hash_equals((string) $linha['segredo_hash'], hash('sha256', $token['segredo']))
+        && $linha['expira_em'] > agora()
+        // Trocar a senha muda a versão e derruba os aparelhos conectados
+        && (int) $linha['sessao_versao'] === (int) $linha['versao_atual'];
+    if (!$valido) {
+        if ($linha) {
+            consultar('DELETE FROM sessoes_lembradas WHERE seletor = ?', [$token['seletor']]);
+        }
+        cookie_do_token('', time() - 3600);
+        return 0;
+    }
+    session_regenerate_id(true);
+    $_SESSION['usuario_id'] = (int) $linha['usuario_id'];
+    $_SESSION['sessao_versao'] = (int) $linha['versao_atual'];
+    // Quem usa o site continua conectado: o prazo recomeça a cada dia de uso
+    $expira = time() + TOKEN_DIAS * 86400;
+    if (strtotime((string) $linha['expira_em']) < $expira - 86400) {
+        consultar('UPDATE sessoes_lembradas SET expira_em = ? WHERE seletor = ?', [date('Y-m-d H:i:s', $expira), $token['seletor']]);
+        cookie_do_token($token['seletor'] . '.' . $token['segredo'], $expira);
+    }
+    consultar('UPDATE usuarios SET ultimo_acesso_em = ? WHERE id = ?', [agora(), $linha['usuario_id']]);
+    return (int) $linha['usuario_id'];
+}
+
+function esquecer_token(): void
+{
+    $token = token_do_cookie();
+    if ($token !== null) {
+        try {
+            consultar('DELETE FROM sessoes_lembradas WHERE seletor = ?', [$token['seletor']]);
+        } catch (Throwable $e) {
+            // Sem a tabela, não há o que apagar
+        }
+    }
+    if (isset($_COOKIE[TOKEN_COOKIE])) {
+        cookie_do_token('', time() - 3600);
+    }
 }
 
 function encerrar_sessao(): void
 {
+    esquecer_token();
     iniciar_sessao();
     $_SESSION = [];
     $parametros = session_get_cookie_params();

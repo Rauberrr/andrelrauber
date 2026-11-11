@@ -190,7 +190,7 @@
   position: fixed; left: 50%; top: auto; z-index: 70;
   bottom: calc(var(--app-abas) + 14px + env(safe-area-inset-bottom));
   width: max-content; max-width: min(92vw, 520px); min-height: 0; margin: 0;
-  padding: .75rem 1rem; transform: translateX(-50%);
+  padding: .75rem 1rem; transform: none; translate: -50% 0;
   border: 0; border-radius: 14px;
   background: rgba(28, 28, 26, .95); color: #fff;
   box-shadow: 0 14px 34px -14px rgba(0, 0, 0, .6);
@@ -547,7 +547,7 @@
 .tr-marca span { display: grid; place-items: center; min-width: 46px; height: 40px; padding: 0 .6rem; border-radius: 12px; background: var(--app-cinza-ui); font-size: .85rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .tr-marca input:checked + span { background: #c08a48; color: #fff; }
 .tr-marca input:focus-visible + span { outline: 2px solid var(--bordo-vivo); outline-offset: 2px; }
-.tr-carga { display: flex; align-items: center; gap: .5rem; margin-top: .7rem; font-size: .88rem; color: var(--app-texto-2); }
+.tr-carga { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .7rem; font-size: .88rem; color: var(--app-texto-2); }
 .tr-carga input { width: 5.5rem; min-height: 40px; padding: .3rem .6rem; border: 0; border-radius: 10px; background: var(--app-cartao-2); font: inherit; color: var(--preto); }
 .tr-cronometro { position: fixed; left: 50%; z-index: 65; bottom: calc(var(--app-abas) + 14px + env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; align-items: center; gap: 1rem; padding: .6rem .6rem .6rem 1.1rem; border-radius: 999px; background: #1c1c1a; color: #fff; box-shadow: 0 14px 34px -14px rgba(0, 0, 0, .6); font-variant-numeric: tabular-nums; }
 .tr-cronometro b { font-size: 1.25rem; }
@@ -632,7 +632,8 @@ html:not(.app-liberado) body.app .tr-cronometro { display: none !important; }
 .oc-mala .app-lista-texto { flex: 1; min-width: 0; }
 .oc-mala .oc-item-acao { flex: none; width: 34px; height: 34px; }
 .oc-mala .oc-item-acao svg { width: 17px; height: 17px; }
-.oc-item-campo { flex: 1; min-width: 0; min-height: 38px; padding: .3rem .65rem; border: 0; border-radius: 10px; background: var(--app-cartao-2); box-shadow: inset 0 0 0 1.5px var(--bordo-vivo); font: inherit; color: var(--preto); }
+.oc-item-campo { flex: 1 1 100%; width: 100%; min-width: 0; min-height: 3.2rem; padding: .6rem .75rem; border: 0; border-radius: 12px; background: var(--app-cartao); box-shadow: inset 0 0 0 1.5px var(--bordo-vivo); font: inherit; font-size: 16px; line-height: 1.4; color: var(--preto); resize: none; overflow: hidden; }
+.oc-mala li.oc-item-editando { flex-wrap: wrap; background: var(--app-cartao-2); }
 .oc-adicionar { display: flex; gap: .5rem; margin-top: .6rem; }
 .oc-adicionar input { flex: 1; min-width: 0; min-height: 42px; padding: .35rem .8rem; border: 0; border-radius: 12px; background: var(--app-cartao-2); font: inherit; color: var(--preto); }
 .oc-adicionar .botao { flex: none; display: inline-flex; align-items: center; gap: .3rem; }
@@ -705,3 +706,56 @@ html:not(.app-liberado) body.app .tr-cronometro { display: none !important; }
 /* Elementos novos escondidos pelo atributo hidden, mesmo com display definido acima */
 .gr-ajuste[hidden], #app-instalar[hidden], .alim-dieta [hidden], .tr-estrategia [hidden] { display: none !important; }
 .app .app-instalar-modal { height: fit-content !important; max-height: 80svh; }
+
+/* --- Guarda-roupa: sugestão de compra --------------------------------------------------- */
+
+.gr-sugestao { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: .9rem 1rem; align-items: center; margin-bottom: 1.25rem; padding: 1rem; border-radius: 20px; background: var(--app-cartao); box-shadow: inset 0 0 0 1px rgba(148, 48, 74, .18); }
+.gr-sugestao-foto { aspect-ratio: 4 / 5; border-radius: 14px; overflow: hidden; background: var(--app-cartao-2); }
+.gr-sugestao-foto img { width: 100%; height: 100%; object-fit: contain; }
+.gr-sugestao-selo { margin-bottom: .3rem; color: var(--bordo-vivo); font-size: .74rem; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; }
+.gr-sugestao-texto .app-cartao-titulo { font-size: 1.02rem; line-height: 1.3; }
+.gr-sugestao-texto .app-suave { margin-top: .3rem; }
+.gr-sugestao-acoes { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; }
+.gr-sugestao-acoes .texto-botao { margin-left: auto; }
+.gr-sugestao-lista { grid-column: 1 / -1; display: grid; gap: .4rem; }
+.gr-sugestao-lista li { padding: .6rem .75rem; border-radius: 12px; background: var(--app-cartao-2); font-size: .9rem; line-height: 1.4; }
+.gr-sugestao[hidden], .gr-sugestao-lista[hidden] { display: none !important; }
+
+/* --- Alimentação: opções de cada refeição e o dia de hoje ------------------------------------ */
+
+.alim-opcoes { display: flex; gap: .4rem; margin: -.2rem -1rem .9rem; padding: .1rem 1rem .3rem; overflow-x: auto; scrollbar-width: none; }
+.alim-opcoes::-webkit-scrollbar { display: none; }
+.alim-opcao { flex: none; min-height: 36px; padding: .35rem .8rem; border: 0; border-radius: 999px; background: var(--app-cartao-2); color: var(--preto); font: inherit; font-size: .84rem; white-space: nowrap; cursor: pointer; }
+.alim-opcao[aria-pressed="true"] { background: #414c1d; color: #fff; }
+
+.alim-hoje-treino { margin-top: 1rem; padding: .9rem 1rem; border-radius: 16px; background: var(--app-cartao); }
+.alim-hoje-treino .app-suave { margin-top: .35rem; font-size: .9rem; }
+.alim-hoje-painel { display: grid; gap: .75rem; margin-top: .9rem; padding: 1.1rem 1rem; border-radius: 20px; background: var(--app-cartao); }
+.alim-hoje-grande { display: grid; gap: .1rem; }
+.alim-hoje-grande span { color: var(--app-texto-2); font-size: .88rem; }
+.alim-hoje-grande strong { font-family: var(--serifa); font-size: clamp(2rem, 9vw, 2.6rem); font-weight: 400; line-height: 1.1; color: #414c1d; font-variant-numeric: tabular-nums; }
+.alim-hoje-grande.passou strong { color: var(--bordo-vivo); }
+.alim-hoje-barra > div:first-child { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .3rem; font-size: .86rem; }
+.alim-hoje-barra > div:first-child span:last-child { color: var(--app-texto-2); font-variant-numeric: tabular-nums; }
+.alim-hoje-trilho { height: 8px; border-radius: 999px; background: var(--app-cartao-2); overflow: hidden; }
+.alim-hoje-trilho i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #7c8a45, #414c1d); transition: width .5s ease; }
+.alim-hoje-trilho i.passou { background: var(--bordo-vivo); }
+.alim-hoje-conselho { display: grid; gap: .35rem; margin-top: .75rem; padding: .9rem 1rem; border-radius: 16px; background: rgba(124, 138, 69, .12); font-size: .95rem; line-height: 1.45; }
+.alim-hoje-pode { color: #2f3a12; font-weight: 500; }
+.alim-hoje-evitar { color: var(--bordo-vivo); font-weight: 500; }
+.alim-hoje-refeicoes { display: grid; gap: .6rem; margin-top: 1rem; }
+.alim-hoje-refeicao { padding: .9rem 1rem; border-radius: 18px; background: var(--app-cartao); }
+.alim-hoje-refeicao header { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.alim-hoje-refeicao h3 { font-size: 1rem; font-weight: 600; }
+.alim-hoje-refeicao header span { color: var(--app-texto-2); font-size: .85rem; }
+.alim-hoje-refeicao ul { display: grid; gap: .25rem; margin-top: .5rem; }
+.alim-hoje-refeicao li { display: flex; justify-content: space-between; align-items: center; gap: .75rem; font-size: .92rem; }
+.alim-hoje-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .7rem; }
+.alim-hoje-novo { display: grid; gap: .5rem; margin-top: .75rem; padding: .8rem; border-radius: 14px; background: var(--app-cartao-2); }
+.alim-hoje-novo select, .alim-hoje-novo input { width: 100%; min-height: 42px; padding: .35rem .6rem; border: 0; border-radius: 10px; background: var(--app-cartao); font: inherit; font-size: 16px; color: var(--preto); }
+.alim-hoje-novo-linha { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: .5rem; }
+.alim-explica { padding: .5rem 1rem 1rem; color: var(--app-texto-2); line-height: 1.55; }
+.alim-hoje-evitar[hidden] { display: none !important; }
+.gr-sugestao-foto { display: grid; place-items: center; }
+.gr-sugestao-foto svg { width: 78%; height: auto; }
+.gr-sugestao-foto img[hidden] { display: none; }

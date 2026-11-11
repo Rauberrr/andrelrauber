@@ -304,6 +304,10 @@
     });
   }
 
+  // Quem chega de uma sugestão do Guarda-roupa já vem com a peça escolhida
+  var pedida = new URLSearchParams(location.search).get('peca');
+  if (!ler() && C.porPeca[pedida]) estado.peca = pedida;
+
   // Quem volta da tela de entrar com o rascunho cai direto na revisão
   var temRascunho = Boolean(ler() && estado.peca && estado.tecido);
   ir(temRascunho ? 'revisao' : 'peca', true);

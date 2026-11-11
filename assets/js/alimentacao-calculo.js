@@ -226,6 +226,59 @@ window.AR_ALIM_CALC = (function () {
     ['outros', 'oleo', 1]
   ];
 
+  /* --- Cinco opções completas para cada refeição ------------------------------------------- */
+
+  // A primeira opção de cada refeição é a do plano novo. As porções se ajustam à energia
+  // que a refeição tem no plano da pessoa; depois, cada alimento ainda pode ser trocado.
+  var OPCOES = {
+    cafe: [
+      { nome: 'Pão integral com ovos', itens: [['pao_integral', 2], ['ovo', 2], ['banana', 1], ['cafe', 1], ['leite', 1, 1]] },
+      { nome: 'Tapioca com queijo', itens: [['tapioca', 1], ['queijo', 2], ['ovo', 1], ['mamao', 1], ['cafe_leite', 1]] },
+      { nome: 'Cuscuz com ovos', itens: [['cuscuz', 1], ['ovo', 2], ['banana', 1], ['cafe', 1]] },
+      { nome: 'Iogurte com aveia e frutas', itens: [['iogurte', 1], ['aveia', 3], ['banana', 1], ['mamao', 1], ['amendoim', 1]] },
+      { nome: 'Pão francês com queijo', itens: [['pao_frances', 1], ['queijo', 2], ['requeijao', 1], ['laranja', 1], ['cafe_leite', 1]] }
+    ],
+    almoco: [
+      { nome: 'Arroz, feijão e frango', itens: [['arroz', 4], ['feijao', 1], ['frango', 1.2], ['salada', 1], ['legumes', 2], ['azeite', 0.5]] },
+      { nome: 'Arroz, feijão e carne', itens: [['arroz', 4], ['feijao', 1], ['carne', 1], ['salada', 1], ['cenoura', 2], ['azeite', 0.5]] },
+      { nome: 'Macarrão com carne moída', itens: [['macarrao', 2], ['carne_moida', 4], ['salada', 1], ['azeite', 0.5]] },
+      { nome: 'Peixe com batata e legumes', itens: [['peixe', 1], ['batata', 2], ['legumes', 2], ['salada', 1], ['azeite', 1]] },
+      { nome: 'Arroz integral, feijão e ovos', itens: [['arroz_integral', 4], ['feijao', 1], ['ovo', 2], ['brocolis', 2], ['tomate', 1], ['azeite', 0.5]] }
+    ],
+    lanche: [
+      { nome: 'Iogurte com aveia e maçã', itens: [['iogurte', 1], ['aveia', 2], ['maca', 1]] },
+      { nome: 'Sanduíche de frango', itens: [['pao_integral', 2], ['frango', 0.5], ['tomate', 0.5], ['requeijao', 0.5]] },
+      { nome: 'Banana com pasta de amendoim', itens: [['banana', 1], ['amendoim', 1], ['cafe_leite', 1]] },
+      { nome: 'Pão com ovo', itens: [['pao_frances', 1], ['ovo', 1], ['cafe_leite', 1]] },
+      { nome: 'Vitamina de banana com aveia', itens: [['leite', 1], ['banana', 1], ['aveia', 2]] }
+    ],
+    jantar: [
+      { nome: 'Batata-doce, carne e brócolis', itens: [['batata_doce', 1], ['carne', 1], ['brocolis', 2], ['azeite', 0.5]] },
+      { nome: 'Omelete com salada', itens: [['ovo', 3], ['queijo', 1], ['salada', 1], ['pao_integral', 1], ['azeite', 0.5]] },
+      { nome: 'Arroz, feijão e frango', itens: [['arroz', 3], ['feijao', 1], ['frango', 1], ['legumes', 2], ['azeite', 0.5]] },
+      { nome: 'Cuscuz com frango', itens: [['cuscuz', 1], ['frango', 1], ['salada', 1], ['azeite', 0.5]] },
+      { nome: 'Mandioca com peixe', itens: [['mandioca', 1.5], ['peixe', 1], ['legumes', 2], ['azeite', 0.5]] }
+    ]
+  };
+  // Verduras, legumes, bebidas e gordura ficam como estão; o resto acompanha a energia
+  var FIXOS_NA_OPCAO = { vegetais: 1, bebidas: 1, gorduras: 1 };
+
+  function opcaoDaRefeicao(refeicao, indice, kcalAlvo) {
+    var opcao = OPCOES[refeicao] && OPCOES[refeicao][indice];
+    if (!opcao) return [];
+    var itens = opcao.itens.map(function (m) { return novoItem(refeicao, m[0], m[1], m[2] || 0, { opcao: indice }); });
+    var total = nutrientes(itens).kcal;
+    var fixo = 0;
+    itens.forEach(function (i) { if (FIXOS_NA_OPCAO[D.porAlimento[i.alimento].grupo]) fixo += kcalDoItem(i); });
+    if (!kcalAlvo || total - fixo < 30) return itens;
+    var fator = Math.max(0.6, Math.min(1.7, (kcalAlvo - fixo) / (total - fixo)));
+    if (Math.abs(fator - 1) < 0.06) return itens;
+    return itens.map(function (i) {
+      if (FIXOS_NA_OPCAO[D.porAlimento[i.alimento].grupo]) return i;
+      return copiar(i, { qtd: Math.max(0.5, arredondar(i.qtd * fator)) });
+    });
+  }
+
   function planoNovo(metas) {
     var itens = MODELO.map(function (m) { return novoItem(m[0], m[1], m[2], m[3] || 0); });
     return ajustarPorcoes(itens, metas.meta).itens;
@@ -505,6 +558,7 @@ window.AR_ALIM_CALC = (function () {
 
   return {
     ATIVIDADES: ATIVIDADES, OBJETIVOS: OBJETIVOS, REFEICOES: REFEICOES, FREQUENCIAS: FREQUENCIAS,
+    OPCOES: OPCOES, opcaoDaRefeicao: opcaoDaRefeicao,
     gasto: gasto, nutrientes: nutrientes, novoItem: novoItem, planoAjustado: planoAjustado, planoNovo: planoNovo,
     compras: compras, frequenciaDeCompra: frequenciaDeCompra, indiceRegional: indiceRegional, precoDe: precoDe,
     descreverItem: descreverItem, gramasDoItem: gramasDoItem,

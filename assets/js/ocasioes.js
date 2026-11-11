@@ -749,18 +749,23 @@
     return li;
   }
 
-  // Troca o texto por um campo. Enter ou sair do campo guarda; Esc cancela.
+  // Troca o texto por uma caixa que ocupa a linha toda e cresce com o texto.
+  // Enter ou sair da caixa guarda; Esc cancela.
   function editarItem(e, li, rotulo, texto, aoMudar) {
-    var campo = document.createElement('input');
-    campo.type = 'text';
+    var campo = document.createElement('textarea');
     campo.className = 'oc-item-campo';
     campo.value = texto;
     campo.maxLength = 80;
+    campo.rows = 2;
     campo.setAttribute('aria-label', 'Novo texto do item');
+    li.classList.add('oc-item-editando');
     li.replaceChild(campo, rotulo);
     li.querySelectorAll('.oc-item-acao').forEach(function (b) { b.hidden = true; });
+    function crescer() { campo.style.height = 'auto'; campo.style.height = campo.scrollHeight + 'px'; }
+    campo.addEventListener('input', crescer);
+    crescer();
     campo.focus();
-    campo.select();
+    campo.setSelectionRange(campo.value.length, campo.value.length);
     var feito = false;
     function terminar(guardar) {
       if (feito) return;
@@ -770,7 +775,7 @@
       else redesenhar();
     }
     campo.addEventListener('keydown', function (ev) {
-      if (ev.key === 'Enter') { ev.preventDefault(); terminar(true); }
+      if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); terminar(true); }
       if (ev.key === 'Escape') { ev.preventDefault(); terminar(false); }
     });
     campo.addEventListener('blur', function () { terminar(true); });
