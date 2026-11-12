@@ -1,10 +1,12 @@
 <?php
 /**
- * Notificações no navegador (Web Push), sem conteúdo no envio.
+ * Notificações no navegador (Web Push).
  *
- * O servidor só "cutuca" o navegador da pessoa. Quem decide o que mostrar é o sw.js, que
- * busca os avisos em api/habitos.php?acao=avisos com a própria conta. Assim nada do que a
- * pessoa anotou passa pelos serviços de notificação do Google, da Apple ou da Mozilla.
+ * O aviso vai dentro da própria notificação, cifrado de ponta a ponta (RFC 8291, aes128gcm)
+ * com as chaves que o navegador entregou ao se inscrever: o serviço de notificação do Google,
+ * da Apple ou da Mozilla só transporta, sem conseguir ler. Assim o aviso chega mesmo com o site
+ * fechado e sem a conta conectada no navegador. Aparelhos inscritos antes das chaves recebem
+ * um toque vazio, e o sw.js busca o aviso em api/habitos.php?acao=avisos.
  *
  * As chaves (VAPID) são criadas no primeiro uso e ficam em api/privado, bloqueada ao acesso
  * direto e fora do repositório. Trocar as chaves desliga os lembretes de todo mundo.
@@ -111,26 +113,78 @@ function token_vapid(string $endereco, array $chaves): string
     return $assinado . '.' . base64url(der_para_bruto($der));
 }
 
-/** Cutuca um navegador. Devolve o código HTTP do serviço (0 sem conexão). */
-function enviar_push(string $endereco): int
+function base64url_decode(string $texto): string
+{
+    $b = strtr($texto, '-_', '+/');
+    return (string) base64_decode($b . str_repeat('=', (4 - strlen($b) % 4) % 4), true);
+}
+
+// Chave pública P-256 crua (65 bytes) no formato que o OpenSSL entende
+function chave_publica_pem(string $bruta): string
+{
+    $der = hex2bin('3059301306072a8648ce3d020106082a8648ce3d030107034200') . $bruta;
+    return "-----BEGIN PUBLIC KEY-----\n" . chunk_split(base64_encode($der), 64, "\n") . "-----END PUBLIC KEY-----\n";
+}
+
+function chaves_do_navegador_validas($p256dh, $auth): bool
+{
+    if (!is_string($p256dh) || !is_string($auth) || strlen($p256dh) > 120 || strlen($auth) > 40) {
+        return false;
+    }
+    $publica = base64url_decode($p256dh);
+    return strlen($publica) === 65 && $publica[0] === "\x04" && strlen(base64url_decode($auth)) === 16;
+}
+
+/** Cifra o aviso para um navegador (RFC 8291 e RFC 8188, aes128gcm, um registro só). */
+function cifrar_push(string $mensagem, string $p256dh, string $auth): string
+{
+    $publicaNavegador = base64url_decode($p256dh);
+    $segredo = base64url_decode($auth);
+    $temporaria = openssl_pkey_new(opcoes_openssl(['private_key_type' => OPENSSL_KEYTYPE_EC, 'curve_name' => 'prime256v1']));
+    if ($temporaria === false) {
+        throw new RuntimeException('Não foi possível criar a chave do aviso.');
+    }
+    $detalhes = openssl_pkey_get_details($temporaria);
+    $publicaServidor = "\x04" . str_pad($detalhes['ec']['x'], 32, "\0", STR_PAD_LEFT) . str_pad($detalhes['ec']['y'], 32, "\0", STR_PAD_LEFT);
+    $par = openssl_pkey_get_public(chave_publica_pem($publicaNavegador));
+    $compartilhado = $par === false ? false : openssl_pkey_derive($par, $temporaria, 32);
+    if ($compartilhado === false) {
+        throw new RuntimeException('Chave do navegador inválida.');
+    }
+    $ikm = hash_hkdf('sha256', $compartilhado, 32, "WebPush: info\0" . $publicaNavegador . $publicaServidor, $segredo);
+    $sal = random_bytes(16);
+    $cek = hash_hkdf('sha256', $ikm, 16, "Content-Encoding: aes128gcm\0", $sal);
+    $nonce = hash_hkdf('sha256', $ikm, 12, "Content-Encoding: nonce\0", $sal);
+    $cifrado = openssl_encrypt($mensagem . "\x02", 'aes-128-gcm', $cek, OPENSSL_RAW_DATA, $nonce, $tag);
+    return $sal . pack('N', 4096) . chr(65) . $publicaServidor . $cifrado . $tag;
+}
+
+/**
+ * Manda a notificação a um navegador. Com as chaves dele, o aviso vai cifrado dentro dela;
+ * sem as chaves, vai um toque vazio. Devolve o código HTTP do serviço (0 sem conexão).
+ */
+function enviar_push(string $endereco, ?array $aviso = null, string $p256dh = '', string $auth = ''): int
 {
     if (!endereco_de_push_valido($endereco) || !function_exists('curl_init')) {
         return 0;
     }
     $chaves = chaves_vapid();
+    $corpo = '';
+    $cabecalhos = ['TTL: 43200', 'Urgency: high', 'Authorization: vapid t=' . token_vapid($endereco, $chaves) . ', k=' . $chaves['publica']];
+    if ($aviso !== null && chaves_do_navegador_validas($p256dh, $auth)) {
+        $corpo = cifrar_push((string) json_encode($aviso, JSON_UNESCAPED_UNICODE), $p256dh, $auth);
+        $cabecalhos[] = 'Content-Encoding: aes128gcm';
+        $cabecalhos[] = 'Content-Type: application/octet-stream';
+    }
+    $cabecalhos[] = 'Content-Length: ' . strlen($corpo);
     $c = curl_init($endereco);
     curl_setopt_array($c, [
         CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => '',
+        CURLOPT_POSTFIELDS => $corpo,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT => 10,
         CURLOPT_FOLLOWLOCATION => false,
-        CURLOPT_HTTPHEADER => [
-            'TTL: 3600',
-            'Urgency: high',
-            'Content-Length: 0',
-            'Authorization: vapid t=' . token_vapid($endereco, $chaves) . ', k=' . $chaves['publica'],
-        ],
+        CURLOPT_HTTPHEADER => $cabecalhos,
     ]);
     curl_exec($c);
     $codigo = (int) curl_getinfo($c, CURLINFO_RESPONSE_CODE);
@@ -145,21 +199,54 @@ function avisar_por_push(int $usuarioId, string $titulo, string $texto, string $
         'INSERT INTO avisos_push (usuario_id, titulo, texto, marca, criado_em) VALUES (?, ?, ?, ?, ?)',
         [$usuarioId, mb_substr($titulo, 0, 80), mb_substr($texto, 0, 200), mb_substr($marca, 0, 40), agora()]
     );
-    return cutucar_aparelhos($usuarioId);
+    return cutucar_aparelhos($usuarioId, [['titulo' => $titulo, 'texto' => $texto, 'marca' => $marca]]);
 }
 
-function cutucar_aparelhos(int $usuarioId): int
+/**
+ * Avisa todos os aparelhos da pessoa. Os que têm chaves recebem o aviso dentro da notificação
+ * (mais de um aviso de uma vez viram um resumo); os outros, um toque para buscar.
+ * @param array<int, array{titulo: string, texto: string, marca?: string, url?: string}> $avisos
+ */
+function cutucar_aparelhos(int $usuarioId, array $avisos = []): int
 {
     $aceitos = 0;
-    $inscricoes = consultar('SELECT id, endpoint FROM push_inscricoes WHERE usuario_id = ?', [$usuarioId])->fetchAll();
+    $aviso = null;
+    if ($avisos) {
+        $um = count($avisos) === 1 ? $avisos[0] : [
+            'titulo' => count($avisos) . ' lembretes agora',
+            'texto' => implode(' · ', array_map(function ($a) { return $a['titulo']; }, $avisos)),
+            'marca' => 'varios',
+        ];
+        $aviso = [
+            'titulo' => mb_substr((string) $um['titulo'], 0, 80),
+            'texto' => mb_substr((string) $um['texto'], 0, 200),
+            'marca' => (string) ($um['marca'] ?? 'habitos'),
+            'url' => (string) ($um['url'] ?? '/apps/habitos/'),
+        ];
+    }
+    try {
+        $inscricoes = consultar(
+            'SELECT i.id, i.endpoint, i.endpoint_hash, c.p256dh, c.auth FROM push_inscricoes i
+             LEFT JOIN push_chaves c ON c.endpoint_hash = i.endpoint_hash WHERE i.usuario_id = ?',
+            [$usuarioId]
+        )->fetchAll();
+    } catch (PDOException $erro) {
+        // Banco ainda sem a tabela das chaves: vai o toque vazio
+        $inscricoes = consultar('SELECT id, endpoint, endpoint_hash FROM push_inscricoes WHERE usuario_id = ?', [$usuarioId])->fetchAll();
+    }
     foreach ($inscricoes as $i) {
-        $codigo = enviar_push((string) $i['endpoint']);
+        $codigo = enviar_push((string) $i['endpoint'], $aviso, (string) ($i['p256dh'] ?? ''), (string) ($i['auth'] ?? ''));
         if ($codigo >= 200 && $codigo < 300) {
             $aceitos++;
             consultar('UPDATE push_inscricoes SET usado_em = ? WHERE id = ?', [agora(), $i['id']]);
         } elseif ($codigo === 404 || $codigo === 410) {
             // O navegador desfez a inscrição: não adianta mais avisar por ali
             consultar('DELETE FROM push_inscricoes WHERE id = ?', [$i['id']]);
+            try {
+                consultar('DELETE FROM push_chaves WHERE endpoint_hash = ?', [$i['endpoint_hash']]);
+            } catch (PDOException $erro) {
+                // Sem a tabela das chaves, não há o que apagar
+            }
         }
     }
     return $aceitos;

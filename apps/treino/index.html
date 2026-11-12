@@ -17,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261111b">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261111a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261112a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261112a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -110,26 +110,49 @@
 
     <!-- Painel -->
     <div id="tr-painel" hidden>
-      <section class="app-cartao" aria-labelledby="tr-hoje-titulo">
-        <p class="oc-subtitulo" id="tr-hoje-rotulo">Treino de hoje</p>
-        <h2 class="app-titulo" style="font-size:1.7rem" id="tr-hoje-titulo"></h2>
-        <p class="app-suave" id="tr-hoje-detalhe"></p>
+      <section class="tr-hoje" aria-labelledby="tr-hoje-titulo">
+        <div class="tr-hoje-topo">
+          <span class="tr-hoje-letra" id="tr-hoje-letra" aria-hidden="true">A</span>
+          <div>
+            <p class="tr-hoje-rotulo" id="tr-hoje-rotulo">Treino de hoje</p>
+            <h2 class="tr-hoje-titulo" id="tr-hoje-titulo"></h2>
+          </div>
+        </div>
+        <p class="tr-hoje-detalhe" id="tr-hoje-detalhe"></p>
+        <div class="tr-hoje-numeros" id="tr-hoje-numeros"></div>
         <div class="tr-semana" id="tr-semana" aria-label="Sua semana"></div>
-        <div class="app-botoes">
-          <button class="botao botao-cheio" type="button" id="tr-comecar">Começar treino</button>
-          <button class="texto-botao" type="button" id="tr-escolher-outro">Fazer outro treino</button>
+        <div class="tr-hoje-botoes">
+          <button class="botao tr-hoje-comecar" type="button" id="tr-comecar">Começar treino</button>
+          <button class="texto-botao tr-hoje-outro" type="button" id="tr-escolher-outro">Fazer outro treino</button>
         </div>
       </section>
 
       <section class="app-secao" aria-labelledby="tr-plano-titulo">
         <h2 class="app-secao-titulo" id="tr-plano-titulo">Seu plano</h2>
         <p class="app-secao-texto" id="tr-plano-texto"></p>
-        <p class="app-secao-texto">Cada treino tem 3 opções com exercícios diferentes para os mesmos músculos. Escolha a opção no cartão do treino, ou toque em <svg data-icone="girar" class="tr-icone-texto" aria-hidden="true"></svg> para trocar um exercício por outro do mesmo grupo.</p>
-        <div class="app-cartao" style="margin-bottom:.85rem">
-          <label class="app-interruptor"><span><strong>Alternar as opções a cada treino</strong></span><input id="tr-alternar" type="checkbox"><span class="app-interruptor-trilho" aria-hidden="true"></span></label>
-          <p class="app-suave" style="margin-top:.4rem">Depois de feito, cada treino passa para a próxima opção. Para ver a carga subir, repita a mesma opção por 4 a 6 semanas antes de mudar.</p>
+        <div class="tr-fase" id="tr-fase">
+          <div class="tr-fase-topo">
+            <span class="tr-fase-numero" id="tr-fase-numero">Fase 1</span>
+            <strong class="tr-fase-nome" id="tr-fase-nome">Base</strong>
+          </div>
+          <p class="tr-fase-texto" id="tr-fase-texto"></p>
+          <div class="tr-fase-barra" aria-hidden="true"><i id="tr-fase-progresso"></i></div>
+          <p class="tr-fase-semanas" id="tr-fase-semanas"></p>
         </div>
         <div class="tr-treinos" id="tr-treinos"></div>
+        <p class="tr-dica-troca">Não gostou de um exercício? Toque no botão de girar ao lado dele para trocar por outro do mesmo músculo.</p>
+        <section class="tr-mudar" aria-labelledby="tr-mudar-titulo">
+          <h3 class="tr-mudar-titulo" id="tr-mudar-titulo">O treino não está mais rendendo?</h3>
+          <p class="app-suave">Toque no que você está sentindo. O seu histórico e o gráfico de evolução continuam do jeito que estão.</p>
+          <div class="tr-motivos" id="tr-motivos" role="group" aria-label="O que você está sentindo"></div>
+          <div class="tr-mudar-escolha" id="tr-mudar-escolha" hidden>
+            <p class="tr-mudar-explicacao" id="tr-mudar-explicacao"></p>
+            <div class="tr-mudar-botoes">
+              <button class="botao botao-cheio" type="button" id="tr-mudar-proxima">Começar a próxima fase</button>
+              <button class="texto-botao" type="button" id="tr-mudar-perguntas">Refazer as perguntas</button>
+            </div>
+          </div>
+        </section>
       </section>
 
       <section class="app-secao" aria-labelledby="tr-busca-titulo">
@@ -234,9 +257,9 @@
   <p class="app-aviso" id="app-aviso" role="status" aria-live="polite"></p>
 
   <script src="assets/js/config.js?v=20261111a"></script>
-  <script src="assets/js/conta-api.js?v=20261111b"></script>
-  <script src="assets/js/apps.js?v=20261111a"></script>
-  <script src="assets/js/treino-dados.js?v=20261111a"></script>
-  <script src="assets/js/treino.js?v=20261111a"></script>
+  <script src="assets/js/conta-api.js?v=20261112a"></script>
+  <script src="assets/js/apps.js?v=20261112a"></script>
+  <script src="assets/js/treino-dados.js?v=20261112a"></script>
+  <script src="assets/js/treino.js?v=20261112a"></script>
 </body>
 </html>

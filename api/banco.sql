@@ -409,3 +409,55 @@ CREATE TABLE IF NOT EXISTS publicacoes (
   KEY idx_publicacao_fila (situacao, agendado_para),
   CONSTRAINT fk_publicacao_video FOREIGN KEY (video_id) REFERENCES videos (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Hábitos: chaves que o navegador entrega ao se inscrever. Com elas, o aviso vai cifrado
+-- dentro da notificação e chega mesmo com o site fechado.
+CREATE TABLE IF NOT EXISTS push_chaves (
+  endpoint_hash CHAR(64) NOT NULL,
+  p256dh VARCHAR(120) NOT NULL,
+  auth VARCHAR(40) NOT NULL,
+  criado_em DATETIME NOT NULL,
+  PRIMARY KEY (endpoint_hash)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ajustes do site que o gestor muda pelo painel (assinatura, preço) e marcas das tarefas do Cron
+CREATE TABLE IF NOT EXISTS configuracoes (
+  chave VARCHAR(60) NOT NULL,
+  valor TEXT NOT NULL,
+  atualizado_em DATETIME NOT NULL,
+  PRIMARY KEY (chave)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Guarda-roupa: peças que o gestor cadastra no painel para o catálogo de todos.
+-- automatica = 1 coloca a peça no guarda-roupa de todo mundo; 0 deixa só no catálogo, para escolher.
+CREATE TABLE IF NOT EXISTS catalogo_pecas (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  tipo VARCHAR(30) NOT NULL,
+  cor VARCHAR(30) NOT NULL,
+  corte VARCHAR(30) NOT NULL,
+  tecido VARCHAR(30) NOT NULL,
+  formalidade VARCHAR(20) NOT NULL,
+  clima VARCHAR(20) NOT NULL,
+  nome VARCHAR(60) NOT NULL,
+  arquivo VARCHAR(80) NOT NULL,
+  automatica TINYINT(1) NOT NULL DEFAULT 0,
+  ativa TINYINT(1) NOT NULL DEFAULT 1,
+  criado_por INT UNSIGNED NULL,
+  criado_em DATETIME NOT NULL,
+  atualizado_em DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_catalogo_ativa (ativa, automatica)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Assinatura dos apps: quem tem acesso quando a cobrança estiver ligada no painel.
+-- origem: cortesia (liberado pelo gestor) ou mercadopago. valida_ate NULL: sem prazo.
+CREATE TABLE IF NOT EXISTS assinaturas (
+  usuario_id INT UNSIGNED NOT NULL,
+  situacao VARCHAR(20) NOT NULL,
+  valida_ate DATETIME NULL,
+  origem VARCHAR(20) NOT NULL,
+  criado_em DATETIME NOT NULL,
+  atualizado_em DATETIME NOT NULL,
+  PRIMARY KEY (usuario_id),
+  CONSTRAINT fk_assinatura_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

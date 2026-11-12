@@ -206,9 +206,9 @@ window.AR_APP = (function () {
   // respondeu: o servidor respondeu. Sem resposta, não dá para saber se a pessoa tem conta.
   var verificacao = api
     ? api.get('api/auth.php?acao=sessao').then(function (r) {
-      return { respondeu: Boolean(r.ok), usuario: r.ok && r.dados.logado ? r.dados.usuario : null };
-    }, function () { return { respondeu: false, usuario: null }; })
-    : Promise.resolve({ respondeu: false, usuario: null });
+      return { respondeu: Boolean(r.ok), usuario: r.ok && r.dados.logado ? r.dados.usuario : null, assinatura: r.ok ? r.dados.assinatura || null : null };
+    }, function () { return { respondeu: false, usuario: null, assinatura: null }; })
+    : Promise.resolve({ respondeu: false, usuario: null, assinatura: null });
   var sessao = verificacao.then(function (v) { return v.usuario; });
 
   sessao.then(function (usuario) {
@@ -314,6 +314,19 @@ window.AR_APP = (function () {
     return a;
   }
 
+  // Modo "aviso" no painel: os apps estão em teste gratuito, e a assinatura vem depois
+  function avisoDeTeste() {
+    if (paginaAtual() !== 'apps/' || document.getElementById('app-teste')) return;
+    var a = criar('a', 'app-teste');
+    a.id = 'app-teste';
+    a.href = 'assinatura.html';
+    a.appendChild(criar('strong', '', 'Teste gratuito'));
+    a.appendChild(criar('span', '', 'Todos os apps estão liberados por enquanto. Veja como vai ser a assinatura.'));
+    a.appendChild(icone('seguir'));
+    var cabeca = principal.querySelector('.app-cabeca');
+    principal.insertBefore(a, cabeca ? cabeca.nextSibling : principal.firstChild);
+  }
+
   function mostrarPortao() {
     var destino = paginaAtual();
     var p = PORTOES[destino] || PORTOES['apps/'];
@@ -385,10 +398,17 @@ window.AR_APP = (function () {
     }
     verificacao.then(function (v) {
       var abrindo = document.getElementById('app-abrindo');
+      // Cobrança ligada no painel e a pessoa sem assinatura: vai para a página do plano
+      if (v.usuario && v.assinatura && v.assinatura.modo === 'cobrando' && !v.assinatura.liberado) {
+        raiz.classList.remove('app-liberado');
+        location.replace('assinatura.html?voltar=' + encodeURIComponent(paginaAtual()));
+        return;
+      }
       if (v.usuario) {
         gravarLocal(LEMBRAR, 1);
         if (abrindo) abrindo.remove();
         liberar();
+        if (v.assinatura && v.assinatura.modo === 'aviso') avisoDeTeste();
         return;
       }
       // Sem resposta do servidor, quem já entrou antes continua usando o que está no aparelho

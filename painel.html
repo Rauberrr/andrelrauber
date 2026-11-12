@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261111b">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261112a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -36,6 +36,8 @@
       <button type="button" role="tab" id="aba-clientes" aria-controls="painel-clientes" aria-selected="true">Clientes</button>
       <button type="button" role="tab" id="aba-colecao" aria-controls="painel-colecao" aria-selected="false" tabindex="-1">Coleção</button>
       <button type="button" role="tab" id="aba-exclusivos" aria-controls="painel-exclusivos" aria-selected="false" tabindex="-1">Pedidos exclusivos <span class="painel-contador" id="exclusivos-novos" hidden></span></button>
+      <button type="button" role="tab" id="aba-catalogo" aria-controls="painel-catalogo" aria-selected="false" tabindex="-1">Guarda-roupa</button>
+      <button type="button" role="tab" id="aba-assinatura" aria-controls="painel-assinatura" aria-selected="false" tabindex="-1">Assinatura</button>
       <a class="painel-aba-link" href="painel-videos.html">Vídeos</a>
     </div>
 
@@ -104,7 +106,85 @@
       <ul class="painel-exclusivos" id="exclusivos-lista"></ul>
       <p class="carregando" id="exclusivos-vazio" hidden>Nenhum pedido exclusivo ainda.</p>
     </section>
+
+    <section id="painel-catalogo" role="tabpanel" aria-labelledby="aba-catalogo" hidden>
+      <p class="painel-ajuda">Peças do catálogo do guarda-roupa, para todos os clientes. Cada pessoa abre o catálogo no app e toca nas que tem. Marque <strong>Colocar no guarda-roupa de todo mundo</strong> para a peça já aparecer pronta, como as sugeridas.</p>
+      <div class="painel-acoes">
+        <button class="botao botao-cheio" type="button" id="cat-nova">Nova peça no catálogo</button>
+        <a class="botao" href="apps/guarda-roupa/#catalogo" target="_blank" rel="noopener">Ver o catálogo no app</a>
+      </div>
+      <p class="painel-ajuda" id="cat-resumo-gestor"></p>
+      <p class="carregando" id="cat-carregando">Carregando...</p>
+      <ul class="painel-catalogo" id="cat-gestor-lista"></ul>
+      <p class="carregando" id="cat-gestor-vazio" hidden>Nenhuma peça cadastrada por você ainda. As peças da marca já estão no catálogo.</p>
+    </section>
+
+    <section id="painel-assinatura" role="tabpanel" aria-labelledby="aba-assinatura" hidden>
+      <p class="carregando" id="as-carregando">Carregando...</p>
+      <form class="painel-form as-form" id="as-form" novalidate hidden>
+        <fieldset class="as-modos">
+          <legend>Como os apps estão agora</legend>
+          <label class="as-modo"><input type="radio" name="as-modo" value="oculta"><span><strong>Grátis, página oculta</strong><small>Os apps são grátis para quem tem conta. A página da assinatura só aparece para você, como prévia.</small></span></label>
+          <label class="as-modo"><input type="radio" name="as-modo" value="aviso"><span><strong>Grátis, com aviso de teste</strong><small>Os apps continuam grátis, e todos veem que estão em teste e que vai ter assinatura mensal.</small></span></label>
+          <label class="as-modo as-modo-cobrar"><input type="radio" name="as-modo" value="cobrando"><span><strong>Cobrando</strong><small>Só quem tem assinatura usa os apps. Os outros são levados para a página do plano. Você sempre tem acesso.</small></span></label>
+        </fieldset>
+        <p class="as-alerta" id="as-alerta" hidden>O pagamento online ainda não está ligado: com a cobrança ativa, só usa quem você liberar abaixo. Quem tentar assinar recebe o link do WhatsApp.</p>
+        <div class="painel-campos">
+          <div class="campo"><label for="as-nome">Nome do plano</label><div class="campo-entrada"><input id="as-nome" maxlength="60" placeholder="Rauber Apps"></div><p class="erro" data-erro="nome"></p></div>
+          <div class="campo"><label for="as-preco">Valor por mês (R$)</label><div class="campo-entrada"><input id="as-preco" inputmode="decimal" placeholder="19,90"></div><p class="erro" data-erro="preco"></p></div>
+          <div class="campo campo-inteiro"><label for="as-beneficios">O que o plano inclui (um por linha)</label><div class="campo-entrada"><textarea id="as-beneficios" rows="5"></textarea></div></div>
+        </div>
+        <p class="erro" id="as-erro" role="alert"></p>
+        <div class="painel-form-botoes">
+          <button class="botao botao-cheio" type="submit">Salvar</button>
+          <a class="botao" href="assinatura.html" target="_blank" rel="noopener">Ver a página</a>
+        </div>
+      </form>
+
+      <section class="as-liberados" id="as-liberados-caixa" hidden>
+        <h2 class="titulo-s painel-subtitulo">Acesso liberado</h2>
+        <p class="painel-ajuda">Quem você liberar usa os apps mesmo com a cobrança ativa: cortesia, parceria ou quem pagou por fora.</p>
+        <form class="as-liberar" id="as-liberar" novalidate>
+          <div class="campo"><label for="as-email">E-mail da conta</label><div class="campo-entrada"><input id="as-email" type="email" maxlength="190" placeholder="cliente@email.com"></div></div>
+          <div class="campo"><label for="as-ate">Até (em branco: sem prazo)</label><div class="campo-entrada"><input id="as-ate" type="date"></div></div>
+          <button class="botao" type="submit">Liberar</button>
+        </form>
+        <p class="erro" id="as-liberar-erro" role="alert"></p>
+        <ul class="as-lista" id="as-lista"></ul>
+      </section>
+    </section>
   </main>
+
+  <dialog class="modal-figura painel-modal" id="cat-modal-gestor" aria-labelledby="cat-modal-titulo">
+    <button class="modal-fechar" type="button" data-fechar aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+    <form class="modal-texto painel-form" id="cat-form" novalidate>
+      <h2 class="titulo-m" id="cat-modal-titulo">Nova peça no catálogo</h2>
+      <p class="erro" id="cat-form-erro" role="alert"></p>
+      <div class="cat-form-foto">
+        <div class="cat-form-previa" id="cat-previa"><span>Sem foto</span></div>
+        <div>
+          <label class="botao">Escolher foto<input type="file" id="cat-foto" accept="image/jpeg,image/png,image/webp" hidden></label>
+          <p class="painel-ajuda">De preferência PNG sem fundo, ou foto da peça sobre um fundo liso e claro. A peça é centralizada numa moldura vertical, como as da marca.</p>
+          <p class="erro" data-erro="foto"></p>
+        </div>
+      </div>
+      <div class="painel-campos">
+        <div class="campo campo-inteiro"><label for="cat-nome">Nome</label><div class="campo-entrada"><input id="cat-nome" maxlength="60" placeholder="Camiseta verde-musgo"></div><p class="erro" data-erro="nome"></p></div>
+        <div class="campo"><label for="cat-tipo">Tipo</label><div class="campo-entrada"><select id="cat-tipo"></select></div><p class="erro" data-erro="tipo"></p></div>
+        <div class="campo"><label for="cat-cor">Cor</label><div class="campo-entrada"><select id="cat-cor"></select></div><p class="erro" data-erro="cor"></p></div>
+        <div class="campo"><label for="cat-corte">Corte</label><div class="campo-entrada"><select id="cat-corte"></select></div><p class="erro" data-erro="corte"></p></div>
+        <div class="campo"><label for="cat-tecido">Tecido</label><div class="campo-entrada"><select id="cat-tecido"></select></div><p class="erro" data-erro="tecido"></p></div>
+        <div class="campo"><label for="cat-formalidade">Formalidade</label><div class="campo-entrada"><select id="cat-formalidade"></select></div><p class="erro" data-erro="formalidade"></p></div>
+        <div class="campo"><label for="cat-clima">Clima</label><div class="campo-entrada"><select id="cat-clima"></select></div><p class="erro" data-erro="clima"></p></div>
+      </div>
+      <label class="campo-marcar cat-automatica"><input type="checkbox" id="cat-automatica"> <span>Colocar no guarda-roupa de todo mundo (como as sugeridas). Sem marcar, a peça fica só no catálogo, para cada um escolher.</span></label>
+      <div class="painel-form-botoes">
+        <button class="botao botao-cheio" type="submit" id="cat-salvar">Salvar</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog class="modal-figura painel-modal" id="produto-modal" aria-labelledby="produto-modal-titulo">
     <button class="modal-fechar" type="button" data-fechar aria-label="Fechar">
@@ -183,10 +263,11 @@
 
   <script src="assets/js/config.js?v=20261111a"></script>
   <script src="assets/js/medidas-dados.js?v=20261111a"></script>
-  <script src="assets/js/conta-api.js?v=20261111b"></script>
+  <script src="assets/js/conta-api.js?v=20261112a"></script>
   <script src="assets/js/guarda-roupa-dados.js?v=20261111a"></script>
   <script src="assets/js/painel.js?v=20261111a"></script>
   <script src="assets/js/colecao-dados.js?v=20261111a"></script>
-  <script src="assets/js/painel-colecao.js?v=20261111a"></script>
+  <script src="assets/js/painel-colecao.js?v=20261112a"></script>
+  <script src="assets/js/painel-extras.js?v=20261112a"></script>
 </body>
 </html>

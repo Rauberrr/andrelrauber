@@ -524,6 +524,110 @@ function base64url(string $bytes): string
     return rtrim(strtr(base64_encode($bytes), '+/', '-_'), '=');
 }
 
+/* --- Ajustes do site (tabela configuracoes) ------------------------------------------ */
+
+function ajuste(string $chave, $padrao = null)
+{
+    // Antes de importar o banco.sql novo, a tabela não existe: vale o padrão, e os apps seguem funcionando
+    try {
+        $valor = consultar('SELECT valor FROM configuracoes WHERE chave = ?', [$chave])->fetchColumn();
+    } catch (PDOException $erro) {
+        return $padrao;
+    }
+    if ($valor === false) {
+        return $padrao;
+    }
+    $dado = json_decode((string) $valor, true);
+    return $dado === null && $valor !== 'null' ? $padrao : $dado;
+}
+
+/* --- Assinatura dos apps (api/assinatura.php) ----------------------------------------- */
+
+const ASSINATURA_MODOS = ['oculta', 'aviso', 'cobrando'];
+const ASSINATURA_PADRAO = [
+    'modo' => 'oculta',
+    'nome' => 'Rauber Apps',
+    'precoCentavos' => 1990,
+    'beneficios' => [
+        'Guarda-roupa com looks para o clima do dia',
+        'Treino montado para você, com fases e evolução das cargas',
+        'Plano alimentar com o custo do mercado da sua região',
+        'Hábitos e lembretes no celular, mesmo com o site fechado',
+        'Ocasiões: o traje certo para cada evento',
+    ],
+];
+
+function assinatura_config(): array
+{
+    $salvo = ajuste('assinatura', []);
+    $plano = ASSINATURA_PADRAO;
+    if (is_array($salvo)) {
+        if (in_array($salvo['modo'] ?? '', ASSINATURA_MODOS, true)) {
+            $plano['modo'] = $salvo['modo'];
+        }
+        if (is_string($salvo['nome'] ?? null) && $salvo['nome'] !== '') {
+            $plano['nome'] = $salvo['nome'];
+        }
+        if (is_int($salvo['precoCentavos'] ?? null)) {
+            $plano['precoCentavos'] = $salvo['precoCentavos'];
+        }
+        if (is_array($salvo['beneficios'] ?? null) && $salvo['beneficios']) {
+            $plano['beneficios'] = array_values(array_filter($salvo['beneficios'], 'is_string'));
+        }
+    }
+    return $plano;
+}
+
+function assinatura_da_pessoa(int $usuarioId): ?array
+{
+    try {
+        $a = consultar('SELECT * FROM assinaturas WHERE usuario_id = ?', [$usuarioId])->fetch();
+    } catch (PDOException $erro) {
+        return null;
+    }
+    return $a ?: null;
+}
+
+function assinatura_valida(array $a): bool
+{
+    return $a['situacao'] === 'ativa' && ($a['valida_ate'] === null || (string) $a['valida_ate'] >= date('Y-m-d H:i:s'));
+}
+
+// Fora do modo "cobrando", todo mundo usa. O gestor sempre usa.
+function acesso_aos_apps(?array $usuario): bool
+{
+    if (assinatura_config()['modo'] !== 'cobrando') {
+        return true;
+    }
+    if ($usuario === null) {
+        return false;
+    }
+    if ((int) $usuario['admin'] === 1) {
+        return true;
+    }
+    $a = assinatura_da_pessoa((int) $usuario['id']);
+    return $a !== null && assinatura_valida($a);
+}
+
+// Para as APIs dos apps: com a cobrança ligada, quem não assina recebe 402
+function exigir_acesso_apps(array $liberadas = []): void
+{
+    $usuario = usuario_logado();
+    if ($usuario !== null && !in_array($_GET['acao'] ?? '', $liberadas, true) && !acesso_aos_apps($usuario)) {
+        falhar(402, 'Os apps agora são por assinatura. Assine para continuar.', ['assinatura' => true]);
+    }
+}
+
+function gravar_ajuste(string $chave, $valor): void
+{
+    $json = json_encode($valor, JSON_UNESCAPED_UNICODE);
+    $momento = agora();
+    $mudou = consultar('UPDATE configuracoes SET valor = ?, atualizado_em = ? WHERE chave = ?', [$json, $momento, $chave])->rowCount();
+    if ($mudou === 0 && consultar('SELECT 1 FROM configuracoes WHERE chave = ?', [$chave])->fetchColumn() === false) {
+        consultar('INSERT INTO configuracoes (chave, valor, atualizado_em) VALUES (?, ?, ?)', [$chave, $json, $momento]);
+    }
+}
+
 /* --- Dados públicos de outros serviços ---------------------------------------------- */
 
 // Pasta para guardar respostas de outros serviços por um tempo. Fica bloqueada ao acesso direto.

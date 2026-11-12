@@ -14,6 +14,9 @@ declare(strict_types=1);
 define('AR_API', true);
 require __DIR__ . '/nucleo.php';
 
+// Com a cobrança ligada no painel, só quem assina usa os apps
+exigir_acesso_apps([]);
+
 const ALIM_REFEICOES = ['cafe', 'almoco', 'lanche', 'jantar', 'outros'];
 const ALIM_FREQUENCIAS = ['diario', 'quase', 'pouco'];
 const ALIM_ATIVIDADES = ['sedentario', 'leve', 'moderado', 'intenso'];

@@ -15,6 +15,9 @@ declare(strict_types=1);
 define('AR_API', true);
 require __DIR__ . '/nucleo.php';
 
+// Com a cobrança ligada no painel, só quem assina usa os apps
+exigir_acesso_apps([]);
+
 const APPS = ['ocasioes', 'treino', 'habitos'];
 const APPS_COM_AUTORIZACAO = ['treino', 'habitos'];
 
@@ -23,6 +26,8 @@ const HB_MAXIMO = 20;
 const HB_DIAS_GUARDADOS = 400;
 const HB_SITUACOES = ['feito', 'minimo', 'pulado'];
 const HB_CORES = ['bordo', 'ouro', 'oliva', 'azul', 'grafite'];
+const HB_MAXIMO_LEMBRETES = 30;
+const HB_REPETIR = ['uma', 'diario', 'dias'];
 const APPS_UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 
 // Acompanham as listas de assets/js/ocasioes-dados.js
@@ -38,6 +43,7 @@ const TR_OBJETIVOS = ['emagrecer', 'massa', 'saude'];
 const TR_NIVEIS = ['iniciante', 'intermediario'];
 const TR_LOCAIS = ['academia', 'halteres', 'casa'];
 const TR_TEMPOS = [30, 45, 60];
+const TR_MOTIVOS = ['', 'cansei', 'repetitivo', 'sem_efeito'];
 const TR_CUIDADOS = ['joelho', 'ombro', 'lombar'];
 const TR_ESFORCOS = ['leve', 'ok', 'pesado'];
 const TR_FOCOS = ['peito', 'costas', 'ombros', 'bracos', 'pernas', 'gluteos', 'abdomen'];
@@ -312,6 +318,10 @@ function limpar_treino($d): ?array
         if (is_int($variacao) && $variacao >= 0 && $variacao < TR_VARIACOES) {
             $sessao['variacao'] = $variacao;
         }
+        $faseDaSessao = $s['fase'] ?? null;
+        if (is_int($faseDaSessao) && $faseDaSessao >= 0 && $faseDaSessao <= 99) {
+            $sessao['fase'] = $faseDaSessao;
+        }
         $sessoes[] = $sessao;
     }
 
@@ -345,6 +355,30 @@ function limpar_treino($d): ?array
     }
     $resumo = is_array($d['resumo'] ?? null) ? $d['resumo'] : [];
 
+    // Fase do treino (periodização): número, desde quando, o motivo da troca e as anteriores
+    $limparFase = function ($f): ?array {
+        if (!is_array($f) || !is_int($f['numero'] ?? null) || $f['numero'] < 0 || $f['numero'] > 99) {
+            return null;
+        }
+        $desde = data_ou_vazia($f['desde'] ?? '');
+        return [
+            'numero' => $f['numero'],
+            'desde' => $desde ?: date('Y-m-d'),
+            'motivo' => uma_de($f['motivo'] ?? '', TR_MOTIVOS, ''),
+        ];
+    };
+    $fase = $limparFase($d['fase'] ?? null);
+    if ($fase !== null) {
+        $fase['anteriores'] = [];
+        foreach (array_slice(is_array($d['fase']['anteriores'] ?? null) ? $d['fase']['anteriores'] : [], -20) as $a) {
+            $limpa = $limparFase($a);
+            if ($limpa !== null) {
+                $limpa['ate'] = data_ou_vazia($a['ate'] ?? '') ?: $limpa['desde'];
+                $fase['anteriores'][] = $limpa;
+            }
+        }
+    }
+
     return [
         'perfil' => [
             'objetivo' => uma_de($p['objetivo'] ?? '', TR_OBJETIVOS, 'saude'),
@@ -361,6 +395,7 @@ function limpar_treino($d): ?array
         'trocas' => (object) $trocas,
         'variacoes' => (object) $variacoes,
         'alternar' => ($d['alternar'] ?? false) === true,
+        'fase' => $fase,
         'resumo' => ['proximo' => linha_de_texto($resumo, 'proximo', 60)],
         'guardarNaConta' => true,
         'alteradoEm' => momento($d['alteradoEm'] ?? 0),
@@ -432,9 +467,46 @@ function limpar_habitos($d): ?array
     }
     ksort($registros);
 
+    // Lembretes simples: texto, hora e quando repetir
+    $lembretes = [];
+    $idsLembretes = [];
+    foreach (array_slice(is_array($d['lembretes'] ?? null) ? $d['lembretes'] : [], 0, HB_MAXIMO_LEMBRETES) as $l) {
+        if (!is_array($l) || !is_string($l['id'] ?? null) || preg_match('/^l_[a-z0-9]{3,16}$/', $l['id']) !== 1 || isset($idsLembretes[$l['id']])) {
+            continue;
+        }
+        $texto = trim(linha_de_texto($l, 'texto', 80));
+        $hora = $l['hora'] ?? '';
+        if (mb_strlen($texto) < 2 || !is_string($hora) || preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $hora) !== 1) {
+            continue;
+        }
+        $repetir = uma_de($l['repetir'] ?? '', HB_REPETIR, 'uma');
+        $dias = [];
+        foreach ((is_array($l['dias'] ?? null) ? $l['dias'] : []) as $dia) {
+            if (is_int($dia) && $dia >= 0 && $dia <= 6 && !in_array($dia, $dias, true)) {
+                $dias[] = $dia;
+            }
+        }
+        sort($dias);
+        $data = data_ou_vazia($l['data'] ?? '') ?: '';
+        if (($repetir === 'uma' && $data === '') || ($repetir === 'dias' && !$dias)) {
+            continue;
+        }
+        $idsLembretes[$l['id']] = true;
+        $lembretes[] = [
+            'id' => $l['id'],
+            'texto' => $texto,
+            'hora' => $hora,
+            'repetir' => $repetir,
+            'data' => $repetir === 'uma' ? $data : '',
+            'dias' => $repetir === 'dias' ? $dias : [],
+            'criadoEm' => data_ou_vazia($l['criadoEm'] ?? '') ?: date('Y-m-d'),
+        ];
+    }
+
     $fuso = $d['fuso'] ?? '';
     return [
         'habitos' => $habitos,
+        'lembretes' => $lembretes,
         'registros' => (object) $registros,
         'fuso' => is_string($fuso) && in_array($fuso, timezone_identifiers_list(), true) ? $fuso : 'America/Sao_Paulo',
         'avisos' => ($d['avisos'] ?? false) === true,

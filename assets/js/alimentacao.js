@@ -609,6 +609,7 @@
       atalhos.appendChild(criar('span', 'alim-atalhos-rotulo', 'Toque para incluir:'));
       SUGESTOES[ref.id].forEach(function (s) {
         var b = botao(D.porAlimento[s[0]].nome, 'alim-atalho');
+        b.setAttribute('data-alimento', s[0]);
         b.addEventListener('click', function () {
           abrirEditor(ref, { alimento: s[0], qtd: s[1], medida: s[2] || 0, atalho: b });
         });
@@ -656,6 +657,13 @@
         acoes.appendChild(tirar);
         li.appendChild(acoes);
         lista.appendChild(li);
+      });
+      // O atalho do alimento que já está na refeição fica marcado
+      var naRefeicao = estado.itens.filter(function (i) { return i.refeicao === ref.id; }).map(function (i) { return i.alimento; });
+      lista.parentNode.querySelectorAll('.alim-atalho[data-alimento]').forEach(function (b) {
+        var tem = naRefeicao.indexOf(b.getAttribute('data-alimento')) !== -1;
+        b.classList.toggle('incluido', tem);
+        b.setAttribute('aria-pressed', String(tem));
       });
     });
     var n = C.nutrientes(estado.itens.filter(function (i) { return D.porAlimento[i.alimento]; }));

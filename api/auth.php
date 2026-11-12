@@ -54,6 +54,7 @@ function acao_sessao(): void
         'logado' => $usuario !== null,
         'usuario' => $usuario ? dados_publicos($usuario) : null,
         'googleClientId' => (string) (config()['google_client_id'] ?? ''),
+        'assinatura' => ['modo' => assinatura_config()['modo'], 'liberado' => acesso_aos_apps($usuario)],
     ]);
 }
 
@@ -391,6 +392,11 @@ function acao_excluir(): void
     consultar('DELETE FROM apps_dados WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM lembretes_enviados WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM sessoes_lembradas WHERE usuario_id = ?', [$id]);
+    try {
+        consultar('DELETE FROM push_chaves WHERE endpoint_hash IN (SELECT endpoint_hash FROM push_inscricoes WHERE usuario_id = ?)', [$id]);
+    } catch (PDOException $erro) {
+        // Banco ainda sem a tabela das chaves
+    }
     consultar('DELETE FROM push_inscricoes WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM avisos_push WHERE usuario_id = ?', [$id]);
     consultar('DELETE FROM pedidos_exclusivos WHERE usuario_id = ?', [$id]);

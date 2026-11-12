@@ -17,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261111b">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261111a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261112a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261112a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -70,6 +70,15 @@
         <p class="gr-suave" id="gr-limite" hidden>Você chegou ao limite de <span id="gr-maximo">60</span> peças suas. Exclua uma para adicionar outra.</p>
         <p class="gr-ajuda-sugeridas">As peças com a marca <strong>Sugerida</strong> já vêm no seu guarda-roupa para ajudar a montar os looks. Fique com as que você tem e exclua as outras. <button class="texto-botao" id="gr-sem-sugeridas" type="button" hidden>Tirar todas as sugeridas</button></p>
 
+        <button class="cat-chamada" id="gr-abrir-catalogo" type="button">
+          <span class="cat-chamada-fotos" aria-hidden="true">
+            <img src="assets/img/sugeridas/camiseta-azul-marinho.webp" alt="" width="1000" height="1250" loading="lazy">
+            <img src="assets/img/sugeridas/moletom-verde-oliva.webp" alt="" width="1000" height="1250" loading="lazy">
+            <img src="assets/img/sugeridas/camisa-rosa.webp" alt="" width="1000" height="1250" loading="lazy">
+          </span>
+          <span class="cat-chamada-texto"><strong>Catálogo de peças</strong><small>Camisetas, camisas e moletons em várias cores. Toque nas que você tem.</small></span>
+          <svg data-icone="seguir" aria-hidden="true"></svg>
+        </button>
         <div class="gr-vazio" id="gr-vazio" hidden>
           <h2 class="titulo-m">Comece pela peça que você mais usa.</h2>
           <p>Com uma peça de cima e uma de baixo, os primeiros looks já aparecem.</p>
@@ -186,6 +195,7 @@
 
   <button class="app-fab" id="gr-fab" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="gr-fab-menu" aria-label="Adicionar peças" hidden><svg data-icone="mais"></svg></button>
   <div class="app-fab-menu" id="gr-fab-menu" hidden>
+    <button id="gr-do-catalogo" type="button">Do catálogo <svg data-icone="cabide"></svg></button>
     <button id="gr-adicionar" type="button">Uma peça <svg data-icone="camera"></svg></button>
     <button id="gr-adicionar-varias" type="button">Várias de uma vez <svg data-icone="apps"></svg></button>
     <button id="gr-fab-uso" type="button">Registrar o que usei <svg data-icone="diario"></svg></button>
@@ -320,6 +330,19 @@
     </div>
   </dialog>
 
+  <dialog class="modal-figura gr-modal cat-modal" id="cat-modal" aria-labelledby="cat-titulo">
+    <button class="modal-fechar" id="cat-fechar" type="button" aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+    <div class="gr-modal-corpo">
+      <h2 class="titulo-m" id="cat-titulo">Catálogo de peças</h2>
+      <p class="app-suave">Toque nas peças que você tem. Elas entram no seu guarda-roupa e já aparecem nos looks.</p>
+      <p class="cat-resumo" id="cat-resumo"></p>
+      <div class="cat-filtros" id="cat-filtros" role="group" aria-label="Tipo de peça"></div>
+      <p class="app-suave" id="cat-estado" role="status" hidden></p>
+      <ul class="cat-lista" id="cat-lista"></ul>
+    </div>
+  </dialog>
   <dialog class="modal-figura gr-modal" id="uso-modal" aria-labelledby="uso-titulo">
     <button class="modal-fechar" id="uso-fechar" type="button" aria-label="Fechar">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
@@ -489,12 +512,13 @@
   </nav>
 
   <script src="assets/js/config.js?v=20261111a"></script>
-  <script src="assets/js/conta-api.js?v=20261111b"></script>
-  <script src="assets/js/apps.js?v=20261111a"></script>
+  <script src="assets/js/conta-api.js?v=20261112a"></script>
+  <script src="assets/js/apps.js?v=20261112a"></script>
   <script src="assets/js/guarda-roupa-dados.js?v=20261111a"></script>
   <script src="assets/js/guarda-roupa-foto.js?v=20261111a"></script>
   <script src="assets/js/guarda-roupa-looks.js?v=20261111a"></script>
-  <script src="assets/js/guarda-roupa.js?v=20261111a"></script>
+  <script src="assets/js/guarda-roupa.js?v=20261112a"></script>
   <script src="assets/js/guarda-roupa-lote.js?v=20261111a"></script>
+  <script src="assets/js/guarda-roupa-catalogo.js?v=20261112a"></script>
 </body>
 </html>

@@ -17,3 +17,6 @@ api/privado/
 
 # Fotos dos produtos da coleção, enviadas pelo painel
 api/fotos-produtos/*
+
+# Fotos das peças do catálogo do guarda-roupa, enviadas pelo painel
+api/fotos-catalogo/*

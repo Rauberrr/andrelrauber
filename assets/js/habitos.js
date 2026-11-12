@@ -4,7 +4,8 @@
    3. nunca falhe duas vezes (o app destaca o hábito e avisa à noite).
    Cada hábito cumprido é um "voto" para a identidade que a pessoa escolheu.
    Lembretes: Web Push pelo sw.js, mesmo com o navegador fechado, e avisos na própria
-   página enquanto ela estiver aberta. Sem autorização, os hábitos ficam neste aparelho. */
+   página enquanto ela estiver aberta. Sem autorização, os hábitos ficam neste aparelho.
+   Além dos hábitos, lembretes simples: só o texto e a hora (uma vez, todo dia ou em alguns dias). */
 (function () {
   'use strict';
 
@@ -15,6 +16,7 @@
   var ENDERECO = 'api/apps.php?app=habitos';
   var PUSH = 'api/habitos.php?acao=';
   var MAXIMO = 20;
+  var MAXIMO_LEMBRETES = 30;
   var DIAS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
   var DIAS_NOME = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
   var CORES = [
@@ -60,6 +62,8 @@
       if (!h.cor) h.cor = 'bordo';
     });
     if (!e.registros || typeof e.registros !== 'object' || Array.isArray(e.registros)) e.registros = {};
+    if (!Array.isArray(e.lembretes)) e.lembretes = [];
+    e.lembretes = e.lembretes.filter(function (l) { return l && /^l_[a-z0-9]{3,16}$/.test(l.id) && typeof l.texto === 'string' && /^\d{2}:\d{2}$/.test(l.hora || ''); }).slice(0, MAXIMO_LEMBRETES);
     if (typeof e.avisos !== 'boolean') e.avisos = false;
     if (typeof e.guardarNaConta !== 'boolean') e.guardarNaConta = false;
     return e;
@@ -159,6 +163,9 @@
     var tem = estado.habitos.length > 0;
     $('hb-vazio').hidden = tem;
     $('hb-painel').hidden = !tem;
+    desenharListaLembretes();
+    desenharLembretes();
+    mostrarGuardar();
     if (!tem) return;
     var dia = hoje();
     var deHoje = estado.habitos.filter(function (h) { return marcadoNoDia(h, dia); });
@@ -198,8 +205,6 @@
     $('hb-outros-secao').hidden = !outros.length;
     desenharMapa();
     desenharNumeros();
-    desenharLembretes();
-    mostrarGuardar();
   }
 
   function botaoEditar(h) {
@@ -489,7 +494,178 @@
   $('hb-novo').addEventListener('click', function () { abrir(null); });
   $('hb-primeiro').addEventListener('click', function () { abrir(null); });
 
-  /* --- Lembretes --------------------------------------------------------------------------- */
+  /* --- Lembretes simples ------------------------------------------------------------------- */
+
+  var lembreteEditando = null;
+  var DIAS_LONGOS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+
+  function novoId(prefixo) { return prefixo + Math.random().toString(36).slice(2, 10); }
+
+  // Quando o lembrete toca de novo, em texto: "Hoje às 14h", "Todo dia às 8h", "Seg, qua às 9h"
+  function quandoDoLembrete(l) {
+    var hora = l.hora.replace(':', 'h');
+    if (l.repetir === 'diario') return 'Todo dia às ' + hora;
+    if (l.repetir === 'dias') {
+      var nomes = l.dias.map(function (d) { return DIAS_NOME[d]; }).join(', ');
+      return nomes.charAt(0).toUpperCase() + nomes.slice(1) + ' às ' + hora;
+    }
+    var amanha = app.somarDias(hoje(), 1);
+    if (l.data === hoje()) return 'Hoje às ' + hora;
+    if (l.data === amanha) return 'Amanhã às ' + hora;
+    return app.dataCurta(l.data) + ' às ' + hora;
+  }
+
+  function lembretePassou(l) {
+    if (l.repetir !== 'uma') return false;
+    var agora = new Date();
+    var horaAgora = String(agora.getHours()).padStart(2, '0') + ':' + String(agora.getMinutes()).padStart(2, '0');
+    return l.data < hoje() || (l.data === hoje() && l.hora < horaAgora);
+  }
+
+  function ordemDoLembrete(l) {
+    if (lembretePassou(l)) return '9' + l.data + l.hora;
+    return (l.repetir === 'uma' ? '1' + l.data : '0') + l.hora;
+  }
+
+  function desenharListaLembretes() {
+    // Os de uma vez só que passaram há mais de uma semana saem sozinhos
+    var limite = app.somarDias(hoje(), -7);
+    var antes = estado.lembretes.length;
+    estado.lembretes = estado.lembretes.filter(function (l) { return l.repetir !== 'uma' || l.data >= limite; });
+    if (estado.lembretes.length !== antes) salvar();
+    var lista = $('lb-lista');
+    lista.textContent = '';
+    estado.lembretes.slice().sort(function (a, b) { return ordemDoLembrete(a) < ordemDoLembrete(b) ? -1 : 1; }).forEach(function (l) {
+      var passou = lembretePassou(l);
+      var li = criar('li', 'lb-item' + (passou ? ' lb-passou' : ''));
+      var abrirBotao = criar('button', 'lb-abrir');
+      abrirBotao.type = 'button';
+      abrirBotao.setAttribute('aria-label', 'Editar o lembrete: ' + l.texto);
+      var icone = criar('span', 'lb-icone');
+      icone.setAttribute('aria-hidden', 'true');
+      icone.appendChild(app.icone(passou ? 'check' : 'sino'));
+      abrirBotao.appendChild(icone);
+      var textos = criar('span', 'lb-textos');
+      textos.appendChild(criar('strong', '', l.texto));
+      textos.appendChild(criar('small', '', passou ? 'Já passou · ' + quandoDoLembrete(l) : quandoDoLembrete(l)));
+      abrirBotao.appendChild(textos);
+      abrirBotao.addEventListener('click', function () { abrirLembrete(l); });
+      li.appendChild(abrirBotao);
+      var apagar = criar('button', 'app-icone-botao plano');
+      apagar.type = 'button';
+      apagar.setAttribute('aria-label', 'Apagar o lembrete: ' + l.texto);
+      apagar.appendChild(app.icone('lixeira'));
+      apagar.addEventListener('click', function () { apagarLembrete(l); });
+      li.appendChild(apagar);
+      lista.appendChild(li);
+    });
+    $('lb-vazio').hidden = estado.lembretes.length > 0;
+  }
+
+  function montarDiasDoLembrete() {
+    var dias = $('lb-dias');
+    DIAS.forEach(function (letra, i) {
+      var r = criar('label');
+      var c = document.createElement('input');
+      c.type = 'checkbox';
+      c.name = 'lb-dia';
+      c.value = String(i);
+      c.setAttribute('aria-label', DIAS_LONGOS[i]);
+      r.appendChild(c);
+      r.appendChild(criar('span', '', letra));
+      dias.appendChild(r);
+    });
+    document.querySelectorAll('input[name="lb-repetir"]').forEach(function (r) {
+      r.addEventListener('change', mostrarCamposDoLembrete);
+    });
+  }
+
+  function repetirEscolhido() {
+    var r = document.querySelector('input[name="lb-repetir"]:checked');
+    return r ? r.value : 'uma';
+  }
+
+  function mostrarCamposDoLembrete() {
+    var repetir = repetirEscolhido();
+    $('lb-campo-data').hidden = repetir !== 'uma';
+    $('lb-campo-dias').hidden = repetir !== 'dias';
+  }
+
+  function abrirLembrete(l) {
+    lembreteEditando = l || null;
+    ['lb-erro', 'lb-erro-texto'].forEach(function (id) { $(id).textContent = ''; });
+    $('lb-modal-titulo').textContent = l ? 'Editar lembrete' : 'Novo lembrete';
+    $('lb-salvar').textContent = l ? 'Salvar' : 'Criar lembrete';
+    $('lb-excluir').hidden = !l;
+    $('lb-texto').value = l ? l.texto : '';
+    var daquiAPouco = new Date(Date.now() + 60 * 60 * 1000);
+    $('lb-hora').value = l ? l.hora : String(daquiAPouco.getHours()).padStart(2, '0') + ':00';
+    // Daqui a uma hora pode já ser amanhã
+    $('lb-data').value = l && l.data ? l.data : (daquiAPouco.getDate() !== new Date().getDate() ? app.somarDias(hoje(), 1) : hoje());
+    $('lb-data').min = hoje();
+    var repetir = l ? l.repetir : 'uma';
+    document.querySelectorAll('input[name="lb-repetir"]').forEach(function (r) { r.checked = r.value === repetir; });
+    var dias = l && l.dias && l.dias.length ? l.dias : UTEIS;
+    document.querySelectorAll('input[name="lb-dia"]').forEach(function (c) { c.checked = dias.indexOf(Number(c.value)) !== -1; });
+    mostrarCamposDoLembrete();
+    $('lb-modal').showModal();
+    $('lb-texto').focus();
+  }
+
+  function apagarLembrete(l) {
+    var copia = estado.lembretes.slice();
+    estado.lembretes = estado.lembretes.filter(function (x) { return x.id !== l.id; });
+    salvar();
+    desenharListaLembretes();
+    app.avisar('Lembrete apagado.', function () {
+      estado.lembretes = copia;
+      salvar();
+      desenharListaLembretes();
+    });
+  }
+
+  $('lb-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    ['lb-erro', 'lb-erro-texto'].forEach(function (id) { $(id).textContent = ''; });
+    var texto = $('lb-texto').value.trim();
+    var hora = $('lb-hora').value;
+    var repetir = repetirEscolhido();
+    var data = $('lb-data').value;
+    var dias = Array.prototype.slice.call(document.querySelectorAll('input[name="lb-dia"]:checked')).map(function (c) { return Number(c.value); });
+    if (texto.length < 2) { $('lb-erro-texto').textContent = 'Escreva do que você quer ser lembrado.'; $('lb-texto').focus(); return; }
+    if (!/^\d{2}:\d{2}$/.test(hora)) { $('lb-erro').textContent = 'Escolha a hora.'; return; }
+    if (repetir === 'uma' && (!data || data < hoje())) { $('lb-erro').textContent = 'Escolha um dia a partir de hoje.'; return; }
+    if (repetir === 'dias' && !dias.length) { $('lb-erro').textContent = 'Escolha pelo menos um dia da semana.'; return; }
+    if (!lembreteEditando && estado.lembretes.length >= MAXIMO_LEMBRETES) { $('lb-erro').textContent = 'Você chegou a ' + MAXIMO_LEMBRETES + ' lembretes. Apague algum que já passou.'; return; }
+    var dados = { texto: texto, hora: hora, repetir: repetir, data: repetir === 'uma' ? data : '', dias: repetir === 'dias' ? dias : [] };
+    var primeiro = !estado.lembretes.length;
+    if (lembreteEditando) {
+      Object.keys(dados).forEach(function (k) { lembreteEditando[k] = dados[k]; });
+    } else {
+      dados.id = novoId('l_');
+      dados.criadoEm = hoje();
+      estado.lembretes.push(dados);
+    }
+    // Lembrete editado volta a tocar hoje, se a hora ainda não passou
+    try { sessionStorage.removeItem('lb-avisado-' + (lembreteEditando ? lembreteEditando.id : dados.id) + '-' + hoje()); } catch (erro) { /* sem sessionStorage */ }
+    $('lb-modal').close();
+    salvar();
+    desenharListaLembretes();
+    inscricaoAtual().then(function (inscricao) {
+      if (inscricao && estado.avisos) { app.avisar(lembreteEditando ? 'Lembrete salvo.' : 'Lembrete criado. Ele chega na hora, mesmo com o site fechado.'); return; }
+      app.avisar(primeiro ? 'Lembrete criado. Para ele chegar com o site fechado, ative as notificações logo abaixo.' : 'Lembrete salvo.');
+      if (primeiro) $('hb-lembretes-titulo').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+  $('lb-excluir').addEventListener('click', function () {
+    var l = lembreteEditando;
+    $('lb-modal').close();
+    if (l) apagarLembrete(l);
+  });
+  $('lb-fechar').addEventListener('click', function () { $('lb-modal').close(); });
+  $('lb-novo').addEventListener('click', function () { abrirLembrete(null); });
+
+  /* --- Notificações ------------------------------------------------------------------------ */
 
   function temPush() { return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window && window.isSecureContext; }
   function ehIPhone() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
@@ -525,11 +701,11 @@
     var texto = $('hb-lembretes-texto');
     var botoes = $('hb-lembretes-botoes');
     botoes.textContent = '';
-    var semHora = !estado.habitos.some(function (h) { return h.lembrete && h.hora; });
+    var semHora = !estado.habitos.some(function (h) { return h.lembrete && h.hora; }) && !estado.lembretes.length;
 
     if (ehIPhone() && !naTelaDeInicio()) {
       estadoTexto.textContent = 'No iPhone, primeiro coloque o Rauber na Tela de Início';
-      texto.textContent = 'O iPhone só entrega lembretes de sites que estão na Tela de Início. No Safari, toque em Compartilhar e em “Adicionar à Tela de Início”. Depois abra o Rauber pelo ícone e ative aqui.';
+      texto.textContent = 'O iPhone só entrega notificações de sites que estão na Tela de Início. No Safari, toque em Compartilhar e em “Adicionar à Tela de Início”. Depois abra o Rauber pelo ícone, entre na conta e ative aqui. A partir daí, chega igual a um aplicativo, mesmo com tudo fechado.';
       return;
     }
     if (!temPush()) {
@@ -544,16 +720,18 @@
     }
     inscricaoAtual().then(function (inscricao) {
       if (inscricao && estado.avisos) {
-        estadoTexto.textContent = 'Lembretes ligados neste aparelho';
+        // Inscrições antigas não mandavam as chaves: manda de novo, em silêncio
+        atualizarInscricao(inscricao);
+        estadoTexto.textContent = 'Notificações ligadas neste aparelho';
         texto.textContent = semHora
-          ? 'Nenhum hábito tem hora marcada. Edite um hábito e escolha a hora para ele chamar você.'
-          : 'Chegam na hora de cada hábito, mesmo com o navegador fechado. Às 20h, se algum ficou para trás dois dias seguidos, vem o aviso do resgate.';
-        botoes.appendChild(botaoLembrete('Enviar um teste', 'botao', testar));
+          ? 'Nada com hora marcada ainda. Crie um lembrete ou escolha a hora de um hábito para ele chamar você.'
+          : 'Chegam na hora, mesmo com o site e o navegador fechados. Às 20h, se algum hábito ficou para trás dois dias seguidos, vem o aviso do resgate.';
+        botoes.appendChild(botaoLembrete('Testar com o site fechado', 'botao', testarFechado));
         botoes.appendChild(botaoLembrete('Desligar neste aparelho', 'texto-botao', desligar));
       } else {
-        estadoTexto.textContent = 'Receba um aviso na hora de cada hábito';
-        texto.textContent = 'Mesmo com o navegador fechado. É o que mais ajuda quem esquece: o hábito chama você, com a versão de 2 minutos no aviso.';
-        botoes.appendChild(botaoLembrete('Ativar lembretes', 'botao botao-cheio', ativar));
+        estadoTexto.textContent = 'Receba um aviso na hora certa';
+        texto.textContent = 'Dos seus hábitos e lembretes, mesmo com o site fechado. É o que mais ajuda quem esquece.';
+        botoes.appendChild(botaoLembrete('Ativar notificações', 'botao botao-cheio', ativar));
       }
     });
   }
@@ -584,11 +762,12 @@
           });
         });
       }).then(function (inscricao) {
-        return api.post(PUSH + 'inscrever', { endpoint: inscricao.endpoint });
+        return api.post(PUSH + 'inscrever', dadosDaInscricao(inscricao));
       }).then(function (r) {
         if (!r.ok) throw new Error(r.erro || 'sem inscrição');
+        try { sessionStorage.setItem('hb-inscricao-enviada', '1'); } catch (erro) { /* sem sessionStorage */ }
         desenharLembretes();
-        app.avisar('Lembretes ligados. Toque em “Enviar um teste” para ver como chegam.');
+        app.avisar('Notificações ligadas. Toque em “Testar com o site fechado” para ver como chegam.');
       }).catch(function (erro) {
         desenharLembretes();
         app.avisar('Não foi possível ligar os lembretes agora. ' + (erro && erro.message && erro.message.length < 120 ? erro.message : 'Tente de novo.'));
@@ -607,10 +786,32 @@
     });
   }
 
-  function testar() {
-    return api.post(PUSH + 'testar', {}).then(function (r) {
-      app.avisar(r.ok ? 'Enviado. O aviso deve chegar em alguns segundos.' : (r.erro || 'Não foi possível enviar agora.'));
+  function dadosDaInscricao(inscricao) {
+    var json = inscricao && inscricao.toJSON ? inscricao.toJSON() : {};
+    return { endpoint: inscricao.endpoint, keys: json.keys || {} };
+  }
+
+  function atualizarInscricao(inscricao) {
+    try { if (sessionStorage.getItem('hb-inscricao-enviada')) return; sessionStorage.setItem('hb-inscricao-enviada', '1'); } catch (erro) { /* sem sessionStorage */ }
+    if (conta.logado) api.post(PUSH + 'inscrever', dadosDaInscricao(inscricao));
+  }
+
+  // Manda o teste daqui a 20 segundos: dá tempo de fechar o site e ver chegar
+  function testarFechado() {
+    return api.post(PUSH + 'testar', { atraso: 20 }).then(function (r) {
+      app.avisar(r.ok ? 'Pronto. Feche o site agora: em uns 20 segundos chega a notificação.' : (r.erro || 'Não foi possível enviar agora.'));
     });
+  }
+
+  function avisarNaPagina(titulo, texto, tag) {
+    if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration('/').then(function (reg) {
+        if (reg) reg.showNotification(titulo, { body: texto, icon: '/assets/img/icone-192.png', tag: tag, data: { url: '/apps/habitos/' } });
+        else app.avisar(titulo + ': ' + texto);
+      });
+    } else {
+      app.avisar(titulo + ': ' + texto);
+    }
   }
 
   // Com a página aberta, o próprio app avisa na hora (útil onde não há Web Push)
@@ -618,19 +819,22 @@
     var agora = new Date();
     var hora = String(agora.getHours()).padStart(2, '0') + ':' + String(agora.getMinutes()).padStart(2, '0');
     var dia = hoje();
+    var semana = agora.getDay();
+    estado.lembretes.forEach(function (l) {
+      if (l.hora !== hora) return;
+      var vale = (l.repetir === 'uma' && l.data === dia) || l.repetir === 'diario' || (l.repetir === 'dias' && l.dias.indexOf(semana) !== -1);
+      if (!vale) return;
+      var chave = 'lb-avisado-' + l.id + '-' + dia;
+      try { if (sessionStorage.getItem(chave)) return; sessionStorage.setItem(chave, '1'); } catch (e) { /* sem sessionStorage */ }
+      avisarNaPagina(l.texto, 'Lembrete das ' + l.hora.replace(':', 'h') + '.', 'lembrete-' + l.id);
+      if (l.repetir === 'uma') desenharListaLembretes();
+    });
     estado.habitos.forEach(function (h) {
       if (!h.lembrete || h.hora !== hora || !marcadoNoDia(h, dia) || conta1(situacao(h, dia))) return;
       var chave = 'hb-avisado-' + h.id + '-' + dia;
       try { if (sessionStorage.getItem(chave)) return; sessionStorage.setItem(chave, '1'); } catch (e) { /* sem sessionStorage */ }
       var texto = h.minima ? 'Comece pelo mínimo: ' + h.minima + '.' : 'É hora. Comece pequeno, mas comece.';
-      if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistration('/').then(function (reg) {
-          if (reg) reg.showNotification(h.nome, { body: texto, icon: '/assets/img/icone-192.png', tag: 'habitos-' + h.nome, data: { url: '/apps/habitos/' } });
-          else app.avisar(h.nome + ': ' + texto);
-        });
-      } else {
-        app.avisar(h.nome + ': ' + texto);
-      }
+      avisarNaPagina(h.nome, texto, 'habitos-' + h.nome);
     });
   }
 
@@ -655,7 +859,7 @@
       mostrarGuardar();
       return;
     }
-    if (!window.confirm('Apagar os hábitos da sua conta? Eles continuam neste aparelho, e os lembretes com o navegador fechado param.')) {
+    if (!window.confirm('Apagar os hábitos e lembretes da sua conta? Eles continuam neste aparelho, e as notificações com o site fechado param.')) {
       $('hb-guardar').checked = true;
       return;
     }
@@ -671,7 +875,7 @@
 
   $('hb-apagar').addEventListener('click', function () {
     var naConta = conta.logado && conta.temNaConta;
-    if (!window.confirm(naConta ? 'Apagar todos os hábitos e o histórico deste aparelho e da sua conta? Não dá para desfazer.' : 'Apagar todos os hábitos e o histórico deste aparelho?')) return;
+    if (!window.confirm(naConta ? 'Apagar todos os hábitos, lembretes e o histórico deste aparelho e da sua conta? Não dá para desfazer.' : 'Apagar todos os hábitos, lembretes e o histórico deste aparelho?')) return;
     function limpar() {
       try { localStorage.removeItem(CHAVE); } catch (e) { /* nada guardado */ }
       location.reload();
@@ -688,6 +892,7 @@
   /* --- Começo ------------------------------------------------------------------------------ */
 
   montarEscolhas();
+  montarDiasDoLembrete();
   desenhar();
   window.setInterval(conferirAgora, 30000);
   // Virou o dia com a página aberta: redesenha

@@ -34,7 +34,7 @@
 
   /* --- Abas -------------------------------------------------------------------------------------- */
 
-  var ABAS = ['clientes', 'colecao', 'exclusivos'];
+  var ABAS = ['clientes', 'colecao', 'exclusivos', 'catalogo', 'assinatura'];
   function abrirAba(nome) {
     ABAS.forEach(function (a) {
       var ativa = a === nome;
@@ -42,7 +42,9 @@
       $('aba-' + a).tabIndex = ativa ? 0 : -1;
       $('painel-' + a).hidden = !ativa;
     });
-    if (nome !== 'clientes' && !carregou) carregar();
+    if ((nome === 'colecao' || nome === 'exclusivos') && !carregou) carregar();
+    // As abas do catálogo e da assinatura ficam em painel-extras.js
+    document.dispatchEvent(new CustomEvent('painel-aba', { detail: nome }));
     history.replaceState(null, '', nome === 'clientes' ? location.pathname : '#' + nome);
   }
   ABAS.forEach(function (a, i) {

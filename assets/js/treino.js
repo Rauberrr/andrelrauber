@@ -1,6 +1,9 @@
 /* Treino: monta um plano simples a partir do objetivo, do local, do tempo e do foco,
-   com 3 opções de exercícios para cada treino, guia o treino do dia com séries e descanso
-   e guarda as cargas e a semana. As medidas são as mesmas da Alimentação.
+   guia o treino do dia com séries e descanso e guarda as cargas e a semana.
+   Um plano padrão por vez. Quando cansar, ficar repetitivo ou parar de render, a pessoa
+   começa uma fase nova (periodização: Base, Força, Volume), com outros exercícios para os
+   mesmos músculos e outra faixa de repetições. O histórico e a evolução continuam inteiros.
+   As medidas são as mesmas da Alimentação.
    Sem autorização, fica neste aparelho. Com autorização, também na conta. */
 (function () {
   'use strict';
@@ -42,6 +45,14 @@
     });
     if (!e.variacoes || typeof e.variacoes !== 'object' || Array.isArray(e.variacoes)) e.variacoes = {};
     if (typeof e.alternar !== 'boolean') e.alternar = false;
+    // Fase do treino. Quem já usava as opções começa na opção que tinha no treino A
+    if (!e.fase || typeof e.fase !== 'object' || typeof e.fase.numero !== 'number') {
+      var inicio = Array.isArray(e.sessoes) && e.sessoes.length ? e.sessoes[0].data : app.hojeISO();
+      e.fase = { numero: Number(e.variacoes.A) || 0, desde: inicio, motivo: '', anteriores: [] };
+    }
+    e.fase.numero = Math.max(0, Math.min(99, Math.floor(e.fase.numero)));
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(e.fase.desde || '')) e.fase.desde = app.hojeISO();
+    if (!Array.isArray(e.fase.anteriores)) e.fase.anteriores = [];
     if (!e.resumo || typeof e.resumo !== 'object') e.resumo = { proximo: '' };
     if (typeof e.guardarNaConta !== 'boolean') e.guardarNaConta = false;
     return e;
@@ -130,9 +141,21 @@
     return perfil.foco.reduce(function (g, f) { return g.concat(T.porFoco[f].grupos); }, []);
   }
 
-  function variacaoDe(letra) {
-    var v = estado.variacoes[letra];
-    return v === 1 || v === 2 ? v : 0;
+  // Todos os treinos seguem a fase: cada fase usa um conjunto de exercícios
+  function variacaoDe() { return estado.fase.numero % T.VARIACOES; }
+
+  function faseAtual() { return T.FASES[estado.fase.numero % T.FASES.length]; }
+
+  // Repetições e descanso da fase, para o objetivo da pessoa
+  function esquema(perfil) {
+    var obj = T.porObjetivo[perfil.objetivo];
+    var porFase = T.ESQUEMAS[faseAtual().id];
+    return porFase ? porFase[perfil.objetivo] : { reps: obj.reps, descanso: obj.descanso };
+  }
+
+  function semanasNaFase() {
+    var dias = Math.round((app.paraData(app.hojeISO()) - app.paraData(estado.fase.desde)) / 86400000);
+    return Math.max(0, Math.floor(dias / 7));
   }
 
   function chaveDaTroca(letra, v, movimento) { return letra.toLowerCase() + v + '-' + movimento; }
@@ -225,7 +248,7 @@
   function repeticoes(ex, perfil) {
     if (ex.tempo) return perfil.nivel === 'iniciante' ? '20 a 30 s' : '30 a 45 s';
     if (!ex.carga && perfil.objetivo === 'massa') return '10 a 15';
-    return T.porObjetivo[perfil.objetivo].reps;
+    return esquema(perfil).reps;
   }
 
   // Em casa, sem equipamento, não há peso para anotar
@@ -322,7 +345,7 @@
     else estado.trocas[item.chave] = id;
     salvar();
     depois();
-    app.avisar('Trocado por ' + minusculo(T.porExercicio[id].nome) + ' no treino ' + treino.letra + ', opção ' + (treino.variacao + 1) + '.', function () {
+    app.avisar('Trocado por ' + minusculo(T.porExercicio[id].nome) + ' no treino ' + treino.letra + '.', function () {
       if (antes) estado.trocas[item.chave] = antes; else delete estado.trocas[item.chave];
       salvar();
       depois();
@@ -396,6 +419,7 @@
   escolhas('tr-tempo', 'tempo', T.TEMPOS);
   escolhas('tr-foco', 'foco', [{ id: '', rotulo: 'Corpo equilibrado' }].concat(T.FOCOS), true);
   escolhas('tr-cuidados', 'cuidados', T.CUIDADOS, true);
+  montarMotivos();
 
   // "Corpo equilibrado" desmarca os focos; no máximo 2 focos
   $('tr-foco').addEventListener('change', function (e) {
@@ -532,6 +556,7 @@
     }
     var mudouDivisao = estado.perfil && (estado.perfil.local !== p.local || estado.perfil.dias !== p.dias);
     if (mudouDivisao) { estado.trocas = {}; estado.variacoes = {}; }
+    // Refazer as perguntas nunca apaga o histórico nem a evolução: só o plano muda
     var era = Boolean(estado.perfil);
     estado.perfil = p;
     salvar();
@@ -568,10 +593,11 @@
 
   function textoDoPlano(p) {
     var obj = T.porObjetivo[p.objetivo];
+    var e = esquema(p);
     var focos = p.foco.map(function (f) { return minusculo(T.porFoco[f].rotulo); });
     return [
       T.LOCAIS.filter(function (l) { return l.id === p.local; })[0].rotulo + ', ' + p.dias + ' dias por semana, ' +
-        series(p) + ' séries de ' + obj.reps + ' repetições, com ' + obj.descanso + ' segundos de descanso.',
+        series(p) + ' séries de ' + e.reps + ' repetições, com ' + e.descanso + ' segundos de descanso.',
       focos.length ? 'Foco em ' + juntar(focos) + ': exercícios a mais e uma série extra nesses grupos, marcados com Foco.' : '',
       obj.cardio,
       p.cuidados.length ? 'Sem exercícios que forçam: ' + p.cuidados.join(', ') + '.' : ''
@@ -586,15 +612,23 @@
     var naSemana = desenharSemana();
     var gasto = gastoDoTreino(proximo.minutos);
     $('tr-hoje-rotulo').textContent = feitoHoje ? 'Treino de hoje feito' : 'Treino de hoje';
-    $('tr-hoje-titulo').textContent = feitoHoje ? 'Bom trabalho' : 'Treino ' + proximo.letra + ': ' + proximo.nome;
-    $('tr-hoje-detalhe').textContent = (feitoHoje
-      ? 'O próximo é o treino ' + proximo.letra + '. '
-      : 'Opção ' + (proximo.variacao + 1) + ', ' + proximo.exercicios.length + ' exercícios, cerca de ' + proximo.minutos + ' minutos' +
-        (gasto ? ' e ' + gasto + ' kcal' : '') + '. ') +
-      naSemana + ' de ' + p.dias + ' treinos nesta semana.';
+    $('tr-hoje-letra').textContent = proximo.letra;
+    $('tr-hoje-titulo').textContent = feitoHoje ? 'Bom trabalho' : proximo.nome;
+    $('tr-hoje-detalhe').textContent = feitoHoje
+      ? 'Treino de hoje feito. O próximo é o treino ' + proximo.letra + ': ' + minusculo(proximo.nome) + '.'
+      : 'Treino ' + proximo.letra + ' · fase ' + (estado.fase.numero + 1) + ': ' + faseAtual().rotulo;
+    var numeros = $('tr-hoje-numeros');
+    numeros.textContent = '';
+    [[proximo.exercicios.length, 'exercícios'], ['~' + proximo.minutos, 'minutos'], gasto ? ['~' + gasto, 'kcal'] : null, [naSemana + '/' + p.dias, 'na semana']].forEach(function (n) {
+      if (!n) return;
+      var item = criar('span', 'tr-hoje-numero');
+      item.appendChild(criar('strong', '', String(n[0])));
+      item.appendChild(criar('small', '', n[1]));
+      numeros.appendChild(item);
+    });
     $('tr-comecar').textContent = feitoHoje ? 'Treinar de novo' : 'Começar treino';
     $('tr-plano-texto').textContent = textoDoPlano(p);
-    $('tr-alternar').checked = estado.alternar;
+    desenharFase();
 
     var caixa = $('tr-treinos');
     caixa.textContent = '';
@@ -619,30 +653,14 @@
     cab.appendChild(botao('Fazer', 'texto-botao', function () { comecar(t.letra); }));
     c.appendChild(cab);
 
-    var opcoes = criar('div', 'app-segmentos tr-opcoes');
-    opcoes.setAttribute('role', 'group');
-    opcoes.setAttribute('aria-label', 'Opções do treino ' + t.letra);
-    for (var v = 0; v < T.VARIACOES; v += 1) {
-      (function (v) {
-        var b = botao('Opção ' + (v + 1), '', function () {
-          if (variacaoDe(t.letra) === v) return;
-          estado.variacoes[t.letra] = v;
-          salvar();
-          desenharPainel();
-          var novo = document.querySelector('[data-treino="' + t.letra + '"] .tr-opcoes button[aria-pressed="true"]');
-          if (novo) novo.focus();
-          app.avisar('Treino ' + t.letra + ': opção ' + (v + 1) + ' escolhida.');
-        });
-        b.setAttribute('aria-pressed', String(v === t.variacao));
-        opcoes.appendChild(b);
-      })(v);
-    }
     c.dataset.treino = t.letra;
-    c.appendChild(opcoes);
+    var resumo = criar('p', 'tr-treino-resumo', t.exercicios.length + ' exercícios · cerca de ' + t.minutos + ' min');
+    c.appendChild(resumo);
 
     var ul = criar('ul', 'tr-exercicios');
-    t.exercicios.forEach(function (x) {
+    t.exercicios.forEach(function (x, i) {
       var li = criar('li');
+      li.appendChild(criar('span', 'tr-ex-numero', String(i + 1)));
       var nome = criar('span', 'tr-ex-nome', x.exercicio.nome);
       if (x.foco) nome.appendChild(seloFoco());
       li.appendChild(nome);
@@ -659,11 +677,62 @@
     return c;
   }
 
-  $('tr-alternar').addEventListener('change', function () {
-    estado.alternar = $('tr-alternar').checked;
+  /* --- Fases: quando o treino cansa ---------------------------------------------------------- */
+
+  function desenharFase() {
+    var f = faseAtual();
+    var semanas = semanasNaFase();
+    var proxima = T.FASES[(estado.fase.numero + 1) % T.FASES.length];
+    $('tr-fase-numero').textContent = 'Fase ' + (estado.fase.numero + 1);
+    $('tr-fase-nome').textContent = f.rotulo;
+    $('tr-fase-texto').textContent = f.resumo;
+    var parte = Math.min(1, semanas / T.SEMANAS_DA_FASE);
+    $('tr-fase-progresso').style.width = Math.max(4, Math.round(parte * 100)) + '%';
+    $('tr-fase-semanas').textContent = semanas >= T.SEMANAS_DA_FASE
+      ? semanas + ' semanas nesta fase. Já dá para mudar: a próxima é ' + proxima.rotulo + '.'
+      : (semanas === 0 ? 'Começou esta semana.' : (semanas === 1 ? '1 semana' : semanas + ' semanas')) + ' de ' + T.SEMANAS_DA_FASE + '. Repetir a mesma fase faz a carga subir.';
+    $('tr-fase').classList.toggle('tr-fase-pronta', semanas >= T.SEMANAS_DA_FASE);
+    $('tr-mudar-proxima').textContent = 'Começar a fase ' + (estado.fase.numero + 2) + ': ' + proxima.rotulo;
+  }
+
+  function montarMotivos() {
+    var caixa = $('tr-motivos');
+    T.MOTIVOS.forEach(function (m) {
+      var b = botao(m.rotulo, 'tr-motivo', function () { escolherMotivo(m, b); });
+      b.setAttribute('aria-pressed', 'false');
+      b.dataset.motivo = m.id;
+      caixa.appendChild(b);
+    });
+  }
+
+  var motivoEscolhido = '';
+  function escolherMotivo(m, b) {
+    motivoEscolhido = m.id;
+    document.querySelectorAll('.tr-motivo').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    $('tr-mudar-explicacao').textContent = m.explicacao;
+    $('tr-mudar-escolha').hidden = false;
+  }
+
+  $('tr-mudar-proxima').addEventListener('click', function () {
+    var anterior = { numero: estado.fase.numero, desde: estado.fase.desde, ate: app.hojeISO(), motivo: estado.fase.motivo };
+    estado.fase = {
+      numero: Math.min(99, estado.fase.numero + 1),
+      desde: app.hojeISO(),
+      motivo: motivoEscolhido,
+      anteriores: estado.fase.anteriores.concat([anterior]).slice(-20)
+    };
     salvar();
-    app.avisar(estado.alternar ? 'Cada treino vai passar para a próxima opção depois de feito.' : 'Cada treino fica na opção escolhida.');
+    $('tr-mudar-escolha').hidden = true;
+    document.querySelectorAll('.tr-motivo').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+    desenharPainel();
+    $('tr-plano-titulo').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    app.avisar('Fase ' + (estado.fase.numero + 1) + ' começou: ' + faseAtual().rotulo + '. Exercícios novos, mesmo histórico.', function () {
+      estado.fase = { numero: anterior.numero, desde: anterior.desde, motivo: anterior.motivo, anteriores: estado.fase.anteriores.slice(0, -1) };
+      salvar();
+      desenharPainel();
+    });
   });
+  $('tr-mudar-perguntas').addEventListener('click', function () { abrirConfiguracao(); });
 
   /* --- A estratégia, explicada ---------------------------------------------------------------------- */
 
@@ -677,12 +746,13 @@
     } else {
       itens.push(['Empurrar, puxar e pernas', 'Com ' + p.dias + ' dias, os músculos que trabalham juntos treinam no mesmo dia: peito, ombros e tríceps empurram; costas e bíceps puxam; as pernas ficam sozinhas. Cada grupo descansa enquanto os outros trabalham.']);
     }
+    obj = esquema(p);
     var porObjetivo = {
       massa: 'De ' + obj.reps + ' repetições, com ' + obj.descanso + ' segundos de descanso: a faixa que mais estimula o músculo a crescer, com carga pesada o bastante e tempo para recuperar o fôlego entre as séries.',
       emagrecer: 'De ' + obj.reps + ' repetições, com ' + obj.descanso + ' segundos de descanso: o treino fica mais intenso, gasta mais energia e preserva o músculo enquanto você perde gordura. O cardio no fim ajuda a fechar a conta.',
       saude: 'De ' + obj.reps + ' repetições, com ' + obj.descanso + ' segundos de descanso: força e disposição sem exagero, num ritmo que dá para manter por muito tempo.'
     };
-    itens.push(['Repetições para o seu objetivo', porObjetivo[p.objetivo]]);
+    itens.push(['Repetições para o seu objetivo', porObjetivo[p.objetivo] + (faseAtual().id !== 'base' ? ' É a faixa da fase ' + faseAtual().rotulo + '.' : '')]);
     itens.push([p.nivel === 'iniciante' ? '2 séries por exercício, para começar' : 'Mais séries, para quem já treina',
       p.nivel === 'iniciante'
         ? 'É o suficiente para evoluir rápido nas primeiras semanas, com menos dor muscular e tempo para aprender bem cada movimento.'
@@ -693,7 +763,7 @@
       itens.push(['Foco em ' + juntar(nomes), 'Os grupos que você escolheu ganham exercícios e séries a mais. Mais volume na semana é o que mais faz um músculo crescer. Os outros continuam no treino, para o corpo ficar equilibrado.']);
     }
     itens.push(['Carga que sobe aos poucos', 'Anote o peso de cada exercício. Quando o treino fica leve duas vezes seguidas, o app sugere subir 1 a 2 kg ou fazer mais repetições. Essa sobrecarga progressiva é o que faz o corpo continuar mudando.']);
-    itens.push(['Três opções para não cansar', 'Cada treino tem 3 opções com exercícios diferentes para os mesmos músculos. Fique numa por 4 a 6 semanas para ver a carga subir e depois troque, para variar o estímulo.']);
+    itens.push(['Fases para não estagnar', 'O treino passa por fases: Base, Força e Volume. Cada uma dura cerca de ' + T.SEMANAS_DA_FASE + ' semanas, com outros exercícios para os mesmos músculos e outra faixa de repetições. É a periodização: o corpo não se acostuma, e as cargas continuam subindo. Mudar de fase não apaga o seu histórico.']);
     if (p.cuidados.length) {
       itens.push(['Respeitando o seu corpo', 'Os exercícios que costumam forçar ' + juntar(p.cuidados.map(function (c) { return (T.CUIDADOS.filter(function (x) { return x.id === c; })[0] || { rotulo: c }).rotulo.toLowerCase(); })) + ' saíram do treino e foram trocados por outros do mesmo grupo.']);
     }
@@ -769,7 +839,7 @@
     lista.textContent = '';
     estado.sessoes.slice(-10).reverse().forEach(function (s) {
       var li = criar('li');
-      var texto = criar('span', 'app-lista-texto', app.dataCurta(s.data) + ' · Treino ' + s.treino + (s.variacao !== undefined ? ', opção ' + (s.variacao + 1) : ''));
+      var texto = criar('span', 'app-lista-texto', app.dataCurta(s.data) + ' · Treino ' + s.treino + (typeof s.fase === 'number' ? ', fase ' + (s.fase + 1) : (s.variacao !== undefined ? ', opção ' + (s.variacao + 1) : '')));
       var esforco = T.ESFORCOS.filter(function (e) { return e.id === s.esforco; })[0];
       texto.appendChild(criar('small', '', (esforco ? esforco.rotulo : '') + (s.feitos ? ', ' + s.feitos + (s.feitos === 1 ? ' exercício completo' : ' exercícios completos') : '')));
       li.appendChild(texto);
@@ -1016,18 +1086,16 @@
     return c;
   }
 
-  // Onde o exercício entra: no lugar de um exercício do mesmo músculo, em cada treino e opção
+  // Onde o exercício entra: no lugar de um exercício do mesmo músculo, em cada treino da fase
   function mostrarEncaixe(ex, depoisDe) {
     var aberto = document.querySelector('.tr-encaixe');
     if (aberto) aberto.remove();
     var caixa = criar('div', 'tr-encaixe');
     var lugares = [];
     divisao(estado.perfil).forEach(function (m) {
-      for (var v = 0; v < T.VARIACOES; v += 1) {
-        var t = treinoDe(m.letra, v);
-        if (t.exercicios.some(function (x) { return x.exercicio.id === ex.id; })) { lugares.push({ treino: t, ja: true }); continue; }
-        t.exercicios.forEach(function (x) { if (x.exercicio.grupo === ex.grupo) lugares.push({ treino: t, item: x }); });
-      }
+      var t = treinoDe(m.letra);
+      if (t.exercicios.some(function (x) { return x.exercicio.id === ex.id; })) { lugares.push({ treino: t, ja: true }); return; }
+      t.exercicios.forEach(function (x) { if (x.exercicio.grupo === ex.grupo) lugares.push({ treino: t, item: x }); });
     });
     var grupo = minusculo(T.porGrupo[ex.grupo].rotulo);
     if (!lugares.length) {
@@ -1035,7 +1103,7 @@
     } else {
       caixa.appendChild(criar('p', 'tr-trocas-titulo', 'Coloque no lugar de outro exercício de ' + grupo + ':'));
       lugares.slice(0, 8).forEach(function (l) {
-        var rotulo = 'Treino ' + l.treino.letra + ', opção ' + (l.treino.variacao + 1);
+        var rotulo = 'Treino ' + l.treino.letra + ': ' + minusculo(l.treino.nome);
         if (l.ja) { caixa.appendChild(criar('p', 'app-suave', rotulo + ': já está no treino.')); return; }
         var b = criar('button', 'tr-troca-opcao');
         b.type = 'button';
@@ -1093,7 +1161,7 @@
   function desenharSessao() {
     var p = estado.perfil;
     var t = treinoDe(sessao.letra, sessao.variacao);
-    $('tr-sessao-rotulo').textContent = 'Treino ' + t.letra + ' · opção ' + (t.variacao + 1);
+    $('tr-sessao-rotulo').textContent = 'Treino ' + t.letra + ' · fase ' + (estado.fase.numero + 1) + ': ' + faseAtual().rotulo;
     $('tr-sessao-titulo').textContent = t.nome;
     var dica = conselho(t.letra);
     $('tr-sessao-texto').textContent = 'Comece com 5 minutos de aquecimento leve. Em cada série, anote a carga e as repetições e marque ao terminar: o descanso começa sozinho. Em branco, vale o que você fez da última vez.' + (dica ? ' ' + dica : '');
@@ -1197,7 +1265,7 @@
             // Marcou sem preencher: vale a sugestão da última vez
             if (atual[0] === null && sug.kg !== null) { atual[0] = sug.kg; kg.value = kgTexto(sug.kg); }
             if (atual[1] === null && sug.reps !== null) { atual[1] = sug.reps; reps.value = String(sug.reps); }
-            if (i < n - 1) iniciarDescanso(T.porObjetivo[p.objetivo].descanso);
+            if (i < n - 1) iniciarDescanso(esquema(p).descanso);
           }
         });
         caixa.appendChild(linha);
@@ -1240,13 +1308,9 @@
     var guardar = seriesParaGuardar();
     var algum = Object.keys(sessao.marcas).some(function (k) { return sessao.marcas[k].some(Boolean); }) || Object.keys(guardar.series).length > 0;
     if (!algum && !window.confirm('Nenhuma série marcada. Registrar o treino mesmo assim?')) return;
-    estado.sessoes.push({ data: app.hojeISO(), treino: sessao.letra, variacao: sessao.variacao, esforco: sessao.esforco, feitos: feitos, cargas: guardar.cargas, series: guardar.series });
+    estado.sessoes.push({ data: app.hojeISO(), treino: sessao.letra, variacao: sessao.variacao, fase: estado.fase.numero, esforco: sessao.esforco, feitos: feitos, cargas: guardar.cargas, series: guardar.series });
     if (estado.sessoes.length > 500) estado.sessoes = estado.sessoes.slice(-500);
     var mudou = '';
-    if (estado.alternar) {
-      estado.variacoes[sessao.letra] = (sessao.variacao + 1) % T.VARIACOES;
-      mudou = ' Da próxima vez, o treino ' + sessao.letra + ' vem na opção ' + (estado.variacoes[sessao.letra] + 1) + '.';
-    }
     pararDescanso();
     sessao = null;
     salvar();

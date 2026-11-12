@@ -222,6 +222,26 @@ window.AR_TREINO_DADOS = (function () {
     { id: 'massa', rotulo: 'Ganhar massa muscular', reps: '8 a 12', descanso: 90, cardio: '' },
     { id: 'saude', rotulo: 'Saúde e disposição', reps: '10 a 15', descanso: 60, cardio: 'Nos dias sem treino, caminhe 20 a 30 minutos.' }
   ];
+  // Fases do treino (periodização). A cada fase nova, os exercícios mudam para os mesmos
+  // músculos e a faixa de repetições também: o corpo recebe um estímulo diferente.
+  var FASES = [
+    { id: 'base', rotulo: 'Base', resumo: 'Técnica e constância, na faixa de repetições do seu objetivo.' },
+    { id: 'forca', rotulo: 'Força', resumo: 'Menos repetições, mais carga e descanso maior. O músculo trabalha pesado.' },
+    { id: 'volume', rotulo: 'Volume', resumo: 'Mais repetições e descanso curto. O músculo trabalha até cansar.' }
+  ];
+  // Repetições e descanso de cada fase, por objetivo (a Base usa os do objetivo)
+  var ESQUEMAS = {
+    forca: { massa: { reps: '6 a 8', descanso: 120 }, emagrecer: { reps: '8 a 10', descanso: 75 }, saude: { reps: '8 a 10', descanso: 90 } },
+    volume: { massa: { reps: '12 a 15', descanso: 60 }, emagrecer: { reps: '15 a 20', descanso: 30 }, saude: { reps: '12 a 15', descanso: 45 } }
+  };
+  // Semanas que vale ficar numa fase antes de mudar
+  var SEMANAS_DA_FASE = 6;
+  var MOTIVOS = [
+    { id: 'cansei', rotulo: 'Cansei do treino', explicacao: 'Normal depois de algumas semanas. Uma fase nova traz exercícios diferentes para os mesmos músculos, e o treino volta a ter novidade.' },
+    { id: 'repetitivo', rotulo: 'Ficou repetitivo', explicacao: 'O corpo se acostuma com o mesmo estímulo. Mudando os exercícios e a faixa de repetições, ele volta a ser desafiado.' },
+    { id: 'sem_efeito', rotulo: 'Não sinto efeito', explicacao: 'Quando a carga para de subir, é hora de mudar o estímulo. A fase nova muda as repetições e o descanso, e as cargas voltam a evoluir.' }
+  ];
+
   var NIVEIS = [
     { id: 'iniciante', rotulo: 'Começando agora ou voltando', series: 2 },
     { id: 'intermediario', rotulo: 'Treino há mais de 6 meses', series: 3 }
@@ -290,6 +310,7 @@ window.AR_TREINO_DADOS = (function () {
     EXERCICIOS: EXERCICIOS, GRUPOS: GRUPOS, MOVIMENTOS: MOVIMENTOS, GRUPO_DO_MOVIMENTO: GRUPO_DO_MOVIMENTO,
     classificar: classificar, normalizar: normalizar,
     FOCOS: FOCOS, MAXIMO_FOCOS: MAXIMO_FOCOS, VARIACOES: VARIACOES, DIVISOES: DIVISOES,
+    FASES: FASES, ESQUEMAS: ESQUEMAS, SEMANAS_DA_FASE: SEMANAS_DA_FASE, MOTIVOS: MOTIVOS,
     OBJETIVOS: OBJETIVOS, NIVEIS: NIVEIS, LOCAIS: LOCAIS, TEMPOS: TEMPOS, CUIDADOS: CUIDADOS, ESFORCOS: ESFORCOS,
     porExercicio: indice(EXERCICIOS), porGrupo: indice(GRUPOS), porFoco: indice(FOCOS),
     porObjetivo: indice(OBJETIVOS), porNivel: indice(NIVEIS), porTempo: indice(TEMPOS)

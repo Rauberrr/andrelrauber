@@ -114,23 +114,26 @@ O cPanel manda para o e-mail da conta o que a tarefa escrever, como `Lembretes e
 
 ### Lembretes no navegador (Hábitos)
 
-O app Hábitos avisa no celular ou no computador na hora de cada hábito, mesmo com o navegador fechado (Web Push). Funciona no Chrome, Edge, Firefox e Safari. No iPhone, só depois de colocar o site na Tela de Início e abrir por lá; a página explica isso à pessoa.
+O app Hábitos avisa no celular ou no computador na hora de cada hábito e de cada lembrete, mesmo com o site e o navegador fechados (Web Push). Funciona no Chrome, Edge, Firefox e Safari. No iPhone, só depois de colocar o site na Tela de Início e abrir por lá; a página explica isso à pessoa.
 
-Para os avisos saírem, crie mais uma tarefa no cPanel, a cada 15 minutos:
+**Sem esta tarefa do Cron, nenhum aviso sai com o site fechado.** Crie no cPanel, a cada 5 minutos (ou 15, se a hospedagem não deixar menos):
 
 1. No cPanel, abra **Cron Jobs**.
-2. Em **Configurações comuns**, escolha **A cada 15 minutos**.
+2. Em **Configurações comuns**, escolha **A cada 5 minutos** (`*/5 * * * *`).
 3. Em **Comando**, cole:
 
 ```
 /usr/local/bin/php /home2/and63667/public_html/api/tarefas/habitos.php
 ```
 
-4. Clique em **Adicionar novo trabalho Cron**. Para não receber um e-mail a cada 15 minutos, deixe vazio o campo **E-mail do Cron** ou ponha `>/dev/null 2>&1` no fim do comando.
+4. Clique em **Adicionar novo trabalho Cron**. Para não receber um e-mail a cada vez, deixe vazio o campo **E-mail do Cron** ou ponha `>/dev/null 2>&1` no fim do comando.
+
+Para conferir: no app Hábitos, toque em **Testar com o site fechado** e feche o site; em uns 20 segundos chega a notificação. Esse teste não depende do Cron. Os lembretes na hora marcada dependem.
 
 Como funciona:
 
-- O servidor manda só um toque, sem conteúdo, para o serviço de notificações do navegador (Google, Apple ou Mozilla). Ao receber, o `sw.js`, na raiz do site, busca os avisos na conta da pessoa em `api/habitos.php?acao=avisos` e mostra cada um. Assim nada do que ela anotou passa por esses serviços.
+- O aviso vai dentro da própria notificação, cifrado de ponta a ponta (RFC 8291) com as chaves que o navegador entregou ao se inscrever (tabela `push_chaves`). O serviço de notificações (Google, Apple ou Mozilla) só transporta, sem conseguir ler. Por isso chega com o site fechado, sem depender da conta conectada no navegador. Aparelhos inscritos antes disso mandam as chaves sozinhos na próxima vez que abrirem o app; até lá, recebem o toque vazio, e o `sw.js` busca o aviso em `api/habitos.php?acao=avisos`.
+- **Lembretes simples:** além dos hábitos, a pessoa cria lembretes só com o texto e a hora, para uma vez numa data, todo dia ou em alguns dias da semana (até 30). Ficam junto dos hábitos, em `apps_dados`. Vários avisos na mesma hora viram uma notificação só, com o resumo.
 - Avisa na hora marcada de cada hábito que ainda não foi feito, e às 20h o resgate: o hábito ficou para trás no último dia e ainda está em aberto. A hora segue o fuso do aparelho da pessoa. Nada se repete, pela tabela `lembretes_enviados`.
 - As chaves que assinam os toques (VAPID) são criadas sozinhas no primeiro uso, em `api/privado`, uma pasta bloqueada ao navegador e fora do GitHub. Não apague essa pasta: com chaves novas, todo mundo precisa ativar os lembretes de novo.
 - Os aparelhos ficam em `push_inscricoes` e os avisos esperando o navegador, em `avisos_push` (apagados depois de 7 dias). Para criar essas tabelas num site que já está no ar, importe o `api/banco.sql` de novo no phpMyAdmin: ele só cria o que falta.
@@ -160,6 +163,8 @@ Ao atualizar o site depois, nunca apague a pasta `api/fotos-pecas`: é nela que 
 - **Licença da biblioteca:** AGPL. Antes de usar comercialmente, confira as condições ou fale com a IMG.LY sobre uma licença comercial.
 - **Fotos:** ficam em `api/fotos-pecas`, bloqueadas ao acesso direto, e só abrem para a pessoa dona delas. O servidor regrava cada imagem, o que apaga dados como a localização. Nem o painel mostra as fotos.
 - **Peças sugeridas:** cada pessoa recebe as peças da lista `GR_SUGERIDAS`, em `api/guarda-roupa.php`, na primeira vez que abre o guarda-roupa. As fotos sem fundo ficam em `assets/img/sugeridas`, e as originais, em `imagens-guarda-roupa`, fora do GitHub. Para acrescentar uma peça, inclua a foto e a linha na lista: quem já tem conta também a recebe.
+- **Catálogo de peças:** na aba Peças, **Catálogo de peças** (ou **+ → Do catálogo**) mostra as sugeridas e as peças da marca em outras cores (`GR_CATALOGO`, em `api/guarda-roupa.php`): camisetas, camisas, moletons e calças de moletom. A pessoa toca nas que tem e elas entram no guarda-roupa, prontas para os looks; as do catálogo não contam no limite. As cores novas foram feitas recolorindo as fotos sem fundo das peças brancas e cinza, para ficarem iguais às outras.
+- **Peças cadastradas no painel:** em **Painel → Guarda-roupa**, o gestor cadastra peças para todos os clientes, com foto, tipo, cor, corte, tecido, formalidade e clima. A foto vai para uma moldura de 1000 × 1250, como as da marca (de preferência PNG sem fundo), e fica em `api/fotos-catalogo`, fora do GitHub; não apague essa pasta. Com **Colocar no guarda-roupa de todo mundo**, a peça entra sozinha para todos, como as sugeridas; sem marcar, fica só no catálogo. **Tirar do catálogo** esconde a peça, e quem já tem continua com ela. As peças ficam na tabela `catalogo_pecas`.
 - **Peças excluídas:** ficam na aba Excluídas, com as fotos, até a pessoa adicionar de novo ou apagar de vez. As sugeridas só saem junto com a conta, porque a foto é da marca.
 - **Várias peças de uma vez:** em **Adicionar várias**, a pessoa faz todas as fotos, descreve cada uma enquanto o fundo sai em segundo plano e guarda até 20 de cada vez. O código fica em `assets/js/guarda-roupa-lote.js`.
 - **Looks:** as regras de cor, ocasião, clima e caimento estão em `assets/js/guarda-roupa-looks.js`. As listas de tipos, cores e cortes estão em `assets/js/guarda-roupa-dados.js` e `api/guarda-roupa.php`, que precisam ficar iguais.
@@ -307,8 +312,8 @@ Os prazos de confecção são estimativas, em `SOB_MEDIDA` e `FOLGA`, no começo
 Em `/apps/treino/`, a pessoa escolhe o objetivo, a experiência, o local (academia, casa com halteres ou casa sem equipamento), os dias por semana e o tempo, e marca se sente dor no joelho, no ombro ou na lombar. O app monta a divisão (corpo inteiro, parte de cima e pernas, ou empurrar, puxar e pernas), guia o treino com as séries e o descanso, guarda as cargas e mostra a semana. Os exercícios e as alternativas ficam em `assets/js/treino-dados.js`.
 
 - **Foco:** a pessoa pode escolher até dois grupos, como peito e braços. Os treinos que trabalham esses grupos ganham até dois exercícios a mais, e cada exercício do foco ganha uma série a mais. Eles aparecem com o selo **Foco**.
-- **3 opções por treino:** cada treino (A, B, C...) tem 3 opções, com exercícios diferentes para os mesmos músculos. A pessoa escolhe a opção no cartão do treino, ou liga **Alternar as opções a cada treino**.
-- **Trocar um exercício:** o botão de troca mostra até 3 exercícios do mesmo grupo muscular que servem para o local e os cuidados da pessoa. Com restrições fortes, como em casa e com dor no joelho, podem sobrar menos de 3. A troca vale para aquele treino e aquela opção.
+- **Um plano padrão e as fases:** a pessoa vê um plano só. Quando o treino cansa, fica repetitivo ou para de render, ela toca no que está sentindo em **O treino não está mais rendendo?** e começa a fase seguinte (periodização): **Base** (repetições do objetivo), **Força** (menos repetições, mais carga e descanso) e **Volume** (mais repetições, descanso curto), em ciclo. Cada fase troca os exercícios por outros para os mesmos músculos e muda a faixa de repetições e o descanso (`FASES` e `ESQUEMAS`, em `treino-dados.js`). A barra da fase sugere mudar depois de 6 semanas. Também dá para **Refazer as perguntas**. Nada disso mexe no histórico nem na evolução das cargas; cada treino registrado guarda a fase em que foi feito.
+- **Trocar um exercício:** o botão de troca mostra até 3 exercícios do mesmo grupo muscular que servem para o local e os cuidados da pessoa. Com restrições fortes, como em casa e com dor no joelho, podem sobrar menos de 3. A troca vale para aquele treino e aquela fase.
 - **Ligação com a Alimentação:** os dois apps usam as mesmas medidas (sexo, idade, altura e peso), guardadas no navegador em `ar-corpo-v1`. Quem preenche num, não digita de novo no outro. Ao terminar o plano alimentar, a Alimentação convida a montar o treino; depois de montar o treino, o Treino mostra a meta de calorias e de proteína do plano, ou convida a montá-lo. Os dias de treino sugerem a rotina na Alimentação, e o objetivo passa de um app para o outro.
 
 - **Carga e repetições por série:** durante o treino, cada série tem os campos de carga (kg) e repetições (ou segundos, nos exercícios de tempo). O que foi feito da última vez aparece como sugestão e vale se a pessoa marcar a série sem preencher.
@@ -327,6 +332,22 @@ Em `/apps/habitos/`, para quem já tentou mudar um hábito e desistiu. O app seg
 - Modelos prontos (ler, beber água, treinar, caminhar, meditar...) em `MODELOS`, no `assets/js/habitos.js`. Quem tenta criar mais de 3 hábitos recebe a dica de firmar os que já tem.
 
 Os hábitos ficam no navegador e só vão para a conta se a pessoa autorizar. Os lembretes com o navegador fechado precisam deles na conta, e a página pede essa autorização ao ativar.
+
+## Assinatura dos apps
+
+Em **Painel → Assinatura**, o gestor escolhe em que modo os apps estão:
+
+| Modo | Os apps | A página `assinatura.html` |
+| --- | --- | --- |
+| Grátis, página oculta (padrão) | Grátis para quem tem conta | Só o gestor vê, como prévia |
+| Grátis, com aviso de teste | Grátis para quem tem conta | Todos veem: os apps estão em teste e vai ter assinatura mensal. A tela inicial dos apps mostra o aviso |
+| Cobrando | Só para quem tem acesso liberado | Quem não tem é levado para a página do plano |
+
+- No mesmo lugar ficam o nome do plano, o valor por mês e o que ele inclui. O gestor sempre usa os apps.
+- **Acesso liberado:** o gestor libera uma conta pelo e-mail, com ou sem data para acabar (cortesia, parceria, quem pagou por fora). Fica na tabela `assinaturas`.
+- **Pagamento online:** ainda não está ligado. Com a cobrança ativa, quem toca em Assinar recebe o link do WhatsApp da marca para combinar, e o gestor libera o acesso. O próximo passo é a assinatura recorrente do Mercado Pago.
+- Com a cobrança ativa, as APIs dos apps respondem 402 para quem não tem acesso, e os lembretes dessas pessoas param. Os dados continuam guardados.
+- O modo e os ajustes ficam na tabela `configuracoes`. Para criar as tabelas novas num site que já está no ar, importe o `api/banco.sql` de novo.
 
 ## Alimentação
 
@@ -376,6 +397,10 @@ Os mesmos dados ficam no phpMyAdmin, nas tabelas `usuarios`, `cadastros` e `even
 | Exercícios do Treino | `assets/js/treino-dados.js` |
 | Modelos de hábitos | `assets/js/habitos.js` |
 | Publicar vídeos (redes, envio, etapas) | `api/redes.php`, `api/videos.php`, `assets/js/painel-videos.js` |
+| Catálogo do guarda-roupa (peças e cores) | `GR_CATALOGO` em `api/guarda-roupa.php`, `assets/js/guarda-roupa-catalogo.js`, `assets/js/painel-extras.js` |
+| Assinatura (modos, plano, acesso) | `api/assinatura.php`, `ASSINATURA_PADRAO` em `api/nucleo.php`, `assinatura.html`, `assets/js/assinatura.js` |
+| Fases do treino | `FASES`, `ESQUEMAS` e `MOTIVOS` em `assets/js/treino-dados.js` |
+| Lembretes e notificações | `assets/js/habitos.js`, `api/push.php`, `api/tarefas/habitos.php`, `sw.js` |
 | Visual dos apps | `assets/css/apps.css` |
 | Opções do pedido exclusivo e categorias da coleção | `assets/js/colecao-dados.js` |
 | Fita métrica da página inicial | `assets/js/home-animacoes.js` |

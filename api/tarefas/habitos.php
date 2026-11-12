@@ -1,14 +1,15 @@
 <?php
 /**
- * Lembretes dos hábitos no navegador. Roda a cada 15 minutos pelo "Cron Jobs" do cPanel,
- * nunca pelo navegador:
+ * Lembretes dos hábitos no navegador. Roda a cada 5 minutos (ou 15, se a hospedagem não deixar
+ * menos) pelo "Cron Jobs" do cPanel, nunca pelo navegador:
  *
- *   * /15 * * * *   /usr/local/bin/php /home2/and63667/public_html/api/tarefas/habitos.php
+ *   * /5 * * * *   /usr/local/bin/php /home2/and63667/public_html/api/tarefas/habitos.php
  *   (sem o espaço entre o asterisco e a barra)
  *
  * Para cada pessoa com lembretes ligados num aparelho:
  * - na hora marcada de cada hábito do dia, se ainda não foi feito;
- * - às 20h, o resgate: o hábito (com lembrete) ficou para trás no último dia e ainda não foi feito hoje.
+ * - às 20h, o resgate: o hábito (com lembrete) ficou para trás no último dia e ainda não foi feito hoje;
+ * - os lembretes simples: uma vez numa data, todo dia ou em dias da semana, na hora marcada.
  * As horas seguem o fuso do aparelho da pessoa. Nunca repete o mesmo aviso.
  */
 declare(strict_types=1);
@@ -71,6 +72,13 @@ function marcar_avisado(int $usuarioId, string $chave): void
     consultar('INSERT INTO lembretes_enviados (usuario_id, chave, enviado_em) VALUES (?, ?, ?)', [$usuarioId, mb_substr($chave, 0, 100), agora()]);
 }
 
+// Marca quando rodou: o app e o painel mostram se a tarefa do Cron está ligada
+try {
+    gravar_ajuste('tarefa_habitos_em', time());
+} catch (PDOException $erro) {
+    // Banco ainda sem a tabela de ajustes: os lembretes saem do mesmo jeito
+}
+
 $linhas = consultar(
     "SELECT a.usuario_id, a.dados FROM apps_dados a
      WHERE a.app = 'habitos' AND EXISTS (SELECT 1 FROM push_inscricoes p WHERE p.usuario_id = a.usuario_id)"
@@ -79,8 +87,15 @@ $linhas = consultar(
 $total = 0;
 foreach ($linhas as $linha) {
     $id = (int) $linha['usuario_id'];
+    $pessoa = consultar('SELECT * FROM usuarios WHERE id = ?', [$id])->fetch();
+    if (!$pessoa || !acesso_aos_apps($pessoa)) {
+        continue;
+    }
     $dados = json_decode((string) $linha['dados'], true);
     if (!is_array($dados) || ($dados['avisos'] ?? false) !== true || !is_array($dados['habitos'] ?? null)) {
+        continue;
+    }
+    if (!$dados['habitos'] && empty($dados['lembretes'])) {
         continue;
     }
     $fuso = in_array($dados['fuso'] ?? '', timezone_identifiers_list(), true) ? $dados['fuso'] : 'America/Sao_Paulo';
@@ -120,17 +135,35 @@ foreach ($linhas as $linha) {
             }
         }
     }
+    // Lembretes simples: só o texto e a hora
+    foreach ((is_array($dados['lembretes'] ?? null) ? $dados['lembretes'] : []) as $l) {
+        if (!is_array($l) || !is_string($l['id'] ?? null) || ($l['hora'] ?? '') === '' || !na_janela((string) $l['hora'], $agoraMin)) {
+            continue;
+        }
+        $repetir = (string) ($l['repetir'] ?? 'uma');
+        $vale = ($repetir === 'uma' && ($l['data'] ?? '') === $hoje)
+            || $repetir === 'diario'
+            || ($repetir === 'dias' && in_array($semana, is_array($l['dias'] ?? null) ? $l['dias'] : [], true));
+        $chave = 'lem-' . $l['id'] . '-' . $hoje;
+        if ($vale && !ja_avisado($id, $chave)) {
+            marcar_avisado($id, $chave);
+            $novos[] = [(string) $l['texto'], 'Lembrete das ' . str_replace(':', 'h', (string) $l['hora']) . '. Toque para abrir.', 'lembrete'];
+        }
+    }
     if (!$novos) {
         continue;
     }
+    $avisos = [];
     foreach ($novos as $n) {
+        $marca = $n[2] ?? 'habitos';
         consultar(
             'INSERT INTO avisos_push (usuario_id, titulo, texto, marca, criado_em) VALUES (?, ?, ?, ?, ?)',
-            [$id, mb_substr($n[0], 0, 80), mb_substr($n[1], 0, 200), 'habitos', agora()]
+            [$id, mb_substr($n[0], 0, 80), mb_substr($n[1], 0, 200), $marca, agora()]
         );
+        $avisos[] = ['titulo' => $n[0], 'texto' => $n[1], 'marca' => $marca];
     }
-    // Um toque por aparelho: o sw.js busca e mostra todos os avisos novos
-    $total += cutucar_aparelhos($id);
+    // Uma notificação por aparelho, com o aviso dentro (ou o resumo, se forem vários)
+    $total += cutucar_aparelhos($id, $avisos);
 }
 
 echo 'Aparelhos avisados: ' . $total . PHP_EOL;

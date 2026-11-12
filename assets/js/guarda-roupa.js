@@ -1827,6 +1827,16 @@
       paginaLooks = 1;
       desenharPecas();
     },
+    // Peça escolhida no catálogo (guarda-roupa-catalogo.js): nova ou de volta das Excluídas
+    aoTrazerDoCatalogo: function (peca) {
+      excluidas = excluidas.filter(function (p) { return p.id !== peca.id; });
+      pecas = pecas.filter(function (p) { return p.id !== peca.id; });
+      pecas.unshift(peca);
+      paginaLooks = 1;
+      desenharPecas();
+      desenharExcluidas();
+      atualizarContagemExcluidas();
+    },
     avisar: avisar,
     pagina: PAGINA
   };

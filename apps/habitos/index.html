@@ -17,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261111b">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261111a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261112a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261112a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -47,6 +47,7 @@
         <li><strong>Nunca falhe duas vezes.</strong> Esquecer um dia acontece. Dois seguidos é o começo de desistir. O app avisa antes.</li>
       </ol>
       <button class="botao botao-cheio" id="hb-primeiro" type="button">Criar meu primeiro hábito</button>
+      <p class="app-suave hb-so-lembrete">Só quer ser lembrado de algo? Use os <a href="apps/habitos/#lb-titulo">Lembretes</a>, logo abaixo.</p>
     </section>
 
     <!-- Painel -->
@@ -87,29 +88,41 @@
         <ul class="app-lista" id="hb-numeros" style="margin-top:.85rem"></ul>
       </section>
 
-      <section class="app-secao" aria-labelledby="hb-lembretes-titulo">
-        <h2 class="app-secao-titulo" id="hb-lembretes-titulo">Lembretes no celular</h2>
-        <div class="app-cartao hb-lembretes">
-          <span class="hb-lembretes-icone" aria-hidden="true"><svg data-icone="sino"></svg></span>
-          <div>
-            <p class="hb-lembretes-estado" id="hb-lembretes-estado"></p>
-            <p class="app-suave" id="hb-lembretes-texto"></p>
-            <div class="app-botoes" id="hb-lembretes-botoes"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="app-secao" aria-labelledby="hb-ajustes-titulo">
-        <h2 class="app-secao-titulo" id="hb-ajustes-titulo">Ajustes</h2>
-        <div class="app-cartao">
-          <label class="app-interruptor"><span><strong>Guardar na minha conta</strong></span><input id="hb-guardar" type="checkbox"><span class="app-interruptor-trilho" aria-hidden="true"></span></label>
-          <p class="app-suave" id="hb-guardar-texto" style="margin-top:.4rem"></p>
-        </div>
-        <div class="app-botoes">
-          <button class="texto-botao" type="button" id="hb-apagar" style="color:var(--erro)">Apagar meus hábitos</button>
-        </div>
-      </section>
     </div>
+    <!-- Lembretes simples: aparecem com ou sem hábitos -->
+    <section class="app-secao lb-secao" aria-labelledby="lb-titulo">
+      <div class="lb-cabeca">
+        <div>
+          <h2 class="app-secao-titulo" id="lb-titulo">Lembretes</h2>
+          <p class="app-secao-texto">Para o que não é hábito: tomar o remédio, pagar uma conta, ligar para alguém. Só o texto e a hora.</p>
+        </div>
+        <button class="botao" id="lb-novo" type="button"><svg data-icone="mais"></svg>Novo lembrete</button>
+      </div>
+      <ul class="lb-lista" id="lb-lista"></ul>
+      <p class="app-suave lb-vazio" id="lb-vazio">Nenhum lembrete ainda.</p>
+    </section>
+    <section class="app-secao" aria-labelledby="hb-lembretes-titulo">
+      <h2 class="app-secao-titulo" id="hb-lembretes-titulo">Notificações no celular</h2>
+      <div class="app-cartao hb-lembretes">
+        <span class="hb-lembretes-icone" aria-hidden="true"><svg data-icone="sino"></svg></span>
+        <div>
+          <p class="hb-lembretes-estado" id="hb-lembretes-estado"></p>
+          <p class="app-suave" id="hb-lembretes-texto"></p>
+          <div class="app-botoes" id="hb-lembretes-botoes"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="app-secao" aria-labelledby="hb-ajustes-titulo">
+      <h2 class="app-secao-titulo" id="hb-ajustes-titulo">Ajustes</h2>
+      <div class="app-cartao">
+        <label class="app-interruptor"><span><strong>Guardar na minha conta</strong></span><input id="hb-guardar" type="checkbox"><span class="app-interruptor-trilho" aria-hidden="true"></span></label>
+        <p class="app-suave" id="hb-guardar-texto" style="margin-top:.4rem"></p>
+      </div>
+      <div class="app-botoes">
+        <button class="texto-botao" type="button" id="hb-apagar" style="color:var(--erro)">Apagar meus hábitos e lembretes</button>
+      </div>
+    </section>
   </main>
 
   <dialog class="modal-figura gr-modal" id="hb-modal" aria-labelledby="hb-modal-titulo">
@@ -169,6 +182,46 @@
     </form>
   </dialog>
 
+  <dialog class="modal-figura gr-modal" id="lb-modal" aria-labelledby="lb-modal-titulo">
+    <button class="modal-fechar" id="lb-fechar" type="button" aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+    <form class="gr-modal-corpo app-formulario" id="lb-form" novalidate>
+      <h2 class="titulo-m" id="lb-modal-titulo">Novo lembrete</h2>
+      <div class="campo">
+        <label for="lb-texto">Lembrar de</label>
+        <div class="campo-entrada"><input id="lb-texto" type="text" maxlength="80" placeholder="Ex.: Tomar o remédio" autocomplete="off" required></div>
+        <p class="erro" id="lb-erro-texto" role="alert"></p>
+      </div>
+      <fieldset class="app-grupo">
+        <legend>Repetir</legend>
+        <div class="lb-repetir" role="radiogroup">
+          <label><input type="radio" name="lb-repetir" value="uma" checked><span>Uma vez</span></label>
+          <label><input type="radio" name="lb-repetir" value="diario"><span>Todo dia</span></label>
+          <label><input type="radio" name="lb-repetir" value="dias"><span>Alguns dias</span></label>
+        </div>
+      </fieldset>
+      <div class="campos">
+        <div class="campo" id="lb-campo-data">
+          <label for="lb-data">Dia</label>
+          <div class="campo-entrada"><input id="lb-data" type="date"></div>
+        </div>
+        <div class="campo">
+          <label for="lb-hora">Hora</label>
+          <div class="campo-entrada"><input id="lb-hora" type="time" step="300" required></div>
+        </div>
+      </div>
+      <fieldset class="app-grupo" id="lb-campo-dias" hidden>
+        <legend>Em quais dias</legend>
+        <div class="app-escolhas hb-dias" id="lb-dias"></div>
+      </fieldset>
+      <p class="erro" id="lb-erro" role="alert"></p>
+      <div class="gr-botoes-empilhados">
+        <button class="botao botao-cheio" id="lb-salvar" type="submit">Criar lembrete</button>
+        <button class="texto-botao" id="lb-excluir" type="button" style="color:var(--erro)" hidden>Apagar este lembrete</button>
+      </div>
+    </form>
+  </dialog>
   <nav class="app-abas" aria-label="Apps">
     <a href="apps/"><svg data-icone="apps"></svg>Apps</a>
     <a href="apps/guarda-roupa/"><svg data-icone="cabide"></svg>Guarda-roupa</a>
@@ -180,8 +233,8 @@
   <p class="app-aviso" id="app-aviso" role="status" aria-live="polite"></p>
 
   <script src="assets/js/config.js?v=20261111a"></script>
-  <script src="assets/js/conta-api.js?v=20261111b"></script>
-  <script src="assets/js/apps.js?v=20261111a"></script>
-  <script src="assets/js/habitos.js?v=20261111a"></script>
+  <script src="assets/js/conta-api.js?v=20261112a"></script>
+  <script src="assets/js/apps.js?v=20261112a"></script>
+  <script src="assets/js/habitos.js?v=20261112a"></script>
 </body>
 </html>
