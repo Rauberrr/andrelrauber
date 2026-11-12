@@ -235,6 +235,7 @@ Em **Painel → Vídeos** (`painel-videos.html`, só para administrador), você 
 - O vídeo sobe em pedaços de 4 MB assim que é escolhido, então funciona com vídeos grandes (até 500 MB) e conexão instável. Use MP4 ou MOV vertical (9:16). Para virar Short no YouTube, até 3 minutos.
 - O que é "agora" o próprio painel publica enquanto a página está aberta. O agendado sai pela tarefa do Cron, com até 5 minutos de diferença. Se fechar a página no meio, o Cron termina.
 - Cada rede aparece separada na lista, com o link do post, o erro que a rede deu (com **Tentar de novo**) e **Cancelar** para o que ainda está agendado.
+- O Instagram baixa o vídeo direto do site, por um link temporário e assinado (`api/video.php`, válido por 6 horas). Os outros recebem o arquivo enviado pelo servidor.
 - Os vídeos ficam em `api/privado/videos` e saem do servidor 3 dias depois de publicados em todas as redes. As contas ficam na tabela `redes_contas`, com os tokens cifrados pelo `segredo` do `config.php`. As senhas das redes nunca passam pelo site: você entra na página da própria rede.
 
 ### O que cada rede permite hoje

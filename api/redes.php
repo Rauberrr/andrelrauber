@@ -341,6 +341,21 @@ function caminho_do_video(array $video): string
     return pasta_videos() . '/' . basename((string) $video['arquivo']);
 }
 
+// Assinatura do link temporário: só quem tem o segredo do config.php consegue gerar
+function assinatura_do_video(array $video, int $ate): string
+{
+    return hash_hmac('sha256', 'video|' . $video['id'] . '|' . $video['arquivo'] . '|' . $ate, (string) (config()['segredo'] ?? ''));
+}
+
+// Link para a rede baixar o vídeo direto do site (api/video.php), válido por algumas horas
+function link_do_video(array $video, int $validade = 21600): string
+{
+    $ate = time() + $validade;
+    return rtrim((string) (config()['site_url'] ?? ''), '/') . '/api/video.php?' . http_build_query([
+        'v' => (int) $video['id'], 'ate' => $ate, 'ass' => assinatura_do_video($video, $ate),
+    ]);
+}
+
 /* --- Publicar: cada rede em etapas ------------------------------------------------------------ */
 
 /**
@@ -396,28 +411,17 @@ function legenda_completa(array $p): string
     return trim((string) $p['legenda']);
 }
 
-/* Instagram: contêiner de Reels, envio do arquivo, espera o processamento, publica */
+/* Instagram: contêiner de Reels com o link do vídeo (o Instagram baixa do site), espera o processamento, publica */
 function publicar_instagram(array $p, array $video, array $conta, array &$estado, int $fim): array
 {
     $token = $conta['token'];
     $graph = base_rede('graph');
     if (empty($estado['conteiner'])) {
         $r = exigir_ok(http_rede('POST', $graph . '/' . $conta['conta'] . '/media', [], [
-            'media_type' => 'REELS', 'upload_type' => 'resumable', 'caption' => mb_substr(legenda_completa($p), 0, 2200),
+            'media_type' => 'REELS', 'video_url' => link_do_video($video), 'caption' => mb_substr(legenda_completa($p), 0, 2200),
             'share_to_feed' => 'true', 'access_token' => $token,
         ]), 'Instagram');
         $estado['conteiner'] = (string) $r['id'];
-        // O Instagram devolve o endereço de envio do contêiner; sem ele, monta o padrão
-        $estado['envio'] = (string) ($r['uri'] ?? '');
-    }
-    if (empty($estado['enviado'])) {
-        $versao = (string) (config()['meta_versao'] ?? 'v23.0');
-        $tamanho = (int) $video['tamanho'];
-        $envio = !empty($estado['envio']) ? $estado['envio'] : base_rede('rupload') . '/ig-api-upload/' . $versao . '/' . $estado['conteiner'];
-        exigir_ok(http_rede('POST', $envio, [
-            'Authorization: OAuth ' . $token, 'offset: 0', 'file_size: ' . $tamanho, 'Content-Type: application/octet-stream',
-        ], null, [caminho_do_video($video), 0, $tamanho], 600), 'Envio ao Instagram');
-        $estado['enviado'] = true;
     }
     // O Instagram processa o vídeo antes de deixar publicar
     while (true) {
@@ -427,7 +431,7 @@ function publicar_instagram(array $p, array $video, array $conta, array &$estado
             break;
         }
         if ($codigo === 'ERROR' || $codigo === 'EXPIRED') {
-            throw new ErroRede('O Instagram recusou o vídeo: ' . ($s['status'] ?? $codigo) . '. Reels pedem vídeo vertical, de 3 segundos a 15 minutos.');
+            throw new ErroRede('O Instagram recusou o vídeo: ' . ($s['status'] ?? $codigo) . '. Reels pedem MP4 ou MOV (H.264, áudio AAC), vertical, de 3 segundos a 15 minutos.');
         }
         if (time() + 5 > $fim) {
             return ['processando', ''];
