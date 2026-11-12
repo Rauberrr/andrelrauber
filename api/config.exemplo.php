@@ -38,6 +38,8 @@ return [
     // Endereço de retorno para cadastrar em todos os apps: https://andrerauber.com/api/conectar.php
     'meta_app_id' => '',
     'meta_app_secret' => '',
+    // ID da configuração do Login do Facebook para Empresas (só números). Vazio pede as permissões direto.
+    'meta_config_id' => '',
     'youtube_client_id' => '',
     'youtube_client_secret' => '',
     'tiktok_client_key' => '',

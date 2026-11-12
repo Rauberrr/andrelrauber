@@ -257,6 +257,7 @@ Em todos os apps, o endereço de retorno (redirect URI) é o mesmo: `https://and
 3. Adicione os produtos **Login do Facebook para Empresas** e **Instagram** (na opção de configurar a API com o login do Facebook).
 4. Em Login do Facebook → Configurações, ponha o endereço de retorno em **URIs de redirecionamento do OAuth válidos**.
 5. Em **Configurações do app → Básico**, copie o ID do app e a Chave secreta para `meta_app_id` e `meta_app_secret`.
+   Em Login do Facebook para Empresas → Configurações, crie uma configuração (token de usuário; ativos Páginas e Contas do Instagram; as permissões `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`, `instagram_basic`, `instagram_content_publish`, `business_management`) e ponha o ID dela em `meta_config_id`.
 6. No painel, em Vídeos, clique em **Conectar** no cartão Instagram e Facebook e autorize as permissões e a Página.
 
 O app pode ficar em modo de desenvolvimento: ele funciona para quem é administrador do app. Só é preciso pedir a análise da Meta se um dia outras pessoas forem usar.

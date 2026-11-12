@@ -206,10 +206,15 @@ function endereco_de_login(string $login, string $estado): string
     }
     $volta = retorno_oauth();
     if ($login === 'meta') {
-        return base_rede('meta_dialogo') . '?' . http_build_query([
-            'client_id' => $chaves['id'], 'redirect_uri' => $volta, 'state' => $estado, 'response_type' => 'code',
-            'scope' => 'pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish,business_management',
-        ]);
+        $pedido = ['client_id' => $chaves['id'], 'redirect_uri' => $volta, 'state' => $estado, 'response_type' => 'code'];
+        // Apps do tipo Empresa (Login do Facebook para Empresas) pedem as permissões pela configuração criada no app.
+        $configuracao = trim((string) (config()['meta_config_id'] ?? ''));
+        if ($configuracao !== '') {
+            $pedido['config_id'] = $configuracao;
+        } else {
+            $pedido['scope'] = 'pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish,business_management';
+        }
+        return base_rede('meta_dialogo') . '?' . http_build_query($pedido);
     }
     if ($login === 'google') {
         return base_rede('google_auth') . '?' . http_build_query([
