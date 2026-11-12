@@ -171,7 +171,8 @@ function http_rede(string $metodo, string $url, array $cabecalhos = [], $corpo =
 function erro_da_rede($corpo, int $status): string
 {
     if (is_array($corpo)) {
-        $msg = $corpo['error']['message'] ?? $corpo['error_description'] ?? $corpo['error']['errors'][0]['message'] ?? $corpo['message'] ?? null;
+        $msg = $corpo['error']['error_user_msg'] ?? $corpo['error']['message'] ?? $corpo['debug_info']['message'] ?? $corpo['error_description']
+            ?? $corpo['error']['errors'][0]['message'] ?? $corpo['message'] ?? null;
         if (is_string($corpo['error'] ?? null) && $msg === null) {
             $msg = $corpo['error'];
         }
@@ -406,11 +407,14 @@ function publicar_instagram(array $p, array $video, array $conta, array &$estado
             'share_to_feed' => 'true', 'access_token' => $token,
         ]), 'Instagram');
         $estado['conteiner'] = (string) $r['id'];
+        // O Instagram devolve o endereço de envio do contêiner; sem ele, monta o padrão
+        $estado['envio'] = (string) ($r['uri'] ?? '');
     }
     if (empty($estado['enviado'])) {
         $versao = (string) (config()['meta_versao'] ?? 'v23.0');
         $tamanho = (int) $video['tamanho'];
-        exigir_ok(http_rede('POST', base_rede('rupload') . '/ig-api-upload/' . $versao . '/' . $estado['conteiner'], [
+        $envio = !empty($estado['envio']) ? $estado['envio'] : base_rede('rupload') . '/ig-api-upload/' . $versao . '/' . $estado['conteiner'];
+        exigir_ok(http_rede('POST', $envio, [
             'Authorization: OAuth ' . $token, 'offset: 0', 'file_size: ' . $tamanho, 'Content-Type: application/octet-stream',
         ], null, [caminho_do_video($video), 0, $tamanho], 600), 'Envio ao Instagram');
         $estado['enviado'] = true;
