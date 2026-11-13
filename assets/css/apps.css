@@ -1038,6 +1038,7 @@ html:not(.app-liberado) body.app .tr-cronometro { display: none !important; }
 .app .assin-botao { width: 100%; min-height: 54px; font-size: 1rem; font-weight: 500; }
 .assin-acao-nota { margin: .7rem 0 0; color: var(--app-texto-2); font-size: .86rem; line-height: 1.45; text-align: center; }
 .assin-acao-nota a { color: var(--bordo-vivo); }
+.assin-cancelar { padding: 0; border: 0; background: none; color: var(--bordo-vivo); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .assin-h2 { margin: 0 0 1.2rem; font-family: var(--serifa); font-size: 1.45rem; font-weight: 400; }
 .assin-beneficios, .assin-passos, .assin-plano, .assin-perguntas { padding: 2.4rem 0 0; }
 .assin-lista { display: grid; gap: 1.35rem; margin: 0; padding: 0; list-style: none; }

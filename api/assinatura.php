@@ -8,7 +8,9 @@
  * - cobrando: só quem tem a assinatura liberada usa os apps. Os outros vão para a página.
  *
  * GET  ?acao=publica    o plano, o modo e a situação de quem está vendo
- * POST ?acao=assinar    pedido de assinatura (o pagamento online ainda não está ligado)
+ * POST ?acao=assinar    cria a assinatura no Mercado Pago e devolve o endereço da tela de pagamento
+ * POST ?acao=conferir   consulta no Mercado Pago a assinatura da pessoa (na volta de lá)
+ * POST ?acao=cancelar   cancela a assinatura no Mercado Pago; o acesso vai até o fim do mês pago
  * GET  ?acao=gestor     (gestor) o plano e quem tem acesso liberado
  * POST ?acao=salvar     (gestor) modo, nome, preço, dias de teste e benefícios  {modo, nome, precoCentavos, testeDias, beneficios[]}
  * POST ?acao=liberar    (gestor) libera o acesso de uma pessoa  {email, ate: AAAA-MM-DD ou vazio}
@@ -20,6 +22,7 @@ declare(strict_types=1);
 
 define('AR_API', true);
 require __DIR__ . '/nucleo.php';
+require __DIR__ . '/mercadopago.php';
 
 header('Cache-Control: no-store');
 
@@ -60,8 +63,20 @@ function minha_assinatura(?array $usuario): ?array
         'testeAcabou' => $fim !== null && !$emTeste,
         'diasDeTeste' => $emTeste ? max(1, (int) ceil((strtotime($fim) - time()) / 86400)) : 0,
         'jaUsava' => ja_usava_antes($usuario, $plano),
+        'mercadoPago' => assinatura_mp_da_pessoa((int) $usuario['id']),
         'testador' => testador_desde($usuario, $plano) !== null,
     ];
+}
+
+// A assinatura do Mercado Pago da pessoa: a situação e o identificador, ou null
+function assinatura_mp_da_pessoa(int $usuarioId): ?array
+{
+    try {
+        $linha = consultar("SELECT preapproval_id, status FROM assinaturas_mp WHERE usuario_id = ? AND status <> 'pending' ORDER BY atualizado_em DESC LIMIT 1", [$usuarioId])->fetch();
+    } catch (PDOException $erro) {
+        return null;
+    }
+    return $linha ? ['status' => $linha['status'], 'id' => $linha['preapproval_id']] : null;
 }
 
 function salvar_plano(array $plano): void
@@ -88,18 +103,69 @@ switch ($_GET['acao'] ?? '') {
         break;
 
     case 'assinar':
+        $dados = exigir_post();
+        $usuario = exigir_login();
+        $id = (int) $usuario['id'];
+        registrar_evento($id, 'assinatura_interesse');
+        $plano = assinatura_config();
+        if (modo_para($usuario, $plano) !== 'cobrando') {
+            falhar(409, 'Os apps estão grátis agora. Não há nada para pagar.');
+        }
+        $mp = assinatura_mp_da_pessoa($id);
+        $a = assinatura_da_pessoa($id);
+        if ($mp && $mp['status'] === 'authorized' && $a && assinatura_valida($a)) {
+            falhar(409, 'Sua assinatura já está ativa.');
+        }
+        if (!mp_ativo()) {
+            falhar(503, 'O pagamento online ainda não está ligado. Fale com a gente pelo WhatsApp para assinar.', ['whatsapp' => true]);
+        }
+        $limite = chave_limite('assinar', (string) $id);
+        exigir_limite($limite, 10, 3600);
+        contar_tentativa($limite);
+        // Durante o teste grátis, a primeira cobrança fica para o dia em que o teste acaba
+        $fimDoTeste = !ja_usava_antes($usuario, $plano) && em_teste($usuario) ? fim_do_teste($usuario, $plano) : null;
+        $link = mp_criar_assinatura($usuario, $plano, $fimDoTeste);
+        if ($link === null) {
+            falhar(502, 'Não foi possível abrir o Mercado Pago agora. Tente de novo em instantes.');
+        }
+        responder(200, ['link' => $link]);
+        break;
+
+    case 'conferir':
         exigir_post();
         $usuario = exigir_login();
-        registrar_evento((int) $usuario['id'], 'assinatura_interesse');
-        falhar(503, 'O pagamento online ainda não está ligado. Fale com a gente pelo WhatsApp para assinar.', ['whatsapp' => true]);
+        $id = (int) $usuario['id'];
+        $limite = chave_limite('conferir-assinatura', (string) $id);
+        exigir_limite($limite, 30, 3600);
+        contar_tentativa($limite);
+        foreach (consultar('SELECT preapproval_id FROM assinaturas_mp WHERE usuario_id = ? ORDER BY atualizado_em DESC LIMIT 3', [$id])->fetchAll(PDO::FETCH_COLUMN) as $pre) {
+            mp_sincronizar_assinatura((string) $pre);
+        }
+        $usuario = consultar('SELECT * FROM usuarios WHERE id = ?', [$id])->fetch();
+        responder(200, ['minha' => minha_assinatura($usuario)]);
+        break;
+
+    case 'cancelar':
+        exigir_post();
+        $usuario = exigir_login();
+        $mp = assinatura_mp_da_pessoa((int) $usuario['id']);
+        if (!$mp || $mp['status'] !== 'authorized') {
+            falhar(404, 'Não há assinatura ativa para cancelar.');
+        }
+        if (!mp_cancelar_assinatura($mp['id'])) {
+            falhar(502, 'Não foi possível cancelar agora. Tente de novo em instantes ou cancele pelo app do Mercado Pago.');
+        }
+        $usuario = consultar('SELECT * FROM usuarios WHERE id = ?', [(int) $usuario['id']])->fetch();
+        responder(200, ['minha' => minha_assinatura($usuario)]);
         break;
 
     case 'gestor':
         exigir_gestor_assinatura();
         $plano = assinatura_config();
         $liberados = consultar(
-            'SELECT a.usuario_id, a.situacao, a.valida_ate, a.origem, a.criado_em, u.nome, u.email
-             FROM assinaturas a JOIN usuarios u ON u.id = a.usuario_id ORDER BY a.atualizado_em DESC LIMIT 300'
+            "SELECT a.usuario_id, a.situacao, a.valida_ate, a.origem, a.criado_em, u.nome, u.email,
+                    (SELECT m.status FROM assinaturas_mp m WHERE m.usuario_id = a.usuario_id AND m.status <> 'pending' ORDER BY m.atualizado_em DESC LIMIT 1) AS mp_status
+             FROM assinaturas a JOIN usuarios u ON u.id = a.usuario_id ORDER BY a.atualizado_em DESC LIMIT 300"
         )->fetchAll();
         responder(200, [
             'plano' => plano_publico(assinatura_config()),
@@ -111,11 +177,14 @@ switch ($_GET['acao'] ?? '') {
                     'validaAte' => $a['valida_ate'] ? substr((string) $a['valida_ate'], 0, 10) : null,
                     'valida' => assinatura_valida($a),
                     'origem' => $a['origem'],
+                    'mpStatus' => $a['mp_status'],
                     'desde' => substr((string) $a['criado_em'], 0, 10),
                 ];
             }, $liberados),
             'pessoas' => (int) consultar('SELECT COUNT(*) FROM usuarios')->fetchColumn(),
             'liberarAntigos' => $plano['liberarAntigos'],
+            'pagamentoOnline' => mp_ativo(),
+            'assinantesMp' => (int) consultar("SELECT COUNT(*) FROM assinaturas_mp WHERE status = 'authorized'")->fetchColumn(),
             'cobrandoDesde' => $plano['cobrandoDesde'],
             'testadores' => array_values(array_filter(array_map(function (array $t) use ($plano) {
                 $u = consultar('SELECT * FROM usuarios WHERE id = ?', [$t['id']])->fetch();

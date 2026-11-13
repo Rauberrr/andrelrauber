@@ -20,6 +20,18 @@ define('AR_API', true);
 require __DIR__ . '/../nucleo.php';
 marcar_tarefa('lembretes');
 
+// Uma vez por dia, confere no Mercado Pago as assinaturas que estão valendo (caso algum aviso tenha se perdido)
+require_once __DIR__ . '/../mercadopago.php';
+if (mp_ativo()) {
+    try {
+        foreach (consultar("SELECT preapproval_id FROM assinaturas_mp WHERE status IN ('authorized', 'paused')")->fetchAll(PDO::FETCH_COLUMN) as $pre) {
+            mp_sincronizar_assinatura((string) $pre);
+        }
+    } catch (PDOException $erro) {
+        // Banco ainda sem a tabela das assinaturas
+    }
+}
+
 const LEMBRETE_ALIMENTO_DIAS = 2;
 const LEMBRETE_ENCOMENDA_DIAS = 3;
 const LEMBRETE_EVENTO_DIAS = 7;

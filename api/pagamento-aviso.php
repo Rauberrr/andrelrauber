@@ -37,6 +37,21 @@ if (!mp_assinatura_valida(
 }
 
 $tipo = (string) ($aviso['type'] ?? ($_GET['type'] ?? ''));
+$avisoId = $dadoId !== '' ? $dadoId : (string) ($aviso['data']['id'] ?? '');
+// Assinatura dos apps: criada, autorizada, pausada ou cancelada
+if ($tipo === 'subscription_preapproval') {
+    if (!mp_sincronizar_assinatura($avisoId)) {
+        falhar(503, 'Assinatura não consultada.');
+    }
+    responder(200);
+}
+// Cada cobrança mensal da assinatura
+if ($tipo === 'subscription_authorized_payment') {
+    if (!mp_sincronizar_cobranca_da_assinatura($avisoId)) {
+        falhar(503, 'Cobrança não consultada.');
+    }
+    responder(200);
+}
 if ($tipo !== 'payment') {
     responder(200);
 }

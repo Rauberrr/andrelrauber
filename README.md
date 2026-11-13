@@ -365,7 +365,18 @@ Em **Painel → Assinatura**, o gestor escolhe em que modo os apps estão:
 
 - No mesmo lugar ficam o nome do plano, o valor por mês e o que ele inclui. O gestor sempre usa os apps.
 - **Acesso liberado:** o gestor libera uma conta pelo e-mail, com ou sem data para acabar (cortesia, parceria, quem pagou por fora). Fica na tabela `assinaturas`.
-- **Pagamento online:** ainda não está ligado. Com a cobrança ativa, quem toca em Assinar recebe o link do WhatsApp da marca para combinar, e o gestor libera o acesso. O próximo passo é a assinatura recorrente do Mercado Pago.
+- **Pagamento online (Mercado Pago):** com o `mercadopago_token` no `config.php`, o botão **Assinar** cria uma assinatura mensal no Mercado Pago e leva a pessoa para a tela de lá, onde ela cadastra o cartão. A cobrança é automática todo mês, no cartão de crédito (assinaturas do Mercado Pago não aceitam Pix). Quem assina durante o teste grátis só é cobrado quando o teste acaba.
+- **Como o acesso muda:** o site nunca confia só no aviso: a cada aviso do Mercado Pago (`api/pagamento-aviso.php`, eventos de assinatura), na volta da pessoa e uma vez por dia (tarefa dos e-mails), ele consulta a assinatura no Mercado Pago. Autorizada: acesso até a próxima cobrança, mais 3 dias de folga. Cancelada ou pausada: o acesso vai até o fim do mês pago e acaba. Fica nas tabelas `assinaturas` e `assinaturas_mp`.
+- **Cancelar:** a pessoa cancela na própria página do plano ou no app do Mercado Pago.
+- Sem o token, quem toca em Assinar recebe o link do WhatsApp da marca, e o gestor libera o acesso pelo e-mail.
+
+### Ligar a assinatura no Mercado Pago
+
+1. Use as mesmas credenciais de produção dos pedidos (`mercadopago_token` e `mercadopago_assinatura` no `config.php`). Não precisa de chave nova.
+2. No painel do Mercado Pago, em **Suas integrações → (sua aplicação) → Webhooks**, no endereço `https://andrerauber.com/api/pagamento-aviso.php`, marque também os eventos **Planos e assinaturas** (assinaturas e pagamentos de assinatura), além de **Pagamentos**, e salve.
+3. Importe o `api/banco.sql` de novo (cria `assinaturas_mp`).
+4. Teste com um usuário de teste: em **Painel → Assinatura → Usuários de teste**, inclua uma conta sua (não a de gestor), entre com ela, abra a página do plano e toque em **Assinar agora**. No Mercado Pago, entre com uma conta **diferente** da conta que recebe os pagamentos (o Mercado Pago não deixa a pessoa assinar o próprio plano) e use o mesmo e-mail da conta de teste do site. Depois, cancele pela página.
+5. Quando estiver tudo certo, mude o modo para **Grátis, com aviso do valor** por uns dias e depois para **Cobrando**.
 - Com a cobrança ativa, as APIs dos apps respondem 402 para quem não tem acesso, e os lembretes dessas pessoas param. Os dados continuam guardados.
 - O modo e os ajustes ficam na tabela `configuracoes`. Para criar as tabelas novas num site que já está no ar, importe o `api/banco.sql` de novo.
 

@@ -268,6 +268,9 @@
       $('as-form').hidden = false;
       $('as-liberados-caixa').hidden = false;
       desenharLiberados(r.dados.liberados);
+      $('as-pagamento').textContent = r.dados.pagamentoOnline
+        ? 'Pagamento online ligado: a assinatura é cobrada no cartão, todo mês, pelo Mercado Pago. Assinantes ativos: ' + r.dados.assinantesMp + '.'
+        : 'Pagamento online desligado: falta o token do Mercado Pago no config.php. Quem tentar assinar recebe o link do WhatsApp.';
     });
   }
 
@@ -346,7 +349,8 @@
       var li = criar('li', 'as-item' + (a.valida ? '' : ' as-item-inativo'));
       var texto = criar('div');
       texto.appendChild(criar('strong', '', a.nome));
-      texto.appendChild(criar('span', '', a.email + ' · ' + (a.valida ? (a.validaAte ? 'até ' + dataBr(a.validaAte) : 'sem prazo') : 'sem acesso') + (a.origem === 'mercadopago' ? ' · Mercado Pago' : '')));
+      var mp = a.origem === 'mercadopago' ? (a.mpStatus === 'authorized' ? ' · Mercado Pago, renovando' : ' · Mercado Pago, cancelada') : ' · cortesia';
+      texto.appendChild(criar('span', '', a.email + ' · ' + (a.valida ? (a.validaAte ? 'até ' + dataBr(a.validaAte) : 'sem prazo') : 'sem acesso') + mp));
       li.appendChild(texto);
       if (a.valida) {
         var tirar = criar('button', 'texto-botao painel-perigo', 'Tirar acesso');

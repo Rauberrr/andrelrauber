@@ -475,3 +475,17 @@ CREATE TABLE IF NOT EXISTS pedidos_itens (
   KEY idx_item_pedido (pedido_id),
   CONSTRAINT fk_item_pedido FOREIGN KEY (pedido_id) REFERENCES pedidos (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Assinatura dos apps no Mercado Pago (cobrança mensal automática). O acesso fica em assinaturas;
+-- aqui fica a ligação com o Mercado Pago e a última situação consultada lá.
+CREATE TABLE IF NOT EXISTS assinaturas_mp (
+  preapproval_id VARCHAR(64) NOT NULL,
+  usuario_id INT UNSIGNED NOT NULL,
+  status VARCHAR(20) NOT NULL,
+  criado_em DATETIME NOT NULL,
+  atualizado_em DATETIME NOT NULL,
+  PRIMARY KEY (preapproval_id),
+  KEY idx_assinatura_mp_usuario (usuario_id),
+  CONSTRAINT fk_assinatura_mp_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

@@ -308,3 +308,128 @@ function mp_assinatura_valida(string $cabecalho, string $requestId, string $dado
     $modelo .= 'ts:' . $ts . ';';
     return hash_equals(hash_hmac('sha256', $modelo, $segredo), $v1);
 }
+
+/* --- Assinatura dos apps (cobrança mensal automática, "preapproval") ----------------------------
+   O site cria a assinatura no Mercado Pago e manda a pessoa para a tela de lá, onde ela
+   cadastra o cartão. Depois, o acesso só muda pelo que o site consulta no próprio Mercado Pago:
+   o aviso e a volta da pessoa servem só para disparar a consulta. */
+
+// Dias de folga depois da data da próxima cobrança, para o Mercado Pago tentar de novo
+const MP_ASSINATURA_FOLGA_DIAS = 3;
+
+function mp_id_valido(string $id): bool
+{
+    return preg_match('/^[A-Za-z0-9_-]{1,64}$/', $id) === 1;
+}
+
+/**
+ * Cria a assinatura e devolve o endereço da tela do Mercado Pago, ou null.
+ * $primeiraCobranca: quem assina durante o teste grátis só paga quando o teste acaba.
+ */
+function mp_criar_assinatura(array $usuario, array $plano, ?string $primeiraCobranca = null): ?string
+{
+    $site = mp_endereco_do_site();
+    $recorrencia = [
+        'frequency' => 1,
+        'frequency_type' => 'months',
+        'transaction_amount' => (int) $plano['precoCentavos'] / 100,
+        'currency_id' => 'BRL',
+    ];
+    if ($primeiraCobranca !== null && strtotime($primeiraCobranca) > time()) {
+        $recorrencia['start_date'] = date('Y-m-d\TH:i:s.000P', strtotime($primeiraCobranca));
+    }
+    $resposta = mp_pedir('POST', '/preapproval', [
+        'reason' => mb_substr((string) $plano['nome'], 0, 60) . ' (mensal)',
+        'external_reference' => 'assinatura-' . (int) $usuario['id'],
+        'payer_email' => (string) $usuario['email'],
+        'auto_recurring' => $recorrencia,
+        'back_url' => $site . '/assinatura.html?assinatura=voltou',
+        'status' => 'pending',
+    ]);
+    if (!is_array($resposta) || !mp_id_valido((string) ($resposta['id'] ?? '')) || strpos((string) ($resposta['init_point'] ?? ''), 'http') !== 0) {
+        return null;
+    }
+    $momento = agora();
+    consultar('DELETE FROM assinaturas_mp WHERE usuario_id = ? AND status = ?', [(int) $usuario['id'], 'pending']);
+    consultar(
+        'INSERT INTO assinaturas_mp (preapproval_id, usuario_id, status, criado_em, atualizado_em) VALUES (?, ?, ?, ?, ?)',
+        [(string) $resposta['id'], (int) $usuario['id'], 'pending', $momento, $momento]
+    );
+    return (string) $resposta['init_point'];
+}
+
+/**
+ * Consulta a assinatura no Mercado Pago e ajusta o acesso da pessoa.
+ * authorized: libera até a próxima cobrança (mais a folga). cancelled ou paused: o acesso
+ * continua até o fim do mês que já foi pago e depois acaba. Devolve false se não conseguiu consultar.
+ */
+function mp_sincronizar_assinatura(string $id): bool
+{
+    if (!mp_id_valido($id)) {
+        return true;
+    }
+    $linha = consultar('SELECT * FROM assinaturas_mp WHERE preapproval_id = ?', [$id])->fetch();
+    if (!$linha) {
+        // Assinatura que não foi criada por este site: nada a fazer
+        return true;
+    }
+    $pre = mp_pedir('GET', '/preapproval/' . $id);
+    if ($pre === null) {
+        return false;
+    }
+    $usuarioId = (int) $linha['usuario_id'];
+    // Confere que é mesmo a assinatura desta pessoa
+    if ((string) ($pre['external_reference'] ?? '') !== 'assinatura-' . $usuarioId) {
+        return true;
+    }
+    $status = in_array($pre['status'] ?? '', ['pending', 'authorized', 'paused', 'cancelled'], true) ? $pre['status'] : 'pending';
+    $momento = agora();
+    consultar('UPDATE assinaturas_mp SET status = ?, atualizado_em = ? WHERE preapproval_id = ?', [$status, $momento, $id]);
+    $atual = consultar('SELECT * FROM assinaturas WHERE usuario_id = ?', [$usuarioId])->fetch();
+    if ($status === 'authorized') {
+        $proxima = strtotime((string) ($pre['next_payment_date'] ?? '')) ?: time() + 31 * 86400;
+        $ate = date('Y-m-d H:i:s', $proxima + MP_ASSINATURA_FOLGA_DIAS * 86400);
+        if ($atual) {
+            consultar("UPDATE assinaturas SET situacao = 'ativa', valida_ate = ?, origem = 'mercadopago', atualizado_em = ? WHERE usuario_id = ?", [$ate, $momento, $usuarioId]);
+        } else {
+            consultar("INSERT INTO assinaturas (usuario_id, situacao, valida_ate, origem, criado_em, atualizado_em) VALUES (?, 'ativa', ?, 'mercadopago', ?, ?)", [$usuarioId, $ate, $momento, $momento]);
+        }
+        if ((string) $linha['status'] !== 'authorized') {
+            registrar_evento($usuarioId, 'assinatura_ativa');
+        }
+    } elseif (($status === 'cancelled' || $status === 'paused') && $atual && $atual['origem'] === 'mercadopago') {
+        // Sem prazo guardado, o acesso acaba agora
+        if ($atual['valida_ate'] === null) {
+            consultar('UPDATE assinaturas SET valida_ate = ?, atualizado_em = ? WHERE usuario_id = ?', [$momento, $momento, $usuarioId]);
+        }
+        if ((string) $linha['status'] === 'authorized') {
+            registrar_evento($usuarioId, 'assinatura_cancelada');
+        }
+    }
+    return true;
+}
+
+// O aviso de cada cobrança traz o pagamento autorizado; dele sai a assinatura
+function mp_sincronizar_cobranca_da_assinatura(string $id): bool
+{
+    if (preg_match('/^\d{1,30}$/', $id) !== 1) {
+        return true;
+    }
+    $cobranca = mp_pedir('GET', '/authorized_payments/' . $id);
+    if ($cobranca === null) {
+        return false;
+    }
+    return mp_sincronizar_assinatura((string) ($cobranca['preapproval_id'] ?? ''));
+}
+
+function mp_cancelar_assinatura(string $id): bool
+{
+    if (!mp_id_valido($id)) {
+        return false;
+    }
+    if (mp_pedir('PUT', '/preapproval/' . $id, ['status' => 'cancelled']) === null) {
+        return false;
+    }
+    return mp_sincronizar_assinatura($id);
+}
+
