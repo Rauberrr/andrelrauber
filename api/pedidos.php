@@ -8,6 +8,7 @@
  * POST ?acao=criar     cria um pedido para um cliente (só administrador)
  * POST ?acao=cancelar  cancela um pedido ainda não pago (só administrador)
  * POST ?acao=encomendar cria um pedido de um produto da coleção, para a própria pessoa
+ * POST ?acao=finalizar  cria um pedido só com as peças da sacola  {itens: [{slug, cor, quantidade}]}
  */
 declare(strict_types=1);
 
@@ -18,6 +19,8 @@ require __DIR__ . '/mercadopago.php';
 const PEDIDO_VALOR_MINIMO = 100;
 const PEDIDO_VALOR_MAXIMO = 10000000;
 const PEDIDOS_ABERTOS_MAXIMO = 20;
+const SACOLA_MAXIMO_ITENS = 10;
+const SACOLA_MAXIMO_QUANTIDADE = 5;
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
     $usuario = exigir_login();
@@ -41,12 +44,20 @@ switch ($_GET['acao'] ?? '') {
     case 'encomendar':
         encomendar();
         break;
+    case 'finalizar':
+        finalizar();
+        break;
     default:
         falhar(404, 'Ação desconhecida.');
 }
 
 function pedido_publico(array $p): array
 {
+    try {
+        $itens = consultar('SELECT nome, cor, quantidade, preco_centavos FROM pedidos_itens WHERE pedido_id = ? ORDER BY id', [(int) $p['id']])->fetchAll();
+    } catch (PDOException $erro) {
+        $itens = [];
+    }
     return [
         'codigo' => $p['codigo'],
         'descricao' => $p['descricao'],
@@ -58,6 +69,9 @@ function pedido_publico(array $p): array
         'parcelas' => (int) $p['parcelas'],
         'pagoEm' => $p['pago_em'],
         'criadoEm' => $p['criado_em'],
+        'itens' => array_map(function (array $i): array {
+            return ['nome' => $i['nome'], 'cor' => $i['cor'], 'quantidade' => (int) $i['quantidade'], 'precoCentavos' => (int) $i['preco_centavos']];
+        }, $itens),
     ];
 }
 
@@ -276,4 +290,120 @@ function encomendar(): void
     registrar_evento($id, 'pedido_criado', null, $descricao);
     $pedido = consultar('SELECT * FROM pedidos WHERE codigo = ?', [$codigo])->fetch();
     responder(201, ['pedido' => pedido_publico($pedido)]);
+}
+
+// Produto à venda agora e a cor escolhida. Sem cor válida, recusa.
+function produto_a_venda(string $slug, string $cor): array
+{
+    $produto = preg_match('/^[a-z0-9-]{1,90}$/', $slug) === 1
+        ? consultar('SELECT p.*, c.lanca_em FROM produtos p LEFT JOIN colecoes c ON c.id = p.colecao_id WHERE p.slug = ?', [$slug])->fetch()
+        : false;
+    $noAr = $produto && $produto['situacao'] === 'publicado' && ($produto['lanca_em'] === null || $produto['lanca_em'] <= agora());
+    if (!$noAr) {
+        falhar(404, 'Uma das peças da sacola não está mais disponível. Tire ela para continuar.', ['indisponivel' => $slug]);
+    }
+    $cores = json_decode((string) $produto['cores'], true) ?: [];
+    if ($cores) {
+        $nomes = array_map(function ($c) { return (string) ($c['nome'] ?? ''); }, $cores);
+        if (!in_array($cor, $nomes, true)) {
+            falhar(422, 'Escolha a cor de ' . $produto['nome'] . '.', ['indisponivel' => $slug]);
+        }
+    } else {
+        $cor = '';
+    }
+    $produto['cor_escolhida'] = $cor;
+    return $produto;
+}
+
+/** A sacola vira um pedido só: as peças somadas e o maior frete, porque vão juntas. */
+function finalizar(): void
+{
+    $dados = exigir_post();
+    $usuario = exigir_login();
+    $id = (int) $usuario['id'];
+    $lista = is_array($dados['itens'] ?? null) ? array_values($dados['itens']) : [];
+    if (!$lista) {
+        falhar(422, 'A sacola está vazia.');
+    }
+    if (count($lista) > SACOLA_MAXIMO_ITENS) {
+        falhar(422, 'São no máximo ' . SACOLA_MAXIMO_ITENS . ' peças diferentes por pedido.');
+    }
+    $cadastro = consultar('SELECT concluido_em FROM cadastros WHERE usuario_id = ?', [$id])->fetch();
+    if (!$cadastro || $cadastro['concluido_em'] === null) {
+        falhar(409, 'Preencha suas medidas antes de finalizar. As peças são feitas a partir delas, e ficam salvas para as próximas compras.', ['precisaMedidas' => true]);
+    }
+    $limite = chave_limite('encomendar', (string) $id);
+    exigir_limite($limite, 15, 3600);
+    contar_tentativa($limite);
+    $abertos = (int) consultar("SELECT COUNT(*) FROM pedidos WHERE usuario_id = ? AND situacao IN ('aguardando', 'processando')", [$id])->fetchColumn();
+    if ($abertos >= PEDIDOS_ABERTOS_MAXIMO) {
+        falhar(422, 'Você já tem muitos pedidos abertos. Pague ou fale conosco antes de fazer outro.');
+    }
+
+    $itens = [];
+    foreach ($lista as $item) {
+        if (!is_array($item)) {
+            falhar(422, 'Sacola inválida.');
+        }
+        $quantidade = $item['quantidade'] ?? 1;
+        if (!is_int($quantidade) || $quantidade < 1 || $quantidade > SACOLA_MAXIMO_QUANTIDADE) {
+            falhar(422, 'Escolha de 1 a ' . SACOLA_MAXIMO_QUANTIDADE . ' unidades de cada peça.');
+        }
+        $produto = produto_a_venda(texto($item, 'slug', 90), texto($item, 'cor', 30));
+        $chave = $produto['id'] . '|' . $produto['cor_escolhida'];
+        if (isset($itens[$chave])) {
+            $itens[$chave]['quantidade'] = min(SACOLA_MAXIMO_QUANTIDADE, $itens[$chave]['quantidade'] + $quantidade);
+        } else {
+            $itens[$chave] = ['produto' => $produto, 'quantidade' => $quantidade];
+        }
+    }
+    $itens = array_values($itens);
+    $valor = 0;
+    $frete = 0;
+    $pecas = 0;
+    foreach ($itens as $i) {
+        $valor += (int) $i['produto']['preco_centavos'] * $i['quantidade'];
+        $frete = max($frete, (int) $i['produto']['frete_centavos']);
+        $pecas += $i['quantidade'];
+    }
+    if ($valor < PEDIDO_VALOR_MINIMO || $valor > PEDIDO_VALOR_MAXIMO) {
+        falhar(422, 'O valor deste pedido não é aceito. Fale conosco.');
+    }
+    $nome = function (array $i): string {
+        return $i['produto']['nome'] . ($i['produto']['cor_escolhida'] !== '' ? ' (' . $i['produto']['cor_escolhida'] . ')' : '');
+    };
+    if ($pecas === 1) {
+        $descricao = $itens[0]['produto']['nome'] . ' sob medida' . ($itens[0]['produto']['cor_escolhida'] !== '' ? ', ' . $itens[0]['produto']['cor_escolhida'] : '');
+    } else {
+        $descricao = $pecas . ' peças sob medida: ' . implode(', ', array_map(function ($i) use ($nome) {
+            return ($i['quantidade'] > 1 ? $i['quantidade'] . '× ' : '') . $nome($i);
+        }, $itens));
+    }
+    if (mb_strlen($descricao) > 160) {
+        $descricao = mb_substr($descricao, 0, 157) . '...';
+    }
+
+    $momento = agora();
+    $codigo = bin2hex(random_bytes(16));
+    banco()->beginTransaction();
+    try {
+        consultar(
+            'INSERT INTO pedidos (usuario_id, codigo, descricao, valor_centavos, frete_centavos, criado_em, atualizado_em) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [$id, $codigo, $descricao, $valor, $frete, $momento, $momento]
+        );
+        $pedidoId = (int) banco()->lastInsertId();
+        foreach ($itens as $i) {
+            consultar(
+                'INSERT INTO pedidos_itens (pedido_id, produto_id, nome, cor, quantidade, preco_centavos) VALUES (?, ?, ?, ?, ?, ?)',
+                [$pedidoId, (int) $i['produto']['id'], mb_substr((string) $i['produto']['nome'], 0, 90), mb_substr($i['produto']['cor_escolhida'], 0, 30), $i['quantidade'], (int) $i['produto']['preco_centavos']]
+            );
+        }
+        banco()->commit();
+    } catch (Throwable $erro) {
+        banco()->rollBack();
+        throw $erro;
+    }
+    registrar_evento($id, 'pedido_criado', null, mb_substr($descricao, 0, 120));
+    $pedido = consultar('SELECT * FROM pedidos WHERE codigo = ?', [$codigo])->fetch();
+    responder(201, ['pedido' => pedido_publico($pedido), 'pagamentosAtivos' => mp_ativo()]);
 }

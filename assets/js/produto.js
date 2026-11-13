@@ -1,4 +1,4 @@
-/* Uma peça da coleção: fotos, cores, ficha técnica e a encomenda sob medida */
+/* Uma peça da coleção: fotos, cores, ficha técnica, comprar, sacola e compartilhar */
 (function () {
   'use strict';
 
@@ -123,44 +123,66 @@
     $('produto-detalhes-caixa').hidden = !(p.detalhes || []).length;
 
     var comprar = $('produto-comprar');
+    var sacola = $('produto-sacola');
     if (exemplo || previa) {
       $('produto-faixa').hidden = false;
       $('produto-faixa').textContent = exemplo
         ? 'Exemplo: é assim que a página de uma peça vai ficar. Esta peça ainda não está à venda.'
         : 'Prévia para o gestor: esta peça ainda não aparece para os clientes.';
       comprar.disabled = true;
-      $('produto-nota').textContent = 'A encomenda abre quando a peça estiver no ar.';
+      sacola.disabled = true;
+      $('produto-nota').textContent = 'A compra abre quando a peça estiver no ar.';
     } else if (p.situacao === 'esgotado') {
       comprar.disabled = true;
+      sacola.hidden = true;
       comprar.textContent = 'Esgotado';
       $('produto-nota').textContent = 'Quer uma parecida? Faça um pedido exclusivo.';
     } else {
-      $('produto-nota').textContent = 'O pedido fica na sua conta, pronto para pagar. Sem medidas salvas, você preenche antes.';
+      $('produto-nota').textContent = 'Feita a partir das suas medidas. Se ainda não salvou as suas, o site pede antes de pagar.';
     }
+    document.title = p.nome + ' | Rauber';
   }
 
-  $('produto-comprar').addEventListener('click', function () {
-    var botao = $('produto-comprar');
+  function colocarNaSacola(abrir) {
     $('produto-erro').textContent = '';
-    botao.disabled = true;
-    api.post('api/pedidos.php?acao=encomendar', { slug: produto.slug, cor: corEscolhida }).then(function (r) {
-      botao.disabled = false;
-      var aqui = 'produto.html?p=' + produto.slug;
-      if (r.status === 401) { location.href = 'entrar.html?voltar=' + encodeURIComponent(aqui); return; }
-      if (r.ok) { location.href = 'minha-conta.html#conta-pedidos'; return; }
-      if (r.dados && r.dados.precisaMedidas) {
-        $('produto-erro').textContent = '';
-        $('produto-nota').textContent = '';
-        var aviso = $('produto-nota');
-        aviso.appendChild(document.createTextNode('Para encomendar, salve suas medidas. Leva alguns minutos e fica guardado para as próximas compras. '));
-        var link = criar('a', '', 'Preencher minhas medidas');
-        link.href = 'medidas.html';
-        aviso.appendChild(link);
-        return;
-      }
-      $('produto-erro').textContent = r.erro || 'Não foi possível encomendar agora. Tente de novo.';
-    });
+    if (!window.AR_SACOLA) return;
+    var problema = window.AR_SACOLA.adicionar(produto, corEscolhida, abrir);
+    if (problema) { $('produto-erro').textContent = problema; return; }
+    if (!abrir) {
+      $('produto-adicionado').textContent = produto.nome + (corEscolhida ? ' (' + corEscolhida + ')' : '') + ' está na sua sacola.';
+      window.clearTimeout(colocarNaSacola.espera);
+      colocarNaSacola.espera = window.setTimeout(function () { $('produto-adicionado').textContent = ''; }, 4000);
+    }
+  }
+  $('produto-comprar').addEventListener('click', function () { colocarNaSacola(true); });
+  $('produto-sacola').addEventListener('click', function () { colocarNaSacola(false); });
+
+  /* --- Compartilhar ------------------------------------------------------------------------------ */
+
+  function enderecoDaPeca() { return location.origin + '/produto.html?p=' + encodeURIComponent(produto.slug); }
+  var menuCompartilhar = $('produto-compartilhar-menu');
+  function fecharMenu() { menuCompartilhar.hidden = true; $('produto-compartilhar').setAttribute('aria-expanded', 'false'); }
+  $('produto-compartilhar').addEventListener('click', function () {
+    var texto = produto.nome + ', da Rauber: feita sob medida.';
+    if (navigator.share) {
+      navigator.share({ title: produto.nome + ' | Rauber', text: texto, url: enderecoDaPeca() }).catch(function () { /* cancelou */ });
+      return;
+    }
+    $('compartilhar-whatsapp').href = 'https://wa.me/?text=' + encodeURIComponent(texto + ' ' + enderecoDaPeca());
+    var aberto = menuCompartilhar.hidden;
+    menuCompartilhar.hidden = !aberto;
+    $('produto-compartilhar').setAttribute('aria-expanded', String(aberto));
   });
+  $('compartilhar-copiar').addEventListener('click', function () {
+    var b = $('compartilhar-copiar');
+    var feito = function () { b.textContent = 'Link copiado'; window.setTimeout(function () { b.textContent = 'Copiar link'; fecharMenu(); }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(enderecoDaPeca()).then(feito, feito);
+    else { window.prompt('Copie o link:', enderecoDaPeca()); fecharMenu(); }
+  });
+  document.addEventListener('click', function (e) {
+    if (!menuCompartilhar.hidden && !e.target.closest('.produto-compartilhar-caixa')) fecharMenu();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menuCompartilhar.hidden) fecharMenu(); });
 
   if (exemplo) {
     mostrar(EXEMPLO, false);

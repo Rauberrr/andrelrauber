@@ -236,8 +236,42 @@ window.AR_LOOKS = (function () {
     };
   }
 
+  // Vestido: a peça já é o look inteiro. Ganha o calçado e, se combinar, uma camada por cima.
+  function montarVestido(grupos, vestido, camada, clima) {
+    var roupa = camada ? [vestido, camada] : [vestido];
+    if (!roupa.every(function (p) { return aceitaClima(p, clima); })) return null;
+    if (!formalidadeCombina(roupa) || !climaCombina(roupa)) return null;
+    var semente = vestido.id + (camada ? camada.id : 0);
+    var nota = 2.5;
+    var motivos = ['O vestido já resolve o look; o resto só completa.'];
+    if (camada) {
+      var extra = avaliarAcrescimo(camada, [vestido]);
+      if (!extra || extra.nota < 0) return null;
+      nota += extra.nota;
+      if (extra.motivo) motivos.push(extra.motivo);
+    }
+    if (vestido.corte === 'sob_medida') { nota += 1; motivos.push('A peça sob medida dá mais presença ao conjunto.'); }
+    var conjunto = roupa.slice();
+    var calcado = melhorCom(grupos.calcado, roupa, clima, function (p) { return !CALCADO_ESPORTIVO[p.tipo] || p.tipo === 'tenis' || p.tipo === 'sandalia'; }, semente);
+    if (calcado) {
+      conjunto.push(calcado.peca);
+      nota += calcado.nota / 2;
+      if (calcado.motivo && motivos.length < 3 && motivos.indexOf(calcado.motivo) === -1) motivos.push(calcado.motivo);
+    }
+    var nivel = nivelDoLook(conjunto);
+    if (!camada && grupos.cinto.length && semente % 2 === 0) {
+      var cinto = melhorCom(grupos.cinto, conjunto, clima, function () { return true; }, semente);
+      if (cinto) conjunto.push(cinto.peca);
+    }
+    if (nota < NOTA_MINIMA) return null;
+    return {
+      pecas: conjunto, chave: chaveDe(conjunto), nivel: nivel, misto: ehMisto(conjunto),
+      ocasiao: rotuloDaOcasiao(conjunto), nota: nota, motivos: motivos.slice(0, 3)
+    };
+  }
+
   function separar(pecas) {
-    var g = { cima: [], baixo: [], camada: [], conjunto: [], calcado: [], cinto: [], gravata: [], bone: [] };
+    var g = { cima: [], baixo: [], camada: [], conjunto: [], vestido: [], calcado: [], cinto: [], gravata: [], bone: [] };
     pecas.forEach(function (p) {
       var nome = grupo(p);
       if (nome === 'acessorio') {
@@ -296,6 +330,12 @@ window.AR_LOOKS = (function () {
         acrescentar(montarCandidato(grupos, cima, terno, terno, clima));
       });
     });
+    grupos.vestido.forEach(function (vestido) {
+      acrescentar(montarVestido(grupos, vestido, null, clima));
+      grupos.camada.forEach(function (camada) {
+        acrescentar(montarVestido(grupos, vestido, camada, clima));
+      });
+    });
     return candidatos;
   }
 
@@ -332,8 +372,10 @@ window.AR_LOOKS = (function () {
   function oQueFalta(pecas) {
     var g = separar(pecas);
     var falta = [];
+    // Com um vestido, já dá para montar looks
+    if (g.vestido.length) return falta;
     if (!g.cima.length) falta.push('uma peça de cima, como camiseta ou camisa');
-    if (!g.baixo.length && !g.conjunto.length) falta.push('uma peça de baixo, como calça ou bermuda');
+    if (!g.baixo.length && !g.conjunto.length) falta.push('uma peça de baixo, como calça, saia ou bermuda');
     return falta;
   }
 

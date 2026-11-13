@@ -25,18 +25,41 @@
   ];
   var TODOS = [0, 1, 2, 3, 4, 5, 6];
   var UTEIS = [1, 2, 3, 4, 5];
-  var MODELOS = [
-    { nome: 'Ler', identidade: 'lê todos os dias', minima: 'Ler uma página', ancora: 'deitar na cama', hora: '22:00', dias: TODOS, cor: 'bordo' },
-    { nome: 'Beber água', identidade: 'cuida do próprio corpo', minima: 'Um copo cheio ao acordar', ancora: 'levantar da cama', hora: '07:00', dias: TODOS, cor: 'azul' },
-    { nome: 'Treinar', identidade: 'treina', minima: 'Colocar a roupa de treino e fazer uma série', ancora: 'sair do trabalho', hora: '18:30', dias: [1, 3, 5], cor: 'ouro' },
-    { nome: 'Caminhar', identidade: 'se movimenta todo dia', minima: 'Calçar o tênis e sair de casa', ancora: 'almoçar', hora: '12:40', dias: TODOS, cor: 'oliva' },
-    { nome: 'Meditar', identidade: 'tem a cabeça no lugar', minima: 'Respirar fundo por um minuto', ancora: 'escovar os dentes de manhã', hora: '07:20', dias: TODOS, cor: 'grafite' },
-    { nome: 'Alongar', identidade: 'cuida do próprio corpo', minima: 'Alongar por dois minutos', ancora: 'tomar banho', hora: '07:40', dias: TODOS, cor: 'oliva' },
-    { nome: 'Dormir no horário', identidade: 'acorda descansado', minima: 'Deixar o celular fora do quarto', ancora: 'jantar', hora: '22:30', dias: TODOS, cor: 'azul' },
-    { nome: 'Estudar inglês', identidade: 'fala inglês', minima: 'Revisar cinco palavras', ancora: 'passar o café', hora: '08:00', dias: UTEIS, cor: 'bordo' },
-    { nome: 'Gratidão', identidade: 'repara no que tem de bom', minima: 'Escrever uma coisa boa do dia', ancora: 'deitar na cama', hora: '21:45', dias: TODOS, cor: 'ouro' },
-    { nome: 'Organizar a casa', identidade: 'vive num lugar em ordem', minima: 'Guardar uma coisa fora do lugar', ancora: 'chegar em casa', hora: '19:00', dias: TODOS, cor: 'grafite' }
+  // cat: corpo, mente, rotina, dinheiro, relacoes
+  var CATEGORIAS = [
+    { id: '', rotulo: 'Todos' }, { id: 'corpo', rotulo: 'Corpo' }, { id: 'mente', rotulo: 'Mente' },
+    { id: 'rotina', rotulo: 'Rotina' }, { id: 'dinheiro', rotulo: 'Dinheiro' }, { id: 'relacoes', rotulo: 'Pessoas' }
   ];
+  var MODELOS = [
+    { cat: 'mente', nome: 'Ler', identidade: 'lê todos os dias', minima: 'Ler uma página', ancora: 'deitar na cama', hora: '22:00', dias: TODOS, cor: 'bordo' },
+    { cat: 'corpo', nome: 'Beber água', identidade: 'cuida do próprio corpo', minima: 'Um copo cheio ao acordar', ancora: 'levantar da cama', hora: '07:00', dias: TODOS, cor: 'azul' },
+    { cat: 'corpo', nome: 'Treinar', identidade: 'treina', minima: 'Colocar a roupa de treino e fazer uma série', ancora: 'sair do trabalho', hora: '18:30', dias: [1, 3, 5], cor: 'ouro' },
+    { cat: 'corpo', nome: 'Caminhar', identidade: 'se movimenta todo dia', minima: 'Calçar o tênis e sair de casa', ancora: 'almoçar', hora: '12:40', dias: TODOS, cor: 'oliva' },
+    { cat: 'mente', nome: 'Meditar', identidade: 'tem a cabeça no lugar', minima: 'Respirar fundo por um minuto', ancora: 'escovar os dentes de manhã', hora: '07:20', dias: TODOS, cor: 'grafite' },
+    { cat: 'corpo', nome: 'Alongar', identidade: 'cuida do próprio corpo', minima: 'Alongar por dois minutos', ancora: 'tomar banho', hora: '07:40', dias: TODOS, cor: 'oliva' },
+    { cat: 'rotina', nome: 'Dormir no horário', identidade: 'acorda descansado', minima: 'Deixar o celular fora do quarto', ancora: 'jantar', hora: '22:30', dias: TODOS, cor: 'azul' },
+    { cat: 'mente', nome: 'Estudar inglês', identidade: 'fala inglês', minima: 'Revisar cinco palavras', ancora: 'passar o café', hora: '08:00', dias: UTEIS, cor: 'bordo' },
+    { cat: 'mente', nome: 'Gratidão', identidade: 'repara no que tem de bom', minima: 'Escrever uma coisa boa do dia', ancora: 'deitar na cama', hora: '21:45', dias: TODOS, cor: 'ouro' },
+    { cat: 'rotina', nome: 'Organizar a casa', identidade: 'vive num lugar em ordem', minima: 'Guardar uma coisa fora do lugar', ancora: 'chegar em casa', hora: '19:00', dias: TODOS, cor: 'grafite' },
+    { cat: 'corpo', nome: 'Correr', identidade: 'corre', minima: 'Correr 5 minutos', ancora: 'acordar', hora: '06:30', dias: [1, 3, 5], cor: 'ouro' },
+    { cat: 'corpo', nome: 'Comer uma fruta', identidade: 'come bem', minima: 'Uma fruta no lanche', ancora: 'almoçar', hora: '15:30', dias: TODOS, cor: 'oliva' },
+    { cat: 'corpo', nome: 'Tomar o remédio ou a vitamina', identidade: 'cuida da saúde', minima: 'Tomar com um copo de água', ancora: 'tomar o café da manhã', hora: '08:00', dias: TODOS, cor: 'azul' },
+    { cat: 'corpo', nome: 'Cuidar da pele', identidade: 'se cuida', minima: 'Lavar o rosto e passar hidratante', ancora: 'escovar os dentes à noite', hora: '22:15', dias: TODOS, cor: 'bordo' },
+    { cat: 'rotina', nome: 'Arrumar a cama', identidade: 'começa o dia em ordem', minima: 'Esticar o lençol', ancora: 'levantar da cama', hora: '07:00', dias: TODOS, cor: 'grafite' },
+    { cat: 'rotina', nome: 'Desligar as telas antes de dormir', identidade: 'dorme bem', minima: 'Celular fora do quarto 30 minutos antes', ancora: 'escovar os dentes à noite', hora: '22:00', dias: TODOS, cor: 'azul' },
+    { cat: 'rotina', nome: 'Planejar o dia', identidade: 'sabe aonde está indo', minima: 'Escrever as 3 tarefas mais importantes', ancora: 'passar o café', hora: '08:30', dias: UTEIS, cor: 'grafite' },
+    { cat: 'mente', nome: 'Escrever um diário', identidade: 'se conhece', minima: 'Escrever uma frase sobre o dia', ancora: 'jantar', hora: '21:30', dias: TODOS, cor: 'ouro' },
+    { cat: 'mente', nome: 'Orar', identidade: 'tem fé', minima: 'Um minuto em silêncio', ancora: 'acordar', hora: '06:45', dias: TODOS, cor: 'grafite' },
+    { cat: 'dinheiro', nome: 'Anotar os gastos', identidade: 'cuida do próprio dinheiro', minima: 'Anotar o gasto do dia', ancora: 'jantar', hora: '21:00', dias: TODOS, cor: 'oliva' },
+    { cat: 'dinheiro', nome: 'Guardar dinheiro', identidade: 'pensa no futuro', minima: 'Separar R$ 5', ancora: 'receber o salário', hora: '19:00', dias: [5], cor: 'oliva' },
+    { cat: 'relacoes', nome: 'Falar com a família', identidade: 'está presente para quem ama', minima: 'Mandar uma mensagem', ancora: 'almoçar', hora: '12:30', dias: TODOS, cor: 'bordo' },
+    { cat: 'relacoes', nome: 'Elogiar alguém', identidade: 'deixa os outros melhores', minima: 'Um elogio sincero', ancora: 'chegar no trabalho', hora: '09:00', dias: UTEIS, cor: 'ouro' }
+  ];
+  // Sugestões rápidas para os campos que mais confundem
+  var EXEMPLOS = {
+    'hb-minima': ['Ler uma página', 'Calçar o tênis', 'Um copo de água', 'Respirar fundo por 1 minuto', 'Uma série só'],
+    'hb-ancora': ['acordar', 'passar o café', 'almoçar', 'chegar em casa', 'escovar os dentes à noite']
+  };
   // Sequências que merecem comemoração
   var MARCOS = { 3: 'Três seguidos: o começo de tudo.', 7: 'Uma semana inteira.', 14: 'Duas semanas sem falhar.', 21: 'Três semanas: já é parte da rotina.', 30: 'Um mês. Isso já é você.', 66: '66 dias: em média, é quando o hábito fica automático.', 100: 'Cem dias. Poucos chegam aqui.' };
 
@@ -163,6 +186,7 @@
     var tem = estado.habitos.length > 0;
     $('hb-vazio').hidden = tem;
     $('hb-painel').hidden = !tem;
+    $('hb-graficos').hidden = !tem;
     desenharListaLembretes();
     desenharLembretes();
     mostrarGuardar();
@@ -401,11 +425,32 @@
     MODELOS.forEach(function (m) {
       var b = criar('button', 'gr-chip', m.nome);
       b.type = 'button';
+      b.dataset.cat = m.cat;
       b.addEventListener('click', function () {
         preencher(m);
         modelos.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
       });
       modelos.appendChild(b);
+    });
+    var categorias = $('hb-categorias');
+    CATEGORIAS.forEach(function (c) {
+      var b = criar('button', 'hb-categoria', c.rotulo);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(c.id === ''));
+      b.addEventListener('click', function () {
+        categorias.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        modelos.querySelectorAll('button').forEach(function (x) { x.hidden = Boolean(c.id) && x.dataset.cat !== c.id; });
+      });
+      categorias.appendChild(b);
+    });
+    document.querySelectorAll('.hb-exemplos').forEach(function (caixa) {
+      var alvo = caixa.getAttribute('data-alvo');
+      (EXEMPLOS[alvo] || []).forEach(function (texto) {
+        var b = criar('button', 'hb-exemplo', texto);
+        b.type = 'button';
+        b.addEventListener('click', function () { $(alvo).value = texto; $(alvo).focus(); });
+        caixa.appendChild(b);
+      });
     });
   }
 
@@ -430,6 +475,9 @@
     $('hb-excluir').hidden = !h;
     $('hb-modelos-caixa').hidden = Boolean(h);
     $('hb-modelos').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+    $('hb-modelos').querySelectorAll('button').forEach(function (x) { x.hidden = false; });
+    $('hb-categorias').querySelectorAll('button').forEach(function (x, i) { x.setAttribute('aria-pressed', String(i === 0)); });
+    document.querySelectorAll('.hb-porque').forEach(function (d) { d.open = false; });
     // Quem está começando vai melhor com poucos hábitos
     var dica = $('hb-dica');
     dica.hidden = Boolean(h) || estado.habitos.length < 3;

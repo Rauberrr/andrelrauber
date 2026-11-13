@@ -164,6 +164,7 @@ Ao atualizar o site depois, nunca apague a pasta `api/fotos-pecas`: é nela que 
 - **Fotos:** ficam em `api/fotos-pecas`, bloqueadas ao acesso direto, e só abrem para a pessoa dona delas. O servidor regrava cada imagem, o que apaga dados como a localização. Nem o painel mostra as fotos.
 - **Peças sugeridas:** cada pessoa recebe as peças da lista `GR_SUGERIDAS`, em `api/guarda-roupa.php`, na primeira vez que abre o guarda-roupa. As fotos sem fundo ficam em `assets/img/sugeridas`, e as originais, em `imagens-guarda-roupa`, fora do GitHub. Para acrescentar uma peça, inclua a foto e a linha na lista: quem já tem conta também a recebe.
 - **Catálogo de peças:** na aba Peças, **Catálogo de peças** (ou **+ → Do catálogo**) mostra as sugeridas e as peças da marca em outras cores (`GR_CATALOGO`, em `api/guarda-roupa.php`): camisetas, camisas, moletons e calças de moletom. A pessoa toca nas que tem e elas entram no guarda-roupa, prontas para os looks; as do catálogo não contam no limite. As cores novas foram feitas recolorindo as fotos sem fundo das peças brancas e cinza, para ficarem iguais às outras.
+- **Peças femininas:** no mesmo catálogo, camisetas femininas, jeans skinny, flare e wide leg, suéteres de gola V, blazer feminino e vestidos (midi de malha e chemise), em várias cores. Foram feitas a partir das fotos da marca, ajustando o caimento (cintura, perna, barra), recortando a gola V ou alongando a peça até virar vestido. Os tipos novos são **vestido**, **saia** e **blusa**, e os cortes, **skinny**, **wide leg** e **flare**. O vestido monta o look sozinho, com o calçado e, se combinar, uma camada por cima.
 - **Peças cadastradas no painel:** em **Painel → Guarda-roupa**, o gestor cadastra peças para todos os clientes, com foto, tipo, cor, corte, tecido, formalidade e clima. A foto vai para uma moldura de 1000 × 1250, como as da marca (de preferência PNG sem fundo), e fica em `api/fotos-catalogo`, fora do GitHub; não apague essa pasta. Com **Colocar no guarda-roupa de todo mundo**, a peça entra sozinha para todos, como as sugeridas; sem marcar, fica só no catálogo. **Tirar do catálogo** esconde a peça, e quem já tem continua com ela. As peças ficam na tabela `catalogo_pecas`.
 - **Peças excluídas:** ficam na aba Excluídas, com as fotos, até a pessoa adicionar de novo ou apagar de vez. As sugeridas só saem junto com a conta, porque a foto é da marca.
 - **Várias peças de uma vez:** em **Adicionar várias**, a pessoa faz todas as fotos, descreve cada uma enquanto o fundo sai em segundo plano e guarda até 20 de cada vez. O código fica em `assets/js/guarda-roupa-lote.js`.
@@ -196,7 +197,11 @@ Em **Agendar coleção**, dê um nome, a data e a hora do lançamento (horário 
 
 ### Comprar uma peça
 
-Na página da peça, a pessoa escolhe a cor e toca em **Encomendar sob medida**. Sem conta, entra antes. Sem as medidas preenchidas, o site pede para preencher. Com tudo certo, o pedido é criado com o preço e o frete da peça e aparece em Minha conta, pronto para pagar pelo Mercado Pago, como os pedidos criados no painel.
+Na página da peça, a pessoa escolhe a cor e toca em **Comprar** (abre a sacola) ou **Adicionar à sacola** (continua olhando). O botão de compartilhar, ao lado do nome, usa o compartilhamento do celular ou oferece WhatsApp e copiar o link.
+
+- **Sacola:** o ícone no topo da coleção e das peças mostra quantas peças há. A sacola fica no aparelho (`assets/js/sacola.js`), com até 10 peças diferentes e 5 unidades de cada, e atualiza preço e disponibilidade pela vitrine ao abrir.
+- **Finalizar compra:** pede o aceite das condições de compra e cria **um pedido só** com todas as peças (`api/pedidos.php?acao=finalizar`): soma as peças e cobra o maior frete, porque vão juntas. As peças do pedido ficam na tabela `pedidos_itens`. Com o Mercado Pago ligado, a pessoa já vai direto para o pagamento; sem ele, o pedido aparece em Minha conta.
+- Sem conta, a pessoa entra antes. Sem as medidas preenchidas, a sacola pede para preencher, porque cada peça é feita a partir delas.
 
 ### Pedido exclusivo
 
@@ -333,6 +338,16 @@ Em `/apps/habitos/`, para quem já tentou mudar um hábito e desistiu. O app seg
 
 Os hábitos ficam no navegador e só vão para a conta se a pessoa autorizar. Os lembretes com o navegador fechado precisam deles na conta, e a página pede essa autorização ao ativar.
 
+## Tarefas automáticas (Cron)
+
+São três. Cadastre cada uma em **Cron Jobs**, no cPanel; o topo do **Painel** mostra quando cada uma rodou pela última vez.
+
+| Tarefa | Quando | Comando |
+| --- | --- | --- |
+| Lembretes e hábitos (notificações) | A cada 5 minutos (`*/5 * * * *`) | `/usr/local/bin/php /home2/and63667/public_html/api/tarefas/habitos.php >/dev/null 2>&1` |
+| Vídeos agendados | A cada 5 minutos (`*/5 * * * *`) | `/usr/local/bin/php /home2/and63667/public_html/api/tarefas/videos.php >/dev/null 2>&1` |
+| E-mails de lembrete (Alimentação e Ocasiões) | Uma vez por dia, às 9h (`0 9 * * *`) | `/usr/local/bin/php /home2/and63667/public_html/api/tarefas/lembretes.php >/dev/null 2>&1` |
+
 ## Assinatura dos apps
 
 Em **Painel → Assinatura**, o gestor escolhe em que modo os apps estão:
@@ -341,7 +356,12 @@ Em **Painel → Assinatura**, o gestor escolhe em que modo os apps estão:
 | --- | --- | --- |
 | Grátis, página oculta (padrão) | Grátis para quem tem conta | Só o gestor vê, como prévia |
 | Grátis, com aviso de teste | Grátis para quem tem conta | Todos veem: os apps estão em teste e vai ter assinatura mensal. A tela inicial dos apps mostra o aviso |
-| Cobrando | Só para quem tem acesso liberado | Quem não tem é levado para a página do plano |
+| Cobrando | Cada pessoa usa grátis pelos dias de teste; depois, só quem assina ou tem acesso liberado | Quem não tem é levado para a página do plano |
+
+- **Teste grátis:** em **Dias de teste grátis** (7 por padrão, 0 desliga). Com a cobrança ligada, os dias contam da criação da conta ou do dia em que a cobrança começou, o que for mais recente. A tela inicial dos apps mostra quantos dias faltam.
+- **Quem já usa continua grátis:** marcado por padrão. Ao ligar a cobrança, as contas criadas antes disso seguem usando sem pagar; só as contas novas passam pelo teste e pela assinatura. Desmarcado, todo mundo ganha os dias de teste a partir do dia em que a cobrança foi ligada.
+- **Usuários de teste:** em **Usuários de teste**, o gestor coloca o e-mail de uma conta (não a de gestor) que passa a ver a cobrança como se ela estivesse ligada, mesmo com os apps grátis para todos. Dá para **Recomeçar o teste** (os dias voltam a contar de hoje), **Ver depois do teste** (a conta já cai na página do plano) e **Tirar** da lista. Até 20 contas.
+- **A página:** clara e minimalista, com os benefícios primeiro, o "como funciona" (teste grátis, assinar, cancelar quando quiser) e o valor discreto, no fim.
 
 - No mesmo lugar ficam o nome do plano, o valor por mês e o que ele inclui. O gestor sempre usa os apps.
 - **Acesso liberado:** o gestor libera uma conta pelo e-mail, com ou sem data para acabar (cortesia, parceria, quem pagou por fora). Fica na tabela `assinaturas`.
@@ -350,6 +370,8 @@ Em **Painel → Assinatura**, o gestor escolhe em que modo os apps estão:
 - O modo e os ajustes ficam na tabela `configuracoes`. Para criar as tabelas novas num site que já está no ar, importe o `api/banco.sql` de novo.
 
 ## Alimentação
+
+Os alimentos ficam em `assets/js/alimentacao-dados.js` (`PRODUTOS`, com embalagem e preço, e `ALIMENTOS`, com os valores por 100 g). Além do básico, há mel, aveia, granola, morango, uva, abacaxi e o grupo **Suplementos**: whey protein, hipercalórico, creatina e barra de proteína, com preço de prateleira de marcas populares. Os suplementos não mudam de quantidade quando o plano se ajusta à meta.
 
 Em `/apps/alimentacao/`, a pessoa informa sexo, idade, altura, peso, rotina, objetivo e estado, marca o que come num dia comum e recebe:
 

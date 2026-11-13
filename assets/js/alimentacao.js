@@ -453,9 +453,9 @@
   var SUGESTOES = {
     cafe: [['pao_frances', 1], ['manteiga', 1], ['cafe', 1], ['cafe_leite', 1], ['leite', 1, 1], ['acucar', 2], ['ovo', 2], ['banana', 1], ['cuscuz', 1], ['tapioca', 1]],
     almoco: [['arroz', 4], ['feijao', 1], ['frango', 1], ['carne', 1], ['salada', 1], ['macarrao', 1], ['batata_frita', 1], ['refrigerante', 1], ['marmita', 1]],
-    lanche: [['pao_frances', 1], ['cafe', 1], ['biscoito', 4], ['iogurte', 1], ['banana', 1], ['salgado', 1], ['suco_caixa', 1]],
+    lanche: [['pao_frances', 1], ['cafe', 1], ['biscoito', 4], ['iogurte', 1], ['granola', 1], ['banana', 1], ['morango', 8], ['whey', 1], ['salgado', 1], ['suco_caixa', 1]],
     jantar: [['arroz', 3], ['feijao', 1], ['carne', 1], ['ovo', 2], ['macarrao', 1], ['pizza', 2], ['lanche', 1], ['salada', 1]],
-    outros: [['oleo', 2], ['refrigerante', 1], ['cerveja', 2], ['chocolate', 3], ['biscoito', 4], ['agua', 6]]
+    outros: [['oleo', 2], ['refrigerante', 1], ['cerveja', 2], ['chocolate', 3], ['biscoito', 4], ['agua', 6], ['whey', 1], ['hipercalorico', 1], ['creatina', 1], ['mel', 1]]
   };
 
   var editorAberto = null;

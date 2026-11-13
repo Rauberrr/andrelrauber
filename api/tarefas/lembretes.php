@@ -18,6 +18,7 @@ if (PHP_SAPI !== 'cli') {
 
 define('AR_API', true);
 require __DIR__ . '/../nucleo.php';
+marcar_tarefa('lembretes');
 
 const LEMBRETE_ALIMENTO_DIAS = 2;
 const LEMBRETE_ENCOMENDA_DIAS = 3;

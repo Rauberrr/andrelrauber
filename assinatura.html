@@ -5,7 +5,7 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Assinatura | Rauber</title>
-  <meta name="description" content="Guarda-roupa, Treino, Alimentação, Hábitos e Ocasiões: os apps da Rauber numa assinatura só.">
+  <meta name="description" content="Guarda-roupa, Treino, Alimentação, Hábitos e Ocasiões: os apps da Rauber numa assinatura só, com teste grátis.">
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#f4f1ea">
   <link rel="manifest" href="assets/apps.webmanifest?v=20261109d">
@@ -17,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261112a">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261112a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261112d">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261112c">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app assin">
@@ -32,59 +32,75 @@
 
   <main id="principal" class="assin-conteudo">
     <p class="assin-carregando" id="assin-carregando">Carregando...</p>
-
-    <!-- Prévia: só o gestor vê enquanto a página está oculta -->
     <p class="assin-previa" id="assin-previa" hidden></p>
 
     <!-- Página oculta, para quem não é gestor -->
     <section class="assin-gratis" id="assin-gratis" hidden>
-      <span class="assin-selo">Teste gratuito</span>
-      <h1 class="app-titulo">Os apps estão liberados</h1>
-      <p class="app-subtitulo">Durante o teste, todos os apps da Rauber estão abertos para quem tem conta. Aproveite.</p>
+      <p class="assin-sobre">Rauber Apps</p>
+      <h1 class="assin-titulo">Os apps estão liberados.</h1>
+      <p class="assin-texto">Durante o teste, tudo está aberto para quem tem conta. Aproveite.</p>
       <a class="botao botao-cheio" href="apps/">Ir para os apps</a>
     </section>
 
     <div id="assin-pagina" hidden>
       <section class="assin-topo">
-        <span class="assin-selo" id="assin-selo">Teste gratuito</span>
-        <h1 class="assin-titulo">Tudo o que você precisa para se vestir, treinar e comer melhor, num lugar só.</h1>
+        <p class="assin-sobre">Rauber Apps</p>
+        <h1 class="assin-titulo">Vista-se, treine e coma melhor. Com tudo no mesmo lugar.</h1>
         <p class="assin-texto" id="assin-texto"></p>
+        <div class="assin-acao">
+          <button class="botao botao-cheio assin-botao" type="button" id="assin-assinar">Começar</button>
+          <p class="assin-acao-nota" id="assin-acao-nota"></p>
+        </div>
+      </section>
+
+      <section class="assin-beneficios" aria-labelledby="assin-beneficios-titulo">
+        <h2 class="assin-h2" id="assin-beneficios-titulo">O que muda no seu dia</h2>
+        <ul class="assin-lista">
+          <li>
+            <span class="assin-ico app-icone-guarda-roupa" aria-hidden="true"><svg data-icone="cabide"></svg></span>
+            <div><h3>Saber o que vestir em segundos</h3><p>Looks montados com as roupas que você já tem, para o clima do dia e cada ocasião.</p></div>
+          </li>
+          <li>
+            <span class="assin-ico app-icone-treino" aria-hidden="true"><svg data-icone="haltere"></svg></span>
+            <div><h3>Um treino feito para você</h3><p>Plano montado para o seu objetivo e o seu tempo, com fases para não estagnar e a evolução das cargas.</p></div>
+          </li>
+          <li>
+            <span class="assin-ico app-icone-alimentacao" aria-hidden="true"><svg data-icone="folha"></svg></span>
+            <div><h3>Comer melhor sem gastar mais</h3><p>Um plano a partir do que você já come, com o custo no mercado da sua região.</p></div>
+          </li>
+          <li>
+            <span class="assin-ico app-icone-habitos" aria-hidden="true"><svg data-icone="chama"></svg></span>
+            <div><h3>Hábitos que finalmente ficam</h3><p>Pequenos passos todo dia, com lembretes que chegam no celular na hora certa.</p></div>
+          </li>
+          <li>
+            <span class="assin-ico app-icone-ocasioes" aria-hidden="true"><svg data-icone="calendario"></svg></span>
+            <div><h3>Pronto para cada ocasião</h3><p>O traje certo para casamento, entrevista ou viagem, com antecedência.</p></div>
+          </li>
+        </ul>
+      </section>
+
+      <section class="assin-passos" aria-labelledby="assin-passos-titulo">
+        <h2 class="assin-h2" id="assin-passos-titulo">Como funciona</h2>
+        <ol>
+          <li><strong id="assin-passo-1">Use tudo grátis por 7 dias</strong><span>Todos os apps liberados, sem cartão de crédito.</span></li>
+          <li><strong>Gostou? Assine</strong><span id="assin-passo-2">Por um valor mensal pequeno, no Pix ou no cartão.</span></li>
+          <li><strong>Cancele quando quiser</strong><span>Sem fidelidade. O que você anotou continua guardado na sua conta.</span></li>
+        </ol>
       </section>
 
       <section class="assin-plano" aria-labelledby="assin-nome">
-        <div class="assin-plano-cabeca">
-          <h2 class="assin-nome" id="assin-nome">Rauber Apps</h2>
-          <p class="assin-preco"><span class="assin-moeda">R$</span><strong id="assin-valor">19</strong><span class="assin-centavos" id="assin-centavos">,90</span><span class="assin-periodo">/mês</span></p>
-          <p class="assin-preco-nota" id="assin-preco-nota">Cobrança mensal. Cancele quando quiser.</p>
+        <div class="assin-plano-topo">
+          <h2 class="assin-plano-nome" id="assin-nome">Rauber Apps</h2>
+          <p class="assin-plano-preco"><span id="assin-preco">R$ 19,90</span> por mês, depois do teste</p>
         </div>
-        <ul class="assin-beneficios" id="assin-beneficios"></ul>
-        <div class="assin-acao">
-          <button class="botao botao-cheio assin-botao" type="button" id="assin-assinar">Assinar</button>
-          <p class="assin-acao-nota" id="assin-acao-nota"></p>
-        </div>
-        <ul class="assin-garantias">
-          <li><svg data-icone="check"></svg>Pagamento seguro pelo Mercado Pago, com Pix ou cartão</li>
-          <li><svg data-icone="check"></svg>Sem fidelidade: cancele a qualquer momento</li>
-          <li><svg data-icone="check"></svg>O que você anotou continua guardado na sua conta</li>
-        </ul>
-      </section>
-
-      <section class="assin-apps" aria-labelledby="assin-apps-titulo">
-        <h2 class="app-secao-titulo" id="assin-apps-titulo">O que entra na assinatura</h2>
-        <ul class="assin-apps-lista">
-          <li><span class="app-icone-fundo app-icone-guarda-roupa" aria-hidden="true"><svg data-icone="cabide"></svg></span><strong>Guarda-roupa</strong><span>Looks com o que você já tem, para o clima do dia.</span></li>
-          <li><span class="app-icone-fundo app-icone-treino" aria-hidden="true"><svg data-icone="haltere"></svg></span><strong>Treino</strong><span>Plano montado para você, com fases e evolução das cargas.</span></li>
-          <li><span class="app-icone-fundo app-icone-alimentacao" aria-hidden="true"><svg data-icone="folha"></svg></span><strong>Alimentação</strong><span>Um plano a partir do que você come, com o custo do mercado.</span></li>
-          <li><span class="app-icone-fundo app-icone-habitos" aria-hidden="true"><svg data-icone="chama"></svg></span><strong>Hábitos</strong><span>Hábitos que ficam e lembretes que chegam no celular.</span></li>
-          <li><span class="app-icone-fundo app-icone-ocasioes" aria-hidden="true"><svg data-icone="calendario"></svg></span><strong>Ocasiões</strong><span>O traje certo para cada evento, com antecedência.</span></li>
-        </ul>
+        <ul class="assin-incluso" id="assin-incluso"></ul>
       </section>
 
       <section class="assin-perguntas" aria-labelledby="assin-perguntas-titulo">
-        <h2 class="app-secao-titulo" id="assin-perguntas-titulo">Perguntas</h2>
+        <h2 class="assin-h2" id="assin-perguntas-titulo">Perguntas</h2>
         <details>
-          <summary>Como funciona o teste gratuito?</summary>
-          <p>Enquanto os apps estão em teste, quem tem conta usa tudo sem pagar. Quando a assinatura começar, avisamos antes, e nada do que você anotou se perde.</p>
+          <summary>Como funciona o teste grátis?</summary>
+          <p id="assin-faq-teste">Você usa todos os apps por 7 dias, sem pagar e sem cadastrar cartão. No fim do teste, escolhe se quer assinar.</p>
         </details>
         <details>
           <summary>Como eu pago?</summary>
@@ -95,8 +111,8 @@
           <p>Pode. Não há fidelidade nem multa. O acesso continua até o fim do mês que você já pagou.</p>
         </details>
         <details>
-          <summary>O que acontece com os meus dados se eu cancelar?</summary>
-          <p>Continuam guardados na sua conta, visíveis só para você. Se voltar a assinar, está tudo lá. Se preferir, dá para apagar tudo em Minha conta.</p>
+          <summary>O que acontece com os meus dados se eu não assinar?</summary>
+          <p>Continuam guardados na sua conta, visíveis só para você. Se assinar depois, está tudo lá. Se preferir, dá para apagar tudo em Minha conta.</p>
         </details>
       </section>
     </div>
@@ -105,7 +121,7 @@
 
   <script src="assets/js/config.js?v=20261111a"></script>
   <script src="assets/js/conta-api.js?v=20261112a"></script>
-  <script src="assets/js/apps.js?v=20261112a"></script>
-  <script src="assets/js/assinatura.js?v=20261112a"></script>
+  <script src="assets/js/apps.js?v=20261112c"></script>
+  <script src="assets/js/assinatura.js?v=20261112d"></script>
 </body>
 </html>

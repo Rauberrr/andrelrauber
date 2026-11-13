@@ -34,9 +34,9 @@ exigir_acesso_apps(['foto-catalogo', 'catalogo-gestor', 'catalogo-salvar', 'cata
 
 // As listas abaixo acompanham as de assets/js/guarda-roupa-dados.js
 const GR_TIPOS = [
-    'camiseta', 'regata', 'polo', 'camisa', 'camisa_curta', 'malha', 'moletom',
-    'blazer', 'jaqueta', 'casaco', 'sobretudo', 'cardigan', 'colete', 'terno',
-    'calca', 'calca_sarja', 'jeans', 'calca_moletom', 'bermuda', 'short_esportivo',
+    'camiseta', 'regata', 'polo', 'camisa', 'camisa_curta', 'malha', 'moletom', 'blusa',
+    'blazer', 'jaqueta', 'casaco', 'sobretudo', 'cardigan', 'colete', 'terno', 'vestido',
+    'calca', 'calca_sarja', 'jeans', 'calca_moletom', 'saia', 'bermuda', 'short_esportivo',
     'sapato', 'mocassim', 'tenis', 'bota', 'sandalia', 'chinelo',
     'cinto', 'gravata', 'bone', 'oculos', 'relogio', 'acessorio',
 ];
@@ -46,7 +46,7 @@ const GR_CORES = [
     'bege', 'caqui', 'marrom', 'caramelo', 'verde_oliva', 'verde', 'bordo', 'vermelho',
     'rosa', 'amarelo', 'laranja', 'roxo', 'estampado',
 ];
-const GR_CORTES = ['sob_medida', 'slim', 'regular', 'reto', 'relaxed', 'oversized'];
+const GR_CORTES = ['sob_medida', 'slim', 'regular', 'reto', 'relaxed', 'skinny', 'wide_leg', 'flare', 'oversized'];
 const GR_TECIDOS = ['', 'algodao', 'linho', 'la', 'tricot', 'moletom', 'alfaiataria', 'jeans', 'couro', 'camurca', 'malha', 'sarja', 'veludo', 'seda', 'sintetico', 'outro'];
 const GR_FORMALIDADES = ['esportivo', 'casual', 'misto', 'trabalho', 'festa', 'social'];
 const GR_CLIMAS = ['qualquer', 'calor', 'meia_estacao', 'frio'];
@@ -99,6 +99,26 @@ const GR_CATALOGO = [
     'calca-moletom-azul-marinho' => ['calca_moletom', 'azul_marinho', 'relaxed', 'moletom', 'casual', 'frio', 'Calça de moletom azul-marinho'],
     'calca-moletom-bege' => ['calca_moletom', 'bege', 'relaxed', 'moletom', 'casual', 'frio', 'Calça de moletom bege'],
     'calca-moletom-verde-oliva' => ['calca_moletom', 'verde_oliva', 'relaxed', 'moletom', 'casual', 'frio', 'Calça de moletom verde-oliva'],
+    // Femininas
+    'camiseta-feminina-branca' => ['camiseta', 'branco', 'slim', 'algodao', 'casual', 'qualquer', 'Camiseta feminina branca'],
+    'camiseta-feminina-preta' => ['camiseta', 'preto', 'slim', 'algodao', 'casual', 'qualquer', 'Camiseta feminina preta'],
+    'camiseta-feminina-rosa' => ['camiseta', 'rosa', 'slim', 'algodao', 'casual', 'qualquer', 'Camiseta feminina rosa'],
+    'jeans-skinny-escuro' => ['jeans', 'azul_marinho', 'skinny', 'jeans', 'casual', 'qualquer', 'Jeans skinny escuro'],
+    'jeans-flare-azul' => ['jeans', 'azul', 'flare', 'jeans', 'casual', 'qualquer', 'Jeans flare'],
+    'jeans-wide-leg-claro' => ['jeans', 'azul_claro', 'wide_leg', 'jeans', 'casual', 'qualquer', 'Jeans wide leg claro'],
+    'sueter-gola-v-preto' => ['malha', 'preto', 'relaxed', 'tricot', 'misto', 'frio', 'Suéter gola V preto'],
+    'sueter-gola-v-bege' => ['malha', 'bege', 'relaxed', 'tricot', 'misto', 'frio', 'Suéter gola V bege'],
+    'sueter-gola-v-cinza' => ['malha', 'cinza', 'relaxed', 'tricot', 'misto', 'frio', 'Suéter gola V cinza'],
+    'sueter-gola-v-bordo' => ['malha', 'bordo', 'relaxed', 'tricot', 'misto', 'frio', 'Suéter gola V bordô'],
+    'blazer-feminino-preto' => ['blazer', 'preto', 'slim', 'alfaiataria', 'social', 'qualquer', 'Blazer feminino preto'],
+    'vestido-camiseta-preto' => ['vestido', 'preto', 'regular', 'malha', 'casual', 'qualquer', 'Vestido midi preto'],
+    'vestido-camiseta-off-white' => ['vestido', 'off_white', 'regular', 'malha', 'casual', 'calor', 'Vestido midi off-white'],
+    'vestido-camiseta-cinza' => ['vestido', 'cinza', 'regular', 'malha', 'casual', 'qualquer', 'Vestido midi cinza'],
+    'vestido-camiseta-verde-oliva' => ['vestido', 'verde_oliva', 'regular', 'malha', 'casual', 'qualquer', 'Vestido midi verde-oliva'],
+    'vestido-camiseta-bordo' => ['vestido', 'bordo', 'regular', 'malha', 'misto', 'qualquer', 'Vestido midi bordô'],
+    'vestido-chemise-branco' => ['vestido', 'branco', 'regular', 'algodao', 'misto', 'qualquer', 'Vestido chemise branco'],
+    'vestido-chemise-azul-claro' => ['vestido', 'azul_claro', 'regular', 'algodao', 'misto', 'qualquer', 'Vestido chemise azul-claro'],
+    'vestido-chemise-bege' => ['vestido', 'bege', 'regular', 'linho', 'misto', 'calor', 'Vestido chemise bege'],
 ];
 // Peças cadastradas pelo gestor: o código é loja-ID e a foto fica em api/fotos-catalogo
 const GR_PREFIXO_LOJA = 'loja-';

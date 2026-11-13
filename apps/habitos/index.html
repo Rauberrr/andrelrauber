@@ -17,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261112a">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261112a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261112d">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261112c">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -75,18 +75,7 @@
         <ul class="app-lista" id="hb-outros"></ul>
       </section>
 
-      <section class="app-secao" aria-labelledby="hb-consistencia-titulo">
-        <h2 class="app-secao-titulo" id="hb-consistencia-titulo">Sua consistência</h2>
-        <p class="app-secao-texto">As últimas 12 semanas. Quanto mais escuro, mais hábitos cumpridos no dia. Não precisa ser perfeito: precisa ser quase sempre.</p>
-        <div class="app-cartao">
-          <div class="hb-mapa-caixa">
-            <div class="hb-mapa-dias" aria-hidden="true"><span>D</span><span></span><span>T</span><span></span><span>Q</span><span></span><span>S</span></div>
-            <div class="hb-mapa" id="hb-mapa" role="img"></div>
-          </div>
-          <p class="hb-mapa-legenda" aria-hidden="true">Menos <i class="n0"></i><i class="n1"></i><i class="n2"></i><i class="n3"></i> Mais</p>
-        </div>
-        <ul class="app-lista" id="hb-numeros" style="margin-top:.85rem"></ul>
-      </section>
+
 
     </div>
     <!-- Lembretes simples: aparecem com ou sem hábitos -->
@@ -101,6 +90,20 @@
       <ul class="lb-lista" id="lb-lista"></ul>
       <p class="app-suave lb-vazio" id="lb-vazio">Nenhum lembrete ainda.</p>
     </section>
+    <div id="hb-graficos" hidden>
+      <section class="app-secao" aria-labelledby="hb-consistencia-titulo">
+        <h2 class="app-secao-titulo" id="hb-consistencia-titulo">Sua consistência</h2>
+        <p class="app-secao-texto">As últimas 12 semanas. Quanto mais escuro, mais hábitos cumpridos no dia. Não precisa ser perfeito: precisa ser quase sempre.</p>
+        <div class="app-cartao">
+          <div class="hb-mapa-caixa">
+            <div class="hb-mapa-dias" aria-hidden="true"><span>D</span><span></span><span>T</span><span></span><span>Q</span><span></span><span>S</span></div>
+            <div class="hb-mapa" id="hb-mapa" role="img"></div>
+          </div>
+          <p class="hb-mapa-legenda" aria-hidden="true">Menos <i class="n0"></i><i class="n1"></i><i class="n2"></i><i class="n3"></i> Mais</p>
+        </div>
+        <ul class="app-lista" id="hb-numeros" style="margin-top:.85rem"></ul>
+      </section>
+    </div>
     <section class="app-secao" aria-labelledby="hb-lembretes-titulo">
       <h2 class="app-secao-titulo" id="hb-lembretes-titulo">Notificações no celular</h2>
       <div class="app-cartao hb-lembretes">
@@ -132,28 +135,15 @@
     <form class="gr-modal-corpo app-formulario" id="hb-form" novalidate>
       <h2 class="titulo-m" id="hb-modal-titulo">Novo hábito</h2>
       <div id="hb-modelos-caixa">
-        <p class="app-suave" style="margin-bottom:.5rem">Comece por um modelo ou escreva o seu.</p>
+        <p class="hb-passo-titulo">Escolha um modelo pronto <span>ou escreva o seu logo abaixo</span></p>
+        <div class="hb-categorias" id="hb-categorias" role="group" aria-label="Tipo de hábito"></div>
         <div class="hb-modelos" id="hb-modelos"></div>
       </div>
       <p class="gr-alerta" id="hb-dica" hidden></p>
       <div class="campo">
-        <label for="hb-nome">O hábito</label>
+        <label for="hb-nome">Qual é o hábito?</label>
         <div class="campo-entrada"><input id="hb-nome" type="text" maxlength="60" placeholder="Ex.: Ler" autocomplete="off" required></div>
         <p class="erro" id="hb-erro-nome" role="alert"></p>
-      </div>
-      <div class="campo">
-        <label for="hb-identidade">Quero ser alguém que…</label>
-        <div class="campo-entrada"><input id="hb-identidade" type="text" maxlength="80" placeholder="Ex.: lê todos os dias" autocomplete="off"></div>
-      </div>
-      <div class="campo">
-        <label for="hb-minima">A versão de 2 minutos</label>
-        <div class="campo-entrada"><input id="hb-minima" type="text" maxlength="80" placeholder="Ex.: Ler uma página" autocomplete="off"></div>
-        <p class="app-suave hb-ajuda">Nos dias difíceis, fazer só isso já conta e mantém a sequência.</p>
-      </div>
-      <div class="campo">
-        <label for="hb-ancora">Logo depois de…</label>
-        <div class="campo-entrada"><input id="hb-ancora" type="text" maxlength="80" placeholder="Ex.: passar o café" autocomplete="off"></div>
-        <p class="app-suave hb-ajuda">Um hábito que você já tem vira o gatilho do novo.</p>
       </div>
       <fieldset class="app-grupo">
         <legend>Em quais dias</legend>
@@ -174,6 +164,48 @@
         <legend>Cor</legend>
         <div class="hb-cores" id="hb-cores"></div>
       </fieldset>
+
+      <section class="hb-forte" aria-labelledby="hb-forte-titulo">
+        <div class="hb-forte-cabeca">
+          <span class="hb-forte-icone" aria-hidden="true"><svg data-icone="chama"></svg></span>
+          <div>
+            <h3 id="hb-forte-titulo">Deixe o hábito mais forte</h3>
+            <p>Três perguntas rápidas, todas opcionais. São elas que fazem um hábito durar além da primeira semana.</p>
+          </div>
+        </div>
+
+        <div class="hb-pergunta">
+          <div class="hb-pergunta-topo">
+            <label for="hb-minima">E nos dias difíceis, qual é o mínimo?</label>
+            <span class="hb-selo">Mais importante</span>
+          </div>
+          <div class="campo-entrada"><input id="hb-minima" type="text" maxlength="80" placeholder="Ex.: Ler uma página" autocomplete="off"></div>
+          <div class="hb-exemplos" data-alvo="hb-minima"></div>
+          <details class="hb-porque">
+            <summary>Por que isso importa?</summary>
+            <p>É a versão menor do hábito, que leva 2 minutos ou menos. Quase ninguém desiste no dia bom: desiste no dia cansado, quando pensa "hoje não dá, amanhã eu faço". Com o mínimo combinado, até esse dia conta e a sequência continua. Ler <em>uma página</em> ainda é ler. E, uma vez começado, muitas vezes você faz mais.</p>
+          </details>
+        </div>
+
+        <div class="hb-pergunta">
+          <label for="hb-ancora">Logo depois de qual coisa que você já faz?</label>
+          <div class="campo-entrada hb-com-prefixo"><span aria-hidden="true">Depois de</span><input id="hb-ancora" type="text" maxlength="80" placeholder="passar o café" autocomplete="off"></div>
+          <div class="hb-exemplos" data-alvo="hb-ancora"></div>
+          <details class="hb-porque">
+            <summary>Por que isso importa?</summary>
+            <p>Lembrar de um hábito novo é difícil; o que você já faz todo dia, não. Prendendo um no outro ("depois de passar o café, eu leio"), o hábito antigo vira o gatilho do novo e você não depende só da memória ou do lembrete.</p>
+          </details>
+        </div>
+
+        <div class="hb-pergunta">
+          <label for="hb-identidade">Quem você quer ser com isso?</label>
+          <div class="campo-entrada hb-com-prefixo"><span aria-hidden="true">Alguém que</span><input id="hb-identidade" type="text" maxlength="80" placeholder="lê todos os dias" autocomplete="off"></div>
+          <details class="hb-porque">
+            <summary>Por que isso importa?</summary>
+            <p>Metas acabam; identidade fica. Em vez de "quero ler 12 livros", pense "quero ser alguém que lê". Cada vez que você marca o hábito, o app conta como um voto para essa pessoa, e fica mais fácil continuar.</p>
+          </details>
+        </div>
+      </section>
       <p class="erro" id="hb-erro" role="alert"></p>
       <div class="gr-botoes-empilhados">
         <button class="botao botao-cheio" id="hb-salvar" type="submit">Criar hábito</button>
@@ -234,7 +266,7 @@
 
   <script src="assets/js/config.js?v=20261111a"></script>
   <script src="assets/js/conta-api.js?v=20261112a"></script>
-  <script src="assets/js/apps.js?v=20261112a"></script>
-  <script src="assets/js/habitos.js?v=20261112a"></script>
+  <script src="assets/js/apps.js?v=20261112c"></script>
+  <script src="assets/js/habitos.js?v=20261112c"></script>
 </body>
 </html>

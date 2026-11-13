@@ -998,9 +998,15 @@ em { font-style: italic; }
 .acesso-pular { display: none; margin-top: 1.25rem; }
 .acesso-caixa > h2 { scroll-margin-top: calc(var(--topo) + 2.5rem); }
 
+.acesso-sub { margin: -1rem 0 1.5rem; color: var(--cinza); font-size: .95rem; line-height: 1.5; }
+.acesso-sub a { color: var(--bordo); text-underline-offset: 3px; }
+
 @media (max-width: 900px) {
-  .acesso { grid-template-columns: minmax(0, 1fr); }
-  .acesso-pular { display: inline-flex; }
+  .acesso { grid-template-columns: minmax(0, 1fr); padding-top: calc(var(--topo) + 1.25rem); }
+  /* No celular, primeiro entrar ou criar a conta; a explicação vem logo depois */
+  .acesso-caixa { order: -1; }
+  .acesso-pular { display: none; }
+  .acesso-motivo .titulo-l { font-size: clamp(1.7rem, 7vw, 2.2rem); }
 }
 
 /* Tabela ligada à conta */
@@ -1738,3 +1744,85 @@ em { font-style: italic; }
   .as-liberar { grid-template-columns: 1fr; }
   .cat-form-foto { grid-template-columns: 96px minmax(0, 1fr); }
 }
+
+/* Sacola da coleção */
+.tem-sacola .nav { margin-left: auto; }
+.sacola-botao { position: relative; flex: none; display: grid; place-items: center; width: 44px; height: 44px; margin: 0 -6px 0 -1rem; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; }
+.sacola-botao svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linejoin: round; }
+.sacola-contador { position: absolute; top: 4px; right: 2px; display: grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 999px; background: var(--bordo); color: #fff; font-size: .66rem; font-weight: 500; line-height: 1; }
+.sacola-botao.pulou { animation: sacola-pulo .5s var(--curva, ease); }
+@keyframes sacola-pulo { 30% { transform: scale(1.18); } 60% { transform: scale(.94); } }
+@media (max-width: 860px) { .sacola-botao { margin: 0 0 0 auto; } }
+.sacola-aberta, .sacola-aberta body { overflow: hidden; }
+.sacola { position: fixed; inset: 0; z-index: 200; }
+.sacola-fundo { position: absolute; inset: 0; background: rgba(11, 11, 10, .4); opacity: 0; transition: opacity .22s ease; }
+.sacola-painel { position: absolute; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; width: min(100%, 440px); background: var(--off); color: var(--preto); box-shadow: -20px 0 50px -30px rgba(0, 0, 0, .5); transform: translateX(100%); transition: transform .26s var(--curva, ease); }
+.sacola.aberta .sacola-fundo { opacity: 1; }
+.sacola.aberta .sacola-painel { transform: none; }
+.sacola-cabeca { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--linha); }
+.sacola-cabeca h2 { font-family: var(--serifa); font-size: 1.5rem; font-weight: 400; }
+.sacola-fechar { display: grid; place-items: center; width: 40px; height: 40px; margin-right: -10px; border: 0; background: none; color: inherit; cursor: pointer; }
+.sacola-fechar svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.4; }
+.sacola-corpo { flex: 1; overflow-y: auto; padding: .5rem 1.5rem; }
+.sacola-lista { margin: 0; padding: 0; list-style: none; }
+.sacola-item { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 1rem; padding: 1.1rem 0; border-bottom: 1px solid var(--linha); }
+.sacola-indisponivel { opacity: .55; }
+.sacola-foto { display: block; aspect-ratio: 4 / 5; background: var(--off-2); }
+.sacola-foto img { width: 100%; height: 100%; object-fit: cover; }
+.sacola-info { display: grid; align-content: start; gap: .3rem; min-width: 0; }
+.sacola-nome { color: inherit; font-size: 1rem; text-decoration: none; }
+.sacola-nome:hover { text-decoration: underline; text-underline-offset: 3px; }
+.sacola-detalhe { color: var(--cinza); font-size: .84rem; }
+.sacola-linha { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: .35rem; }
+.sacola-qtd { display: inline-flex; align-items: center; border: 1px solid var(--linha); }
+.sacola-qtd button { width: 34px; height: 34px; border: 0; background: none; color: inherit; font: inherit; font-size: 1.05rem; cursor: pointer; }
+.sacola-qtd button:disabled { opacity: .3; cursor: default; }
+.sacola-qtd span { min-width: 1.6rem; text-align: center; font-size: .92rem; font-variant-numeric: tabular-nums; }
+.sacola-preco { font-weight: 500; font-variant-numeric: tabular-nums; }
+.sacola-tirar { justify-self: start; padding: 0; border: 0; background: none; color: var(--cinza); font: inherit; font-size: .8rem; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.sacola-vazia { display: grid; justify-items: center; gap: 1.25rem; padding: 4rem 0; color: var(--cinza); text-align: center; }
+.sacola-rodape { padding: 1.1rem 1.5rem calc(1.25rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--linha); background: var(--off); }
+.sacola-totais { display: grid; gap: .35rem; margin: 0 0 .9rem; }
+.sacola-totais div { display: flex; justify-content: space-between; font-size: .92rem; }
+.sacola-totais dt { color: var(--cinza); }
+.sacola-totais dd { margin: 0; font-variant-numeric: tabular-nums; }
+.sacola-totais .sacola-total { margin-top: .35rem; padding-top: .6rem; border-top: 1px solid var(--linha); font-size: 1.1rem; }
+.sacola-totais .sacola-total dt { color: var(--preto); }
+.sacola-medida { margin: 0 0 .8rem; color: var(--cinza); font-size: .84rem; line-height: 1.45; }
+.sacola-aceite { font-size: .88rem; }
+.sacola-erro:empty { display: none; }
+.sacola-finalizar { width: 100%; margin-top: .9rem; }
+.sacola-seguro { margin: .6rem 0 0; color: var(--cinza); font-size: .78rem; text-align: center; }
+
+/* Produto: comprar, sacola e compartilhar */
+.produto-titulo-linha { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.produto-compartilhar-caixa { position: relative; flex: none; margin-top: .35rem; }
+.produto-compartilhar { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--linha); border-radius: 50%; background: none; color: inherit; cursor: pointer; transition: border-color .2s, background .2s; }
+.produto-compartilhar:hover { border-color: var(--preto); }
+.produto-compartilhar svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.produto-compartilhar-menu { position: absolute; top: calc(100% + .4rem); right: 0; z-index: 5; display: grid; min-width: 11rem; padding: .35rem 0; background: #fff; border: 1px solid var(--linha); box-shadow: 0 14px 30px -18px rgba(0, 0, 0, .4); }
+.produto-compartilhar-menu a, .produto-compartilhar-menu button { padding: .65rem 1rem; border: 0; background: none; color: inherit; font: inherit; font-size: .92rem; text-align: left; text-decoration: none; cursor: pointer; }
+.produto-compartilhar-menu a:hover, .produto-compartilhar-menu button:hover { background: var(--off); }
+.produto-botoes { display: grid; gap: .6rem; margin-top: 1.5rem; }
+.produto-botoes .produto-comprar { width: 100%; margin-top: 0; }
+.produto-sacola { width: 100%; }
+.produto-adicionado { min-height: 1.2em; margin-top: .6rem; color: var(--bordo); font-size: .92rem; }
+
+/* Painel: tarefas do Cron */
+.painel-tarefas { margin: 1rem 0 1.5rem; padding: .75rem 1rem; border: 1px solid var(--linha); background: #fff; }
+.painel-tarefas summary { display: flex; align-items: center; gap: .6rem; font-size: .92rem; cursor: pointer; }
+.painel-tarefas-luz { width: 10px; height: 10px; border-radius: 50%; background: var(--linha); }
+.painel-tarefas-luz.ok { background: #2d7a4b; }
+.painel-tarefas-luz.parada { background: #c0392b; }
+.painel-tarefas ul { display: grid; gap: .4rem; margin: .8rem 0 0; padding: 0; list-style: none; }
+.painel-tarefas li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .2rem 1rem; padding: .5rem .7rem; background: var(--off); font-size: .9rem; }
+.painel-tarefas li span { color: var(--cinza); }
+.painel-tarefas .tarefa-parada strong::before { content: "● "; color: #c0392b; }
+.painel-tarefas .tarefa-ok strong::before { content: "● "; color: #2d7a4b; }
+.as-antigos { margin: 0 0 1rem; padding: .85rem 1rem; border: 1px solid var(--linha); background: #fff; font-size: .92rem; line-height: 1.5; }
+.as-testador-form { grid-template-columns: minmax(0, 1fr) auto; }
+.as-acoes { display: flex; flex-wrap: wrap; gap: .2rem .9rem; }
+.as-acoes .texto-botao { font-size: .84rem; }
+.as-acoes .painel-perigo { margin-left: 0; }
+.as-item-vazio { color: var(--cinza); font-size: .9rem; }
+@media (max-width: 640px) { .as-testador-form { grid-template-columns: 1fr; } }

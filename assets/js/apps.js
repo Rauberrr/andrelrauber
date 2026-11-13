@@ -315,13 +315,15 @@ window.AR_APP = (function () {
   }
 
   // Modo "aviso" no painel: os apps estão em teste gratuito, e a assinatura vem depois
-  function avisoDeTeste() {
+  function avisoDeTeste(diasRestantes) {
     if (paginaAtual() !== 'apps/' || document.getElementById('app-teste')) return;
     var a = criar('a', 'app-teste');
     a.id = 'app-teste';
     a.href = 'assinatura.html';
-    a.appendChild(criar('strong', '', 'Teste gratuito'));
-    a.appendChild(criar('span', '', 'Todos os apps estão liberados por enquanto. Veja como vai ser a assinatura.'));
+    a.appendChild(criar('strong', '', 'Teste grátis'));
+    a.appendChild(criar('span', '', diasRestantes
+      ? (diasRestantes === 1 ? 'Falta 1 dia de teste.' : 'Faltam ' + diasRestantes + ' dias de teste.') + ' Veja como continuar depois.'
+      : 'Todos os apps estão liberados por enquanto. Veja como vai ser a assinatura.'));
     a.appendChild(icone('seguir'));
     var cabeca = principal.querySelector('.app-cabeca');
     principal.insertBefore(a, cabeca ? cabeca.nextSibling : principal.firstChild);
@@ -408,7 +410,7 @@ window.AR_APP = (function () {
         gravarLocal(LEMBRAR, 1);
         if (abrindo) abrindo.remove();
         liberar();
-        if (v.assinatura && v.assinatura.modo === 'aviso') avisoDeTeste();
+        if (v.assinatura && (v.assinatura.modo === 'aviso' || v.assinatura.diasDeTeste)) avisoDeTeste(v.assinatura.diasDeTeste);
         return;
       }
       // Sem resposta do servidor, quem já entrou antes continua usando o que está no aparelho

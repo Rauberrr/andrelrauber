@@ -548,6 +548,13 @@ const ASSINATURA_PADRAO = [
     'modo' => 'oculta',
     'nome' => 'Rauber Apps',
     'precoCentavos' => 1990,
+    // Dias de teste grátis com a cobrança ligada: contam da criação da conta ou do dia em que a cobrança começou
+    'testeDias' => 7,
+    'cobrandoDesde' => null,
+    // Ao ligar a cobrança, quem já tinha conta continua usando grátis (não é pego de surpresa)
+    'liberarAntigos' => true,
+    // Contas que veem a cobrança antes de todo mundo, para testar: [{id, desde}]
+    'testadores' => [],
     'beneficios' => [
         'Guarda-roupa com looks para o clima do dia',
         'Treino montado para você, com fases e evolução das cargas',
@@ -571,11 +578,48 @@ function assinatura_config(): array
         if (is_int($salvo['precoCentavos'] ?? null)) {
             $plano['precoCentavos'] = $salvo['precoCentavos'];
         }
+        if (is_int($salvo['testeDias'] ?? null) && $salvo['testeDias'] >= 0 && $salvo['testeDias'] <= 60) {
+            $plano['testeDias'] = $salvo['testeDias'];
+        }
+        if (is_string($salvo['cobrandoDesde'] ?? null)) {
+            $plano['cobrandoDesde'] = $salvo['cobrandoDesde'];
+        }
         if (is_array($salvo['beneficios'] ?? null) && $salvo['beneficios']) {
             $plano['beneficios'] = array_values(array_filter($salvo['beneficios'], 'is_string'));
         }
+        if (is_bool($salvo['liberarAntigos'] ?? null)) {
+            $plano['liberarAntigos'] = $salvo['liberarAntigos'];
+        }
+        if (is_array($salvo['testadores'] ?? null)) {
+            foreach ($salvo['testadores'] as $t) {
+                if (is_array($t) && is_int($t['id'] ?? null) && is_string($t['desde'] ?? null)) {
+                    $plano['testadores'][] = ['id' => $t['id'], 'desde' => $t['desde']];
+                }
+            }
+        }
     }
     return $plano;
+}
+
+/** Desde quando a pessoa é usuária de teste da cobrança, ou null. */
+function testador_desde(array $usuario, array $plano): ?string
+{
+    foreach ($plano['testadores'] as $t) {
+        if ($t['id'] === (int) $usuario['id']) {
+            return $t['desde'];
+        }
+    }
+    return null;
+}
+
+// O modo que vale para a pessoa: os usuários de teste veem a cobrança mesmo antes de ela ser ligada
+function modo_para(?array $usuario, ?array $plano = null): string
+{
+    $plano = $plano ?? assinatura_config();
+    if ($usuario !== null && (int) $usuario['admin'] !== 1 && testador_desde($usuario, $plano) !== null) {
+        return 'cobrando';
+    }
+    return $plano['modo'];
 }
 
 function assinatura_da_pessoa(int $usuarioId): ?array
@@ -593,10 +637,31 @@ function assinatura_valida(array $a): bool
     return $a['situacao'] === 'ativa' && ($a['valida_ate'] === null || (string) $a['valida_ate'] >= date('Y-m-d H:i:s'));
 }
 
-// Fora do modo "cobrando", todo mundo usa. O gestor sempre usa.
+/** Até quando vai o teste grátis da pessoa (AAAA-MM-DD HH:MM:SS), ou null sem teste. */
+function fim_do_teste(array $usuario, ?array $plano = null): ?string
+{
+    $plano = $plano ?? assinatura_config();
+    if ($plano['testeDias'] <= 0) {
+        return null;
+    }
+    // Quem já tinha conta quando a cobrança começou também ganha os dias de teste.
+    // O usuário de teste conta a partir do dia em que o gestor o colocou na lista.
+    $testador = testador_desde($usuario, $plano);
+    $inicio = $testador ?? max((string) $usuario['criado_em'], (string) ($plano['cobrandoDesde'] ?? ''));
+    return date('Y-m-d H:i:s', strtotime($inicio) + $plano['testeDias'] * 86400);
+}
+
+function em_teste(array $usuario): bool
+{
+    $fim = fim_do_teste($usuario);
+    return $fim !== null && $fim > date('Y-m-d H:i:s');
+}
+
+// Fora do modo "cobrando", todo mundo usa. O gestor sempre usa. Cobrando: quem assina ou está no teste.
 function acesso_aos_apps(?array $usuario): bool
 {
-    if (assinatura_config()['modo'] !== 'cobrando') {
+    $plano = assinatura_config();
+    if (modo_para($usuario, $plano) !== 'cobrando') {
         return true;
     }
     if ($usuario === null) {
@@ -606,7 +671,36 @@ function acesso_aos_apps(?array $usuario): bool
         return true;
     }
     $a = assinatura_da_pessoa((int) $usuario['id']);
-    return $a !== null && assinatura_valida($a);
+    if ($a !== null && assinatura_valida($a)) {
+        return true;
+    }
+    if (ja_usava_antes($usuario, $plano)) {
+        return true;
+    }
+    return em_teste($usuario);
+}
+
+// Com "quem já usa continua grátis": a conta criada antes de a cobrança ser ligada não paga
+function ja_usava_antes(array $usuario, array $plano): bool
+{
+    return $plano['liberarAntigos'] && $plano['modo'] === 'cobrando' && $plano['cobrandoDesde'] !== null
+        && testador_desde($usuario, $plano) === null && (string) $usuario['criado_em'] < (string) $plano['cobrandoDesde'];
+}
+
+// O que os apps precisam saber: o modo, se a pessoa usa e quantos dias de teste faltam
+function situacao_da_assinatura(?array $usuario): array
+{
+    $plano = assinatura_config();
+    $modo = modo_para($usuario, $plano);
+    $situacao = ['modo' => $modo, 'liberado' => acesso_aos_apps($usuario), 'diasDeTeste' => 0];
+    if ($modo === 'cobrando' && $usuario !== null && (int) $usuario['admin'] !== 1 && !ja_usava_antes($usuario, $plano)) {
+        $a = assinatura_da_pessoa((int) $usuario['id']);
+        $fim = fim_do_teste($usuario, $plano);
+        if (!($a && assinatura_valida($a)) && $fim !== null && $fim > date('Y-m-d H:i:s')) {
+            $situacao['diasDeTeste'] = max(1, (int) ceil((strtotime($fim) - time()) / 86400));
+        }
+    }
+    return $situacao;
 }
 
 // Para as APIs dos apps: com a cobrança ligada, quem não assina recebe 402
@@ -615,6 +709,16 @@ function exigir_acesso_apps(array $liberadas = []): void
     $usuario = usuario_logado();
     if ($usuario !== null && !in_array($_GET['acao'] ?? '', $liberadas, true) && !acesso_aos_apps($usuario)) {
         falhar(402, 'Os apps agora são por assinatura. Assine para continuar.', ['assinatura' => true]);
+    }
+}
+
+// As tarefas do Cron marcam quando rodaram: o painel mostra se estão ligadas
+function marcar_tarefa(string $nome): void
+{
+    try {
+        gravar_ajuste('tarefa_' . $nome . '_em', time());
+    } catch (PDOException $erro) {
+        // Banco ainda sem a tabela de ajustes: a tarefa roda do mesmo jeito
     }
 }
 

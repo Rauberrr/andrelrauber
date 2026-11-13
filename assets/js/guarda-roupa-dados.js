@@ -6,6 +6,7 @@ window.AR_GR = (function () {
     { id: 'cima', rotulo: 'Parte de cima' },
     { id: 'camada', rotulo: 'Sobreposição' },
     { id: 'conjunto', rotulo: 'Conjunto' },
+    { id: 'vestido', rotulo: 'Vestidos' },
     { id: 'baixo', rotulo: 'Parte de baixo' },
     { id: 'calcado', rotulo: 'Calçados' },
     { id: 'acessorio', rotulo: 'Acessórios' }
@@ -20,6 +21,7 @@ window.AR_GR = (function () {
     { id: 'camisa_curta', rotulo: 'Camisa de manga curta', grupo: 'cima', nivel: 1, clima: 'calor' },
     { id: 'malha', rotulo: 'Malha ou suéter', grupo: 'cima', nivel: 2, clima: 'frio' },
     { id: 'moletom', rotulo: 'Moletom', grupo: 'cima', nivel: 1, clima: 'frio' },
+    { id: 'blusa', rotulo: 'Blusa', grupo: 'cima', nivel: 2, clima: 'qualquer' },
     { id: 'blazer', rotulo: 'Blazer', grupo: 'camada', nivel: 2, clima: 'qualquer' },
     { id: 'jaqueta', rotulo: 'Jaqueta', grupo: 'camada', nivel: 1, clima: 'frio' },
     { id: 'casaco', rotulo: 'Casaco', grupo: 'camada', nivel: 2, clima: 'frio' },
@@ -27,10 +29,12 @@ window.AR_GR = (function () {
     { id: 'cardigan', rotulo: 'Cardigã', grupo: 'camada', nivel: 2, clima: 'meia_estacao' },
     { id: 'colete', rotulo: 'Colete', grupo: 'camada', nivel: 2, clima: 'qualquer' },
     { id: 'terno', rotulo: 'Terno', grupo: 'conjunto', nivel: 3, clima: 'qualquer' },
+    { id: 'vestido', rotulo: 'Vestido', grupo: 'vestido', nivel: 2, clima: 'qualquer' },
     { id: 'calca', rotulo: 'Calça social', grupo: 'baixo', nivel: 2, clima: 'qualquer' },
     { id: 'calca_sarja', rotulo: 'Calça de sarja', grupo: 'baixo', nivel: 2, clima: 'qualquer' },
     { id: 'jeans', rotulo: 'Calça jeans', grupo: 'baixo', nivel: 1, clima: 'qualquer' },
     { id: 'calca_moletom', rotulo: 'Calça de moletom', grupo: 'baixo', nivel: 1, clima: 'frio' },
+    { id: 'saia', rotulo: 'Saia', grupo: 'baixo', nivel: 2, clima: 'qualquer' },
     { id: 'bermuda', rotulo: 'Bermuda', grupo: 'baixo', nivel: 1, clima: 'calor' },
     { id: 'short_esportivo', rotulo: 'Short esportivo', grupo: 'baixo', nivel: 0, clima: 'calor' },
     { id: 'sapato', rotulo: 'Sapato social', grupo: 'calcado', nivel: 3, clima: 'qualquer' },
@@ -78,6 +82,9 @@ window.AR_GR = (function () {
     { id: 'regular', rotulo: 'Regular' },
     { id: 'reto', rotulo: 'Reto' },
     { id: 'relaxed', rotulo: 'Relaxed' },
+    { id: 'skinny', rotulo: 'Skinny' },
+    { id: 'wide_leg', rotulo: 'Wide leg' },
+    { id: 'flare', rotulo: 'Flare' },
     { id: 'oversized', rotulo: 'Oversized' }
   ];
 

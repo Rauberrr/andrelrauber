@@ -18,6 +18,7 @@ if (PHP_SAPI !== 'cli') {
 define('AR_API', true);
 require __DIR__ . '/../nucleo.php';
 require __DIR__ . '/../redes.php';
+marcar_tarefa('videos');
 
 @set_time_limit(0);
 $fim = time() + 12 * 60;

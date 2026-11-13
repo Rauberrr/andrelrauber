@@ -73,11 +73,7 @@ function marcar_avisado(int $usuarioId, string $chave): void
 }
 
 // Marca quando rodou: o app e o painel mostram se a tarefa do Cron está ligada
-try {
-    gravar_ajuste('tarefa_habitos_em', time());
-} catch (PDOException $erro) {
-    // Banco ainda sem a tabela de ajustes: os lembretes saem do mesmo jeito
-}
+marcar_tarefa('habitos');
 
 $linhas = consultar(
     "SELECT a.usuario_id, a.dados FROM apps_dados a

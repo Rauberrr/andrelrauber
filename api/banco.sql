@@ -461,3 +461,17 @@ CREATE TABLE IF NOT EXISTS assinaturas (
   PRIMARY KEY (usuario_id),
   CONSTRAINT fk_assinatura_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Coleção: as peças de cada pedido feito pela sacola (um pedido pode ter várias peças)
+CREATE TABLE IF NOT EXISTS pedidos_itens (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  pedido_id INT UNSIGNED NOT NULL,
+  produto_id INT UNSIGNED NULL,
+  nome VARCHAR(90) NOT NULL,
+  cor VARCHAR(30) NOT NULL,
+  quantidade INT UNSIGNED NOT NULL,
+  preco_centavos INT UNSIGNED NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_item_pedido (pedido_id),
+  CONSTRAINT fk_item_pedido FOREIGN KEY (pedido_id) REFERENCES pedidos (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

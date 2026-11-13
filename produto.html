@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261112a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261112d">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -64,7 +64,18 @@
       </div>
       <div class="produto-info">
         <nav class="produto-trilha" aria-label="Você está em"><a href="colecao.html">Coleção</a><span aria-hidden="true">/</span><span id="produto-categoria"></span></nav>
-        <h1 class="titulo-l" id="produto-nome"></h1>
+        <div class="produto-titulo-linha">
+          <h1 class="titulo-l" id="produto-nome"></h1>
+          <div class="produto-compartilhar-caixa">
+            <button class="produto-compartilhar" id="produto-compartilhar" type="button" aria-label="Compartilhar esta peça" aria-expanded="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5"/><path d="M7.5 8 12 3.5 16.5 8"/><path d="M5 12v7.5h14V12"/></svg>
+            </button>
+            <div class="produto-compartilhar-menu" id="produto-compartilhar-menu" hidden>
+              <a id="compartilhar-whatsapp" href="#" target="_blank" rel="noopener">WhatsApp</a>
+              <button type="button" id="compartilhar-copiar">Copiar link</button>
+            </div>
+          </div>
+        </div>
         <p class="produto-preco" id="produto-preco"></p>
         <p class="produto-frete" id="produto-frete"></p>
         <p class="produto-resumo" id="produto-resumo"></p>
@@ -79,7 +90,11 @@
           <div><strong>Feita sob as suas medidas</strong><span id="produto-prazo"></span></div>
         </div>
 
-        <button class="botao botao-cheio produto-comprar" id="produto-comprar" type="button">Encomendar sob medida</button>
+        <div class="produto-botoes">
+          <button class="botao botao-cheio produto-comprar" id="produto-comprar" type="button">Comprar</button>
+          <button class="botao produto-sacola" id="produto-sacola" type="button">Adicionar à sacola</button>
+        </div>
+        <p class="produto-adicionado" id="produto-adicionado" role="status" aria-live="polite"></p>
         <p class="erro" id="produto-erro" role="alert"></p>
         <p class="produto-nota" id="produto-nota"></p>
 
@@ -138,6 +153,7 @@
   <script src="assets/js/main.js?v=20261111a"></script>
   <script src="assets/js/conta-api.js?v=20261112a"></script>
   <script src="assets/js/colecao-dados.js?v=20261111a"></script>
-  <script src="assets/js/produto.js?v=20261111a"></script>
+  <script src="assets/js/sacola.js?v=20261112c"></script>
+  <script src="assets/js/produto.js?v=20261112c"></script>
 </body>
 </html>

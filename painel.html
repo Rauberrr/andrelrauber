@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261112a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261112d">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -32,6 +32,11 @@
     <span class="etiqueta">Painel</span>
     <h1 class="titulo-m">Gestão da marca</h1>
 
+    <details class="painel-tarefas" id="painel-tarefas">
+      <summary><span class="painel-tarefas-luz" id="painel-tarefas-luz"></span><span id="painel-tarefas-resumo">Tarefas automáticas (Cron)</span></summary>
+      <ul id="painel-tarefas-lista"></ul>
+      <p class="painel-ajuda">Cada tarefa precisa estar cadastrada em <strong>Cron Jobs</strong>, no cPanel. Se aparecer "nunca rodou", ela ainda não foi criada ou o comando está errado.</p>
+    </details>
     <div class="painel-abas" role="tablist" aria-label="Partes do painel">
       <button type="button" role="tab" id="aba-clientes" aria-controls="painel-clientes" aria-selected="true">Clientes</button>
       <button type="button" role="tab" id="aba-colecao" aria-controls="painel-colecao" aria-selected="false" tabindex="-1">Coleção</button>
@@ -125,13 +130,15 @@
         <fieldset class="as-modos">
           <legend>Como os apps estão agora</legend>
           <label class="as-modo"><input type="radio" name="as-modo" value="oculta"><span><strong>Grátis, página oculta</strong><small>Os apps são grátis para quem tem conta. A página da assinatura só aparece para você, como prévia.</small></span></label>
-          <label class="as-modo"><input type="radio" name="as-modo" value="aviso"><span><strong>Grátis, com aviso de teste</strong><small>Os apps continuam grátis, e todos veem que estão em teste e que vai ter assinatura mensal.</small></span></label>
-          <label class="as-modo as-modo-cobrar"><input type="radio" name="as-modo" value="cobrando"><span><strong>Cobrando</strong><small>Só quem tem assinatura usa os apps. Os outros são levados para a página do plano. Você sempre tem acesso.</small></span></label>
+          <label class="as-modo"><input type="radio" name="as-modo" value="aviso"><span><strong>Grátis, com aviso do valor</strong><small>Os apps continuam grátis, e todos veem a página: teste grátis e o valor da assinatura depois.</small></span></label>
+          <label class="as-modo as-modo-cobrar"><input type="radio" name="as-modo" value="cobrando"><span><strong>Cobrando</strong><small>Cada pessoa tem os dias de teste grátis. Depois, só quem assina usa os apps; os outros são levados para a página do plano. Você sempre tem acesso.</small></span></label>
         </fieldset>
+        <label class="campo-marcar as-antigos"><input type="checkbox" id="as-antigos" checked> <span><strong>Quem já usa continua grátis.</strong> Ao ligar a cobrança, as contas criadas antes disso seguem usando sem pagar. Só quem criar conta depois passa pelo teste grátis e pela assinatura.</span></label>
         <p class="as-alerta" id="as-alerta" hidden>O pagamento online ainda não está ligado: com a cobrança ativa, só usa quem você liberar abaixo. Quem tentar assinar recebe o link do WhatsApp.</p>
         <div class="painel-campos">
           <div class="campo"><label for="as-nome">Nome do plano</label><div class="campo-entrada"><input id="as-nome" maxlength="60" placeholder="Rauber Apps"></div><p class="erro" data-erro="nome"></p></div>
           <div class="campo"><label for="as-preco">Valor por mês (R$)</label><div class="campo-entrada"><input id="as-preco" inputmode="decimal" placeholder="19,90"></div><p class="erro" data-erro="preco"></p></div>
+          <div class="campo"><label for="as-teste">Dias de teste grátis</label><div class="campo-entrada"><input id="as-teste" type="number" inputmode="numeric" min="0" max="60" value="7"></div><p class="painel-ajuda">Com a cobrança ligada, cada pessoa usa grátis por esses dias, contando da criação da conta ou do dia em que a cobrança começou. 0 desliga o teste.</p><p class="erro" data-erro="testeDias"></p></div>
           <div class="campo campo-inteiro"><label for="as-beneficios">O que o plano inclui (um por linha)</label><div class="campo-entrada"><textarea id="as-beneficios" rows="5"></textarea></div></div>
         </div>
         <p class="erro" id="as-erro" role="alert"></p>
@@ -140,6 +147,17 @@
           <a class="botao" href="assinatura.html" target="_blank" rel="noopener">Ver a página</a>
         </div>
       </form>
+
+      <section class="as-liberados" id="as-testadores-caixa" hidden>
+        <h2 class="titulo-s painel-subtitulo">Usuários de teste</h2>
+        <p class="painel-ajuda">Para ver a assinatura funcionando sem mexer em ninguém: a conta que você colocar aqui passa a ver a cobrança como se ela estivesse ligada (teste grátis, aviso dos dias, página do plano e o bloqueio depois do teste), mesmo com os apps grátis para todo mundo. Use uma conta sua, separada da de gestor.</p>
+        <form class="as-liberar as-testador-form" id="as-testador-form" novalidate>
+          <div class="campo"><label for="as-testador-email">E-mail da conta de teste</label><div class="campo-entrada"><input id="as-testador-email" type="email" maxlength="190" placeholder="teste@email.com"></div></div>
+          <button class="botao" type="submit">Incluir</button>
+        </form>
+        <p class="erro" id="as-testador-erro" role="alert"></p>
+        <ul class="as-lista" id="as-testadores"></ul>
+      </section>
 
       <section class="as-liberados" id="as-liberados-caixa" hidden>
         <h2 class="titulo-s painel-subtitulo">Acesso liberado</h2>
@@ -264,10 +282,10 @@
   <script src="assets/js/config.js?v=20261111a"></script>
   <script src="assets/js/medidas-dados.js?v=20261111a"></script>
   <script src="assets/js/conta-api.js?v=20261112a"></script>
-  <script src="assets/js/guarda-roupa-dados.js?v=20261111a"></script>
+  <script src="assets/js/guarda-roupa-dados.js?v=20261112c"></script>
   <script src="assets/js/painel.js?v=20261111a"></script>
   <script src="assets/js/colecao-dados.js?v=20261111a"></script>
   <script src="assets/js/painel-colecao.js?v=20261112a"></script>
-  <script src="assets/js/painel-extras.js?v=20261112a"></script>
+  <script src="assets/js/painel-extras.js?v=20261112d"></script>
 </body>
 </html>

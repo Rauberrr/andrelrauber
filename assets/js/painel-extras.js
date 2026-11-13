@@ -37,6 +37,38 @@
     if (aba && aba.getAttribute('aria-selected') === 'true') abriu(nome);
   });
 
+  /* --- Tarefas do Cron ---------------------------------------------------------------------------- */
+
+  var TAREFAS = {
+    habitos: ['Lembretes e hábitos', 'a cada 5 minutos'],
+    videos: ['Vídeos agendados', 'a cada 5 minutos'],
+    lembretes: ['E-mails de lembrete', 'uma vez por dia']
+  };
+  function tempo(min) {
+    if (min === null) return 'nunca rodou';
+    if (min < 1) return 'rodou agora há pouco';
+    if (min < 60) return 'rodou há ' + min + ' min';
+    if (min < 48 * 60) return 'rodou há ' + Math.floor(min / 60) + ' h';
+    return 'rodou há ' + Math.floor(min / 1440) + ' dias';
+  }
+  api.get(ASSINATURA + 'tarefas').then(function (r) {
+    if (!r.ok) { $('painel-tarefas').hidden = true; return; }
+    var lista = $('painel-tarefas-lista');
+    lista.textContent = '';
+    var paradas = 0;
+    r.dados.tarefas.forEach(function (t) {
+      var info = TAREFAS[t.nome] || [t.nome, ''];
+      if (!t.ok) paradas += 1;
+      var li = criar('li', t.ok ? 'tarefa-ok' : 'tarefa-parada');
+      li.appendChild(criar('strong', '', info[0]));
+      li.appendChild(criar('span', '', tempo(t.minutos) + ' · deve rodar ' + info[1]));
+      lista.appendChild(li);
+    });
+    $('painel-tarefas-luz').className = 'painel-tarefas-luz ' + (paradas ? 'parada' : 'ok');
+    $('painel-tarefas-resumo').textContent = paradas ? 'Tarefas automáticas: ' + paradas + (paradas === 1 ? ' parada' : ' paradas') : 'Tarefas automáticas: todas rodando';
+    if (paradas) $('painel-tarefas').open = true;
+  });
+
   /* --- Catálogo do guarda-roupa ------------------------------------------------------------------ */
 
   var pecasCatalogo = [];
@@ -227,6 +259,10 @@
       document.querySelectorAll('input[name="as-modo"]').forEach(function (x) { x.checked = x.value === plano.modo; });
       $('as-nome').value = plano.nome;
       $('as-preco').value = precoTexto(plano.precoCentavos);
+      $('as-teste').value = String(plano.testeDias);
+      $('as-antigos').checked = r.dados.liberarAntigos !== false;
+      $('as-testadores-caixa').hidden = false;
+      desenharTestadores(r.dados.testadores || []);
       $('as-beneficios').value = plano.beneficios.join('\n');
       mostrarAlerta();
       $('as-form').hidden = false;
@@ -244,18 +280,62 @@
     var preco = lerPreco($('as-preco').value);
     if (preco === null) { f.querySelector('[data-erro="preco"]').textContent = 'Escreva o valor, como 19,90.'; return; }
     if (modo === 'cobrando' && modoSalvo !== 'cobrando' &&
-      !window.confirm('Ligar a cobrança? A partir de agora, só quem tem acesso liberado usa os apps. Os outros são levados para a página da assinatura.')) return;
+      !window.confirm($('as-antigos').checked
+        ? 'Ligar a cobrança? Quem já tem conta continua usando grátis. As contas novas ganham os dias de teste e, depois, precisam assinar.'
+        : 'Ligar a cobrança? Todo mundo, inclusive quem já usa, ganha os dias de teste a partir de hoje. Depois, só quem assina ou tem acesso liberado usa os apps.')) return;
     api.post(ASSINATURA + 'salvar', {
       modo: modo,
       nome: $('as-nome').value.trim(),
       precoCentavos: preco,
+      testeDias: Math.max(0, Math.round(Number($('as-teste').value) || 0)),
+      liberarAntigos: $('as-antigos').checked,
       beneficios: $('as-beneficios').value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean)
     }).then(function (r) {
       if (!r.ok) { mostrarErros(f, r); $('as-erro').textContent = r.erro || 'Não foi possível salvar.'; return; }
       modoSalvo = r.dados.plano.modo;
       $('as-erro').textContent = '';
-      var aviso = { oculta: 'Salvo. Os apps estão grátis e a página só aparece para você.', aviso: 'Salvo. Todos veem o aviso de teste gratuito.', cobrando: 'Salvo. A cobrança está ligada.' }[modoSalvo];
+      var aviso = { oculta: 'Salvo. Os apps estão grátis e a página só aparece para você.', aviso: 'Salvo. Todos veem a página com o teste grátis e o valor.', cobrando: 'Salvo. A cobrança está ligada, com ' + r.dados.plano.testeDias + ' dias de teste grátis para cada pessoa.' }[modoSalvo];
       window.alert(aviso);
+    });
+  });
+
+  var SITUACAO_TESTE = { teste: 'no teste grátis', bloqueado: 'teste acabou: vê a página para assinar', assinante: 'assinante' };
+  function desenharTestadores(lista) {
+    var ul = $('as-testadores');
+    ul.textContent = '';
+    if (!lista.length) { ul.appendChild(criar('li', 'as-item as-item-vazio', 'Nenhuma conta de teste ainda.')); return; }
+    lista.forEach(function (t) {
+      var li = criar('li', 'as-item');
+      var texto = criar('div');
+      texto.appendChild(criar('strong', '', t.nome));
+      texto.appendChild(criar('span', '', t.email + ' · ' + (t.situacao === 'teste' ? (t.diasDeTeste === 1 ? 'falta 1 dia de teste' : 'faltam ' + t.diasDeTeste + ' dias de teste') : SITUACAO_TESTE[t.situacao])));
+      li.appendChild(texto);
+      var acoes = criar('div', 'as-acoes');
+      [['recomecar', 'Recomeçar o teste'], ['encerrar', 'Ver depois do teste'], ['tirar', 'Tirar']].forEach(function (a) {
+        var b = criar('button', 'texto-botao' + (a[0] === 'tirar' ? ' painel-perigo' : ''), a[1]);
+        b.type = 'button';
+        b.addEventListener('click', function () {
+          api.post(ASSINATURA + 'testador', { acao: a[0], usuarioId: t.usuarioId }).then(function (r) {
+            if (!r.ok) { $('as-testador-erro').textContent = r.erro || 'Não foi possível agora.'; return; }
+            carregados.assinatura = false;
+            carregarAssinatura();
+          });
+        });
+        acoes.appendChild(b);
+      });
+      li.appendChild(acoes);
+      ul.appendChild(li);
+    });
+  }
+
+  $('as-testador-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    $('as-testador-erro').textContent = '';
+    api.post(ASSINATURA + 'testador', { acao: 'incluir', email: $('as-testador-email').value.trim() }).then(function (r) {
+      if (!r.ok) { $('as-testador-erro').textContent = r.erro || 'Não foi possível incluir.'; return; }
+      $('as-testador-form').reset();
+      carregados.assinatura = false;
+      carregarAssinatura();
     });
   });
 

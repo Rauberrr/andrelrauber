@@ -93,6 +93,7 @@ window.AR_ALIM_CALC = (function () {
     lanche: { para: [['marmita', 1]], motivo: 'Um prato feito com salada no lugar do lanche: sustenta mais e tem menos gordura.' },
     salgado: { para: [['pao_integral', 2], ['ovo', 1]], motivo: 'Pão integral com ovo no lugar do salgado frito.' },
     acucar: { reduzir: 0.5, motivo: 'Metade do açúcar. O paladar se acostuma em duas ou três semanas.' },
+    mel: { reduzir: 0.5, motivo: 'Metade do mel: ele é açúcar também, só que natural.' },
     achocolatado: { reduzir: 0.5, motivo: 'Metade do achocolatado, que é quase todo açúcar.' },
     chocolate: { reduzir: 0.5, motivo: 'Metade do chocolate, sem cortar de vez.' },
     cerveja: { reduzir: 0.5, motivo: 'Metade da cerveja: são calorias que não matam a fome.' },
@@ -261,7 +262,7 @@ window.AR_ALIM_CALC = (function () {
     ]
   };
   // Verduras, legumes, bebidas e gordura ficam como estão; o resto acompanha a energia
-  var FIXOS_NA_OPCAO = { vegetais: 1, bebidas: 1, gorduras: 1 };
+  var FIXOS_NA_OPCAO = { vegetais: 1, bebidas: 1, gorduras: 1, suplementos: 1 };
 
   function opcaoDaRefeicao(refeicao, indice, kcalAlvo) {
     var opcao = OPCOES[refeicao] && OPCOES[refeicao][indice];
@@ -289,7 +290,8 @@ window.AR_ALIM_CALC = (function () {
   // Não entram como opção de troca: ultraprocessados, frituras, bebidas açucaradas e comida pronta
   var FORA_DAS_TROCAS = {
     salsicha: 1, linguica: 1, batata_frita: 1, ovo_frito: 1, refrigerante: 1, suco_caixa: 1, cerveja: 1,
-    achocolatado: 1, biscoito: 1, chocolate: 1, agua: 1, oleo: 1, acucar: 1, adocante: 1, margarina: 1, presunto: 1
+    achocolatado: 1, biscoito: 1, chocolate: 1, agua: 1, oleo: 1, acucar: 1, adocante: 1, margarina: 1, presunto: 1,
+    mel: 1, hipercalorico: 1, creatina: 1
   };
 
   function kcalDoItem(item) {

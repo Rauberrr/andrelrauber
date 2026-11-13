@@ -54,7 +54,7 @@ function acao_sessao(): void
         'logado' => $usuario !== null,
         'usuario' => $usuario ? dados_publicos($usuario) : null,
         'googleClientId' => (string) (config()['google_client_id'] ?? ''),
-        'assinatura' => ['modo' => assinatura_config()['modo'], 'liberado' => acesso_aos_apps($usuario)],
+        'assinatura' => situacao_da_assinatura($usuario),
     ]);
 }
 

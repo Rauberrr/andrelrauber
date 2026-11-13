@@ -10,9 +10,11 @@
  * GET  ?acao=publica    o plano, o modo e a situação de quem está vendo
  * POST ?acao=assinar    pedido de assinatura (o pagamento online ainda não está ligado)
  * GET  ?acao=gestor     (gestor) o plano e quem tem acesso liberado
- * POST ?acao=salvar     (gestor) modo, nome, preço e benefícios  {modo, nome, precoCentavos, beneficios[]}
+ * POST ?acao=salvar     (gestor) modo, nome, preço, dias de teste e benefícios  {modo, nome, precoCentavos, testeDias, beneficios[]}
  * POST ?acao=liberar    (gestor) libera o acesso de uma pessoa  {email, ate: AAAA-MM-DD ou vazio}
  * POST ?acao=revogar    (gestor) tira o acesso liberado  {usuarioId}
+ * GET  ?acao=tarefas    (gestor) quando cada tarefa do Cron rodou pela última vez
+ * POST ?acao=testador   (gestor) usuários de teste  {acao: incluir|tirar|recomecar|encerrar, email ou usuarioId}
  */
 declare(strict_types=1);
 
@@ -36,6 +38,7 @@ function plano_publico(array $plano): array
         'modo' => $plano['modo'],
         'nome' => $plano['nome'],
         'precoCentavos' => $plano['precoCentavos'],
+        'testeDias' => $plano['testeDias'],
         'beneficios' => $plano['beneficios'],
     ];
 }
@@ -46,11 +49,28 @@ function minha_assinatura(?array $usuario): ?array
         return null;
     }
     $a = assinatura_da_pessoa((int) $usuario['id']);
+    $plano = assinatura_config();
+    $fim = modo_para($usuario, $plano) === 'cobrando' && !ja_usava_antes($usuario, $plano) ? fim_do_teste($usuario, $plano) : null;
+    $emTeste = $fim !== null && $fim > date('Y-m-d H:i:s');
     return [
         'liberado' => acesso_aos_apps($usuario),
         'assinante' => $a !== null && assinatura_valida($a),
         'validaAte' => $a && $a['valida_ate'] ? substr((string) $a['valida_ate'], 0, 10) : null,
+        'emTeste' => $emTeste,
+        'testeAcabou' => $fim !== null && !$emTeste,
+        'diasDeTeste' => $emTeste ? max(1, (int) ceil((strtotime($fim) - time()) / 86400)) : 0,
+        'jaUsava' => ja_usava_antes($usuario, $plano),
+        'testador' => testador_desde($usuario, $plano) !== null,
     ];
+}
+
+function salvar_plano(array $plano): void
+{
+    gravar_ajuste('assinatura', [
+        'modo' => $plano['modo'], 'nome' => $plano['nome'], 'precoCentavos' => $plano['precoCentavos'], 'testeDias' => $plano['testeDias'],
+        'cobrandoDesde' => $plano['cobrandoDesde'], 'liberarAntigos' => $plano['liberarAntigos'], 'testadores' => array_values($plano['testadores']),
+        'beneficios' => $plano['beneficios'],
+    ]);
 }
 
 switch ($_GET['acao'] ?? '') {
@@ -58,6 +78,8 @@ switch ($_GET['acao'] ?? '') {
         $usuario = usuario_logado();
         $gestor = $usuario !== null && (int) $usuario['admin'] === 1;
         $plano = assinatura_config();
+        // O usuário de teste vê a página como se a cobrança estivesse ligada
+        $plano['modo'] = modo_para($usuario, $plano);
         // Oculta: quem não é gestor só fica sabendo que os apps estão em teste
         if ($plano['modo'] === 'oculta' && !$gestor) {
             responder(200, ['plano' => ['modo' => 'oculta'], 'minha' => minha_assinatura($usuario), 'gestor' => false, 'logado' => $usuario !== null]);
@@ -74,6 +96,7 @@ switch ($_GET['acao'] ?? '') {
 
     case 'gestor':
         exigir_gestor_assinatura();
+        $plano = assinatura_config();
         $liberados = consultar(
             'SELECT a.usuario_id, a.situacao, a.valida_ate, a.origem, a.criado_em, u.nome, u.email
              FROM assinaturas a JOIN usuarios u ON u.id = a.usuario_id ORDER BY a.atualizado_em DESC LIMIT 300'
@@ -92,6 +115,22 @@ switch ($_GET['acao'] ?? '') {
                 ];
             }, $liberados),
             'pessoas' => (int) consultar('SELECT COUNT(*) FROM usuarios')->fetchColumn(),
+            'liberarAntigos' => $plano['liberarAntigos'],
+            'cobrandoDesde' => $plano['cobrandoDesde'],
+            'testadores' => array_values(array_filter(array_map(function (array $t) use ($plano) {
+                $u = consultar('SELECT * FROM usuarios WHERE id = ?', [$t['id']])->fetch();
+                if (!$u) {
+                    return null;
+                }
+                $fim = fim_do_teste($u, $plano);
+                $emTeste = $fim !== null && $fim > date('Y-m-d H:i:s');
+                $a = assinatura_da_pessoa((int) $u['id']);
+                return [
+                    'usuarioId' => (int) $u['id'], 'nome' => $u['nome'], 'email' => $u['email'], 'desde' => substr($t['desde'], 0, 10),
+                    'situacao' => $a && assinatura_valida($a) ? 'assinante' : ($emTeste ? 'teste' : 'bloqueado'),
+                    'diasDeTeste' => $emTeste ? max(1, (int) ceil((strtotime($fim) - time()) / 86400)) : 0,
+                ];
+            }, $plano['testadores']))),
         ]);
         break;
 
@@ -111,6 +150,10 @@ switch ($_GET['acao'] ?? '') {
         if (!is_int($preco) || $preco < 100 || $preco > 100000) {
             $erros['preco'] = 'Use um valor entre R$ 1,00 e R$ 1.000,00.';
         }
+        $testeDias = $dados['testeDias'] ?? 7;
+        if (!is_int($testeDias) || $testeDias < 0 || $testeDias > 60) {
+            $erros['testeDias'] = 'Use de 0 a 60 dias.';
+        }
         $beneficios = [];
         foreach (array_slice(is_array($dados['beneficios'] ?? null) ? $dados['beneficios'] : [], 0, 12) as $b) {
             $b = is_string($b) ? trim(preg_replace('/\s+/u', ' ', $b)) : '';
@@ -121,8 +164,15 @@ switch ($_GET['acao'] ?? '') {
         if ($erros) {
             falhar(422, 'Confira os campos marcados.', ['campos' => $erros]);
         }
-        $antes = assinatura_config()['modo'];
-        gravar_ajuste('assinatura', ['modo' => $modo, 'nome' => $nome, 'precoCentavos' => $preco, 'beneficios' => $beneficios ?: ASSINATURA_PADRAO['beneficios']]);
+        $anterior = assinatura_config();
+        $antes = $anterior['modo'];
+        // O teste de quem já tem conta começa no dia em que a cobrança é ligada
+        $desde = $modo === 'cobrando' ? ($antes === 'cobrando' && $anterior['cobrandoDesde'] ? $anterior['cobrandoDesde'] : agora()) : null;
+        salvar_plano(array_merge($anterior, [
+            'modo' => $modo, 'nome' => $nome, 'precoCentavos' => $preco, 'testeDias' => $testeDias, 'cobrandoDesde' => $desde,
+            'liberarAntigos' => ($dados['liberarAntigos'] ?? $anterior['liberarAntigos']) === true,
+            'beneficios' => $beneficios ?: ASSINATURA_PADRAO['beneficios'],
+        ]));
         if ($antes !== $modo) {
             registrar_evento((int) $gestor['id'], 'assinatura_modo', null, $antes . ' > ' . $modo);
         }
@@ -152,6 +202,66 @@ switch ($_GET['acao'] ?? '') {
                 [$id, $validaAte, $momento, $momento]
             );
         }
+        responder(200);
+        break;
+
+    case 'tarefas':
+        exigir_gestor_assinatura();
+        // Quanto tempo cada tarefa pode ficar sem rodar antes de parecer desligada
+        $tarefas = ['habitos' => 20 * 60, 'videos' => 20 * 60, 'lembretes' => 26 * 3600];
+        $lista = [];
+        foreach ($tarefas as $nome => $folga) {
+            $em = (int) ajuste('tarefa_' . $nome . '_em', 0);
+            $lista[] = ['nome' => $nome, 'minutos' => $em > 0 ? (int) floor((time() - $em) / 60) : null, 'ok' => $em > 0 && time() - $em <= $folga];
+        }
+        responder(200, ['tarefas' => $lista]);
+        break;
+
+    case 'testador':
+        $dados = exigir_post();
+        exigir_gestor_assinatura();
+        $plano = assinatura_config();
+        $acao = $dados['acao'] ?? '';
+        if ($acao === 'incluir') {
+            $email = mb_strtolower(trim(texto($dados, 'email', 190)));
+            $pessoa = $email !== '' ? consultar('SELECT id, admin FROM usuarios WHERE email = ?', [$email])->fetch() : false;
+            if (!$pessoa) {
+                falhar(404, 'Nenhuma conta com este e-mail.');
+            }
+            if ((int) $pessoa['admin'] === 1) {
+                falhar(422, 'A conta de gestor sempre tem acesso. Use outra conta, só para testar.');
+            }
+            if (count($plano['testadores']) >= 20) {
+                falhar(422, 'São no máximo 20 usuários de teste.');
+            }
+            $id = (int) $pessoa['id'];
+            $plano['testadores'] = array_values(array_filter($plano['testadores'], function ($t) use ($id) { return $t['id'] !== $id; }));
+            $plano['testadores'][] = ['id' => $id, 'desde' => agora()];
+        } else {
+            $id = (int) ($dados['usuarioId'] ?? 0);
+            $achou = false;
+            foreach ($plano['testadores'] as $i => $t) {
+                if ($t['id'] !== $id) {
+                    continue;
+                }
+                $achou = true;
+                if ($acao === 'tirar') {
+                    unset($plano['testadores'][$i]);
+                } elseif ($acao === 'recomecar') {
+                    // O teste grátis começa de novo hoje
+                    $plano['testadores'][$i]['desde'] = agora();
+                } elseif ($acao === 'encerrar') {
+                    // Para ver como fica depois do teste: o teste já acabou
+                    $plano['testadores'][$i]['desde'] = date('Y-m-d H:i:s', time() - ($plano['testeDias'] + 1) * 86400);
+                } else {
+                    falhar(422, 'Ação desconhecida.');
+                }
+            }
+            if (!$achou) {
+                falhar(404, 'Esta conta não é usuária de teste.');
+            }
+        }
+        salvar_plano($plano);
         responder(200);
         break;
 
