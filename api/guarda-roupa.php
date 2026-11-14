@@ -120,6 +120,11 @@ const GR_CATALOGO = [
     'vestido-chemise-azul-claro' => ['vestido', 'azul_claro', 'regular', 'algodao', 'misto', 'qualquer', 'Vestido chemise azul-claro'],
     'vestido-chemise-bege' => ['vestido', 'bege', 'regular', 'linho', 'misto', 'calor', 'Vestido chemise bege'],
 ];
+// Para quem é cada peça da marca no catálogo: masculino, feminino ou para todos
+const GR_PUBLICOS = ['masculino', 'feminino', 'unissex'];
+const GR_PREFIXOS_FEMININOS = ['camiseta-feminina', 'jeans-skinny', 'jeans-flare', 'jeans-wide-leg', 'sueter-gola-v', 'blazer-feminino', 'vestido-'];
+const GR_TIPOS_FEMININOS = ['vestido', 'saia', 'blusa'];
+const GR_TIPOS_UNISSEX = ['moletom', 'calca_moletom', 'bone', 'tenis', 'oculos', 'relogio'];
 // Peças cadastradas pelo gestor: o código é loja-ID e a foto fica em api/fotos-catalogo
 const GR_PREFIXO_LOJA = 'loja-';
 const GR_MAXIMO_CATALOGO = 300;
@@ -269,6 +274,33 @@ function pecas_do_gestor(bool $soAutomaticas = false): array
     }
 }
 
+function publico_da_marca(string $codigo, string $tipo): string
+{
+    foreach (GR_PREFIXOS_FEMININOS as $prefixo) {
+        if (strpos($codigo, $prefixo) === 0) {
+            return 'feminino';
+        }
+    }
+    if (in_array($tipo, GR_TIPOS_FEMININOS, true)) {
+        return 'feminino';
+    }
+    return in_array($tipo, GR_TIPOS_UNISSEX, true) ? 'unissex' : 'masculino';
+}
+
+// Para quem é cada peça cadastrada pelo gestor (tabela à parte; sem ela, vale o tipo da peça)
+function publicos_do_gestor(): array
+{
+    try {
+        $mapa = [];
+        foreach (consultar('SELECT catalogo_id, publico FROM catalogo_publico')->fetchAll() as $l) {
+            $mapa[(int) $l['catalogo_id']] = (string) $l['publico'];
+        }
+        return $mapa;
+    } catch (PDOException $erro) {
+        return [];
+    }
+}
+
 function linha_do_catalogo(array $c): array
 {
     return [$c['tipo'], $c['cor'], $c['corte'], $c['tecido'], $c['formalidade'], $c['clima'], $c['nome']];
@@ -282,15 +314,17 @@ function pecas_do_catalogo(): array
     $lista = [];
     foreach ([GR_SUGERIDAS, GR_CATALOGO] as $grupo) {
         foreach ($grupo as $codigo => $p) {
-            $lista[$codigo] = ['linha' => $p, 'foto' => 'assets/img/sugeridas/' . $codigo . '.webp', 'novo' => false];
+            $lista[$codigo] = ['linha' => $p, 'foto' => 'assets/img/sugeridas/' . $codigo . '.webp', 'novo' => false, 'publico' => publico_da_marca((string) $codigo, $p[0])];
         }
     }
     $recente = date('Y-m-d H:i:s', time() - 30 * 86400);
+    $publicos = publicos_do_gestor();
     foreach (pecas_do_gestor() as $c) {
         $lista[GR_PREFIXO_LOJA . $c['id']] = [
             'linha' => linha_do_catalogo($c),
             'foto' => 'api/guarda-roupa.php?acao=foto-catalogo&id=' . (int) $c['id'] . '&v=' . substr((string) $c['arquivo'], 0, 8),
             'novo' => (string) $c['criado_em'] >= $recente,
+            'publico' => $publicos[(int) $c['id']] ?? publico_da_marca('', (string) $c['tipo']),
         ];
     }
     return $lista;
@@ -317,6 +351,7 @@ function catalogo(): void
             'nome' => $p[6],
             'foto' => $c['foto'],
             'novo' => $c['novo'],
+            'publico' => $c['publico'],
             'situacao' => $minhas[(string) $codigo] ?? 'livre',
         ];
     }
@@ -406,6 +441,7 @@ function peca_do_catalogo_publica(array $c): array
         'formalidade' => $c['formalidade'], 'clima' => $c['clima'], 'nome' => $c['nome'],
         'automatica' => (int) $c['automatica'] === 1,
         'ativa' => (int) $c['ativa'] === 1,
+        'publico' => publicos_do_gestor()[(int) $c['id']] ?? publico_da_marca('', (string) $c['tipo']),
         'foto' => 'api/guarda-roupa.php?acao=foto-catalogo&id=' . (int) $c['id'] . '&v=' . substr((string) $c['arquivo'], 0, 8),
         'pessoas' => (int) consultar("SELECT COUNT(*) FROM pecas p WHERE p.arquivo = ? AND p.id NOT IN (SELECT peca_id FROM pecas_excluidas)", [GR_PREFIXO_SUGERIDA . GR_PREFIXO_LOJA . $c['id']])->fetchColumn(),
         'criadoEm' => substr((string) $c['criado_em'], 0, 10),
@@ -515,6 +551,14 @@ function catalogo_salvar(): void
             [$descricao['tipo'], $descricao['cor'], $descricao['corte'], $descricao['tecido'], $descricao['formalidade'], $descricao['clima'], $nome, $arquivo, $automatica, (int) $usuario['id'], $momento, $momento]
         );
         $id = (int) banco()->lastInsertId();
+    }
+    // Para quem é a peça: masculino, feminino ou para todos
+    $publico = in_array($_POST['publico'] ?? '', GR_PUBLICOS, true) ? $_POST['publico'] : publico_da_marca('', $descricao['tipo']);
+    try {
+        consultar('DELETE FROM catalogo_publico WHERE catalogo_id = ?', [$id]);
+        consultar('INSERT INTO catalogo_publico (catalogo_id, publico) VALUES (?, ?)', [$id, $publico]);
+    } catch (PDOException $erro) {
+        // Banco ainda sem a tabela: vale o tipo da peça
     }
     $c = consultar('SELECT * FROM catalogo_pecas WHERE id = ?', [$id])->fetch();
     responder($atual ? 200 : 201, ['peca' => peca_do_catalogo_publica($c)]);

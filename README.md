@@ -316,7 +316,7 @@ Os prazos de confecção são estimativas, em `SOB_MEDIDA` e `FOLGA`, no começo
 
 ## Tela inicial dos apps
 
-Em `/apps/`, o conceito central é **organização, estilo e evolução pessoal**. O guarda-roupa vem em destaque ("Seu guarda-roupa digital"), com quantas peças a pessoa tem, quantos looks elas rendem e a peça que renderia mais. Depois vêm os quatro pilares: **Estilo e imagem** (Guarda-roupa), **Organização pessoal** (Hábitos e lembretes), **Saúde e desempenho** (Treino e Alimentação) e **Experiências e ocasiões** (Ocasiões).
+Em `/apps/`, o conceito central é **organização, estilo e evolução pessoal**. O guarda-roupa vem em destaque ("Seu guarda-roupa digital"), com quantas peças a pessoa tem, quantos looks elas rendem e a peça que renderia mais. Depois vêm as quatro áreas, em "Do guarda-roupa à agenda": **Estilo e imagem** (Guarda-roupa), **Organização pessoal** (Hábitos e lembretes), **Saúde e desempenho** (Treino e Alimentação) e **Experiências e ocasiões** (Ocasiões).
 
 ## Treino
 

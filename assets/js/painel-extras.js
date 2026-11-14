@@ -97,6 +97,7 @@
     preencher('cat-formalidade', gr.FORMALIDADES);
     preencher('cat-clima', gr.CLIMAS);
     tipo.addEventListener('change', function () {
+      if (!editando && ['vestido', 'saia', 'blusa'].indexOf(tipo.value) !== -1) $('cat-publico').value = 'feminino';
       var semCorte = !gr.temCorte(tipo.value);
       $('cat-corte').disabled = semCorte;
       if (tipo.value && !editando) {
@@ -133,7 +134,7 @@
       li.appendChild(fig);
       var texto = criar('div', 'painel-cat-texto');
       texto.appendChild(criar('strong', '', p.nome));
-      texto.appendChild(criar('span', '', gr ? rotuloDe(gr.TIPOS, p.tipo) + ' · ' + rotuloDe(gr.CORES, p.cor) : p.tipo));
+      texto.appendChild(criar('span', '', (gr ? rotuloDe(gr.TIPOS, p.tipo) + ' · ' + rotuloDe(gr.CORES, p.cor) : p.tipo) + ' · ' + ({ masculino: 'masculino', feminino: 'feminino', unissex: 'unissex' }[p.publico] || '')));
       var selos = criar('span', 'painel-cat-selos');
       if (!p.ativa) selos.appendChild(criar('span', 'painel-cat-selo', 'Fora do catálogo'));
       else if (p.automatica) selos.appendChild(criar('span', 'painel-cat-selo painel-cat-selo-todos', 'No guarda-roupa de todos'));
@@ -189,6 +190,7 @@
     $('cat-clima').value = p ? p.clima : 'qualquer';
     $('cat-corte').disabled = Boolean(p && gr && !gr.temCorte(p.tipo));
     $('cat-automatica').checked = Boolean(p && p.automatica);
+    $('cat-publico').value = p && p.publico ? p.publico : 'masculino';
     mostrarPrevia(p ? p.foto : '');
     $('cat-modal-gestor').showModal();
   }
@@ -212,6 +214,7 @@
     dados.append('nome', $('cat-nome').value.trim());
     ['tipo', 'cor', 'corte', 'tecido', 'formalidade', 'clima'].forEach(function (c) { dados.append(c, $('cat-' + c).value); });
     dados.append('automatica', $('cat-automatica').checked ? '1' : '0');
+    dados.append('publico', $('cat-publico').value);
     if (fotoEscolhida) dados.append('foto', fotoEscolhida);
     var botao = $('cat-salvar');
     botao.disabled = true;

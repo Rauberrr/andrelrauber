@@ -1182,6 +1182,9 @@
     var caixa = $('gr-sugestao');
     sugestaoAtual = ativa && window.AR_SUGESTAO ? window.AR_SUGESTAO.melhor(pecas, produtosDaColecao, compradas, descartadas()) : null;
     caixa.hidden = !sugestaoAtual;
+    // Descartou todas: o convite para recomeçar aparece só se, sem os descartes, haveria sugestão
+    $('gr-sugestao-recomecar').hidden = !(ativa && !sugestaoAtual && descartadas().length && window.AR_SUGESTAO &&
+      window.AR_SUGESTAO.melhor(pecas, produtosDaColecao, compradas, []));
     caixa.classList.toggle('gr-sugestao-sob-medida', Boolean(sugestaoAtual && sugestaoAtual.tipo === 'sob_medida'));
     desenharPotencial();
     if (!sugestaoAtual) return;
@@ -1212,10 +1215,36 @@
     var lista = $('gr-sugestao-lista');
     lista.textContent = '';
     var rotulo = nome.replace(/^(um|uma|o|a) /, '').replace(/^./, function (l) { return l.toUpperCase(); });
-    s.looks.slice(0, 5).forEach(function (look) {
-      var nomes = look.pecas.map(function (p) { return p.id === s.nova.id ? rotulo : (p.apelido || gr.descrever(p)); });
-      var li = criar('li');
-      li.appendChild(criar('span', '', nomes.join(' + ')));
+    // Cada combinação com as fotos: as peças da pessoa e a peça nova, em destaque
+    s.looks.slice(0, 6).forEach(function (look, i) {
+      var li = criar('li', 'gr-combinacao');
+      li.appendChild(criar('p', 'gr-combinacao-titulo', 'Look ' + (i + 1) + (look.ocasiao ? ' · ' + look.ocasiao : '')));
+      var fotos = criar('div', 'gr-combinacao-fotos');
+      look.pecas.forEach(function (p) {
+        var item = criar('figure', 'gr-combinacao-peca' + (p.id === s.nova.id ? ' gr-combinacao-nova' : ''));
+        if (p.id === s.nova.id) {
+          var moldura = criar('div', 'gr-foto');
+          var foto = s.tipo === 'colecao' && s.produto.fotos && s.produto.fotos[0];
+          if (foto) {
+            var img = document.createElement('img');
+            img.src = foto;
+            img.alt = rotulo;
+            img.loading = 'lazy';
+            moldura.appendChild(img);
+          } else {
+            moldura.classList.add('gr-foto-desenho');
+            moldura.appendChild(desenhoDaPeca(s.tipo === 'colecao' ? s.produto.categoria : s.item.desenho, s.tipo === 'colecao' ? s.corGr : s.item.cor));
+          }
+          moldura.appendChild(criar('span', 'gr-combinacao-selo', s.tipo === 'colecao' ? 'Nova' : 'Sob medida'));
+          item.appendChild(moldura);
+          item.appendChild(criar('figcaption', '', rotulo));
+        } else {
+          item.appendChild(figuraDaPeca(p));
+          item.appendChild(criar('figcaption', '', p.apelido || gr.porTipo[p.tipo].rotulo + ' ' + ((gr.porCor[p.cor] || {}).nome || '')));
+        }
+        fotos.appendChild(item);
+      });
+      li.appendChild(fotos);
       lista.appendChild(li);
     });
     $('gr-sugestao-ver').setAttribute('aria-expanded', String(!lista.hidden));
@@ -1238,6 +1267,13 @@
     lista.hidden = !lista.hidden;
     $('gr-sugestao-ver').setAttribute('aria-expanded', String(!lista.hidden));
     $('gr-sugestao-ver').textContent = lista.hidden ? 'Ver combinações' : 'Esconder combinações';
+  });
+
+  $('gr-sugestao-de-novo').addEventListener('click', function () {
+    try { localStorage.removeItem(DESCARTADAS); } catch (e) { /* nada guardado */ }
+    desenharSugestao(true);
+    app.avisar(sugestaoAtual ? 'Pronto: esta é a peça que mais combinaria com o seu guarda-roupa agora.' : 'Ainda não há uma peça para sugerir. Adicione mais peças e volte aqui.');
+    if (sugestaoAtual) $('gr-sugestao').scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
 
   $('gr-sugestao-descartar').addEventListener('click', function () {

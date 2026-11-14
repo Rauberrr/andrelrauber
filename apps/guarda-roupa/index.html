@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
   <link rel="stylesheet" href="assets/css/style.css?v=20261112d">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261113a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261113b">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -150,6 +150,10 @@
         </div>
         <label class="campo-marcar" id="gr-filtro-recentes-campo" style="margin:-.5rem 0 1.25rem"><input id="gr-filtro-recentes" type="checkbox"> <span>Esconder looks que usei nos últimos 14 dias</span></label>
 
+        <div class="gr-sugestao-recomecar" id="gr-sugestao-recomecar" hidden>
+          <p><strong>Você descartou todas as sugestões de peças.</strong> Quando quiser, a gente procura de novo a peça que mais combinaria com o seu guarda-roupa.</p>
+          <button class="botao" type="button" id="gr-sugestao-de-novo">Quero uma nova sugestão</button>
+        </div>
         <section class="gr-sugestao" id="gr-sugestao" aria-labelledby="gr-sugestao-titulo" hidden>
           <div class="gr-sugestao-foto"><img id="gr-sugestao-img" alt=""></div>
           <div class="gr-sugestao-texto">
@@ -350,6 +354,7 @@
       <h2 class="titulo-m" id="cat-titulo">Catálogo de peças</h2>
       <p class="app-suave">Toque nas peças que você tem. Elas entram no seu guarda-roupa e já aparecem nos looks.</p>
       <p class="cat-resumo" id="cat-resumo"></p>
+      <div class="cat-publico" id="cat-publico" role="group" aria-label="Para quem"></div>
       <div class="cat-filtros" id="cat-filtros" role="group" aria-label="Tipo de peça"></div>
       <p class="app-suave" id="cat-estado" role="status" hidden></p>
       <ul class="cat-lista" id="cat-lista"></ul>
@@ -530,8 +535,8 @@
   <script src="assets/js/guarda-roupa-foto.js?v=20261111a"></script>
   <script src="assets/js/guarda-roupa-looks.js?v=20261112c"></script>
   <script src="assets/js/guarda-roupa-sugestao.js?v=20261113a"></script>
-  <script src="assets/js/guarda-roupa.js?v=20261113a"></script>
+  <script src="assets/js/guarda-roupa.js?v=20261113b"></script>
   <script src="assets/js/guarda-roupa-lote.js?v=20261111a"></script>
-  <script src="assets/js/guarda-roupa-catalogo.js?v=20261112a"></script>
+  <script src="assets/js/guarda-roupa-catalogo.js?v=20261113b"></script>
 </body>
 </html>

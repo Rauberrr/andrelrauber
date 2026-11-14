@@ -10,6 +10,8 @@
   var ENDERECO = 'api/guarda-roupa.php?acao=';
   var itens = null;
   var grupo = '';
+  var LEMBRAR = 'ar-catalogo-publico';
+  var publico = (function () { try { return localStorage.getItem(LEMBRAR) || ''; } catch (e) { return ''; } })();
 
   function $(id) { return document.getElementById(id); }
   function criar(tag, classe, texto) {
@@ -30,16 +32,37 @@
       if (!r.ok) { $('cat-estado').textContent = r.erro || 'Não foi possível abrir o catálogo agora.'; return; }
       itens = r.dados.itens;
       $('cat-estado').hidden = true;
+      montarPublico();
       montarFiltros();
       desenhar();
     });
   }
 
+  function montarPublico() {
+    var caixa = $('cat-publico');
+    caixa.textContent = '';
+    [['', 'Todos'], ['masculino', 'Masculino'], ['feminino', 'Feminino']].forEach(function (o) {
+      var b = criar('button', 'cat-publico-opcao', o[1]);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(o[0] === publico));
+      b.addEventListener('click', function () {
+        publico = o[0];
+        try { localStorage.setItem(LEMBRAR, publico); } catch (e) { /* segue sem lembrar */ }
+        caixa.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        montarFiltros();
+        desenhar();
+      });
+      caixa.appendChild(b);
+    });
+  }
+
+  function doPublico(i) { return !publico || i.publico === publico || i.publico === 'unissex'; }
+
   function montarFiltros() {
     var caixa = $('cat-filtros');
     caixa.textContent = '';
     var grupos = [{ id: '', rotulo: 'Todas' }].concat(gr.GRUPOS.filter(function (g) {
-      return itens.some(function (i) { return tipoDe(i.tipo).grupo === g.id; });
+      return itens.some(function (i) { return doPublico(i) && tipoDe(i.tipo).grupo === g.id; });
     }));
     grupos.forEach(function (g) {
       var b = criar('button', 'cat-filtro', g.rotulo);
@@ -57,7 +80,8 @@
   function desenhar() {
     var lista = $('cat-lista');
     lista.textContent = '';
-    var mostrar = itens.filter(function (i) { return !grupo || tipoDe(i.tipo).grupo === grupo; });
+    if (grupo && !itens.some(function (i) { return doPublico(i) && tipoDe(i.tipo).grupo === grupo; })) grupo = '';
+    var mostrar = itens.filter(function (i) { return doPublico(i) && (!grupo || tipoDe(i.tipo).grupo === grupo); });
     // As que a pessoa ainda não tem primeiro; as novidades do gestor no topo
     mostrar.sort(function (a, b) {
       var pa = (a.situacao === 'tem' ? 2 : 0) - (a.novo ? 1 : 0);
