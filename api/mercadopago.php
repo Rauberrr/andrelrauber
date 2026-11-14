@@ -60,12 +60,42 @@ function mp_pedir(string $metodo, string $caminho, ?array $corpo = null): ?array
     }
 
     if (!is_string($resposta) || $status < 200 || $status >= 300) {
-        // O token não entra no registro: só o caminho e o código da resposta
-        error_log('Andre Rauber: Mercado Pago respondeu ' . $status . ' em ' . strtok($caminho, '?'));
+        // O motivo que o Mercado Pago deu, para mostrar e registrar. O token nunca entra.
+        $erro = is_string($resposta) ? json_decode($resposta, true) : null;
+        $motivo = '';
+        if (is_array($erro)) {
+            $motivo = (string) ($erro['cause'][0]['description'] ?? $erro['message'] ?? $erro['error'] ?? '');
+        }
+        $GLOBALS['mp_ultimo_erro'] = ['status' => $status, 'motivo' => mb_substr(trim($motivo), 0, 200)];
+        error_log('Andre Rauber: Mercado Pago respondeu ' . $status . ' em ' . strtok($caminho, '?') . ($motivo !== '' ? ': ' . mb_substr($motivo, 0, 200) : ''));
         return null;
     }
     $dados = json_decode($resposta, true);
     return is_array($dados) ? $dados : null;
+}
+
+// O motivo da última recusa do Mercado Pago, em português quando for um caso conhecido
+function mp_motivo_da_recusa(): string
+{
+    $erro = $GLOBALS['mp_ultimo_erro'] ?? null;
+    if (!is_array($erro)) {
+        return 'O Mercado Pago não respondeu.';
+    }
+    $motivo = (string) $erro['motivo'];
+    $baixo = mb_strtolower($motivo);
+    if ($erro['status'] === 401 || strpos($baixo, 'unauthorized') !== false || strpos($baixo, 'invalid access token') !== false) {
+        return 'O Access Token do config.php não foi aceito. Confira se é o de produção (começa com APP_USR-).';
+    }
+    if (strpos($baixo, 'same') !== false || strpos($baixo, 'collector') !== false || strpos($baixo, 'cannot pay yourself') !== false) {
+        return 'O e-mail desta conta é o mesmo da conta do Mercado Pago que recebe. Assine com uma conta de outro e-mail.';
+    }
+    if (strpos($baixo, 'test user') !== false || strpos($baixo, 'real or test') !== false || strpos($baixo, 'users involved') !== false) {
+        return 'O Mercado Pago não aceitou misturar conta de teste com conta real. Use credenciais de produção e um e-mail real.';
+    }
+    if (strpos($baixo, 'payer_email') !== false || strpos($baixo, 'email') !== false) {
+        return 'O Mercado Pago não aceitou o e-mail desta conta. Motivo dado por ele: ' . $motivo;
+    }
+    return 'Resposta do Mercado Pago (' . $erro['status'] . ')' . ($motivo !== '' ? ': ' . $motivo : '.');
 }
 
 function mp_endereco_do_site(): string

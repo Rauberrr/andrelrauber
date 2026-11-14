@@ -126,7 +126,7 @@ switch ($_GET['acao'] ?? '') {
         $fimDoTeste = !ja_usava_antes($usuario, $plano) && em_teste($usuario) ? fim_do_teste($usuario, $plano) : null;
         $link = mp_criar_assinatura($usuario, $plano, $fimDoTeste);
         if ($link === null) {
-            falhar(502, 'Não foi possível abrir o Mercado Pago agora. Tente de novo em instantes.');
+            falhar(502, 'Não foi possível abrir o Mercado Pago. ' . mp_motivo_da_recusa());
         }
         responder(200, ['link' => $link]);
         break;
