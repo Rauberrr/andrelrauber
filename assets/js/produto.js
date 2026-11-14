@@ -51,6 +51,9 @@
     lista.textContent = '';
     if (!produto.cores.length) return;
     $('produto-cores-caixa').hidden = false;
+    // Quem chega da sugestão do Guarda-roupa já vem com a cor escolhida
+    var pedida = parametros.get('cor');
+    if (!corEscolhida && pedida && produto.cores.some(function (c) { return c.nome === pedida; })) corEscolhida = pedida;
     if (!corEscolhida) corEscolhida = produto.cores[0].nome;
     produto.cores.forEach(function (c) {
       var b = criar('button', 'produto-cor');

@@ -1135,27 +1135,6 @@
 
   /* --- Sugestão de compra: a peça que mais abriria looks novos -------------------------------- */
 
-  // Peças clássicas que a marca pode fazer. Enquanto a coleção não tem a peça,
-  // a compra vai para o pedido exclusivo, já com a peça escolhida.
-  var PARA_COMPRAR = [
-    { id: 'camisa-branca', tipo: 'camisa', cor: 'branco', corte: 'regular', formalidade: 'misto', clima: 'qualquer', nome: 'uma camisa branca', foto: 'camisa-branca', peca: 'camisa', categoria: 'camisa' },
-    { id: 'blazer-preto', tipo: 'blazer', cor: 'preto', corte: 'regular', formalidade: 'social', clima: 'qualquer', nome: 'um blazer preto', foto: 'blazer-transpassado-preto', peca: 'blazer', categoria: 'blazer' },
-    { id: 'calca-alfaiataria', tipo: 'calca', cor: 'preto', corte: 'reto', formalidade: 'misto', clima: 'qualquer', nome: 'uma calça de alfaiataria preta', foto: 'calca-alfaiataria-preta', peca: 'calca', categoria: 'calca' },
-    { id: 'jeans-escuro', tipo: 'jeans', cor: 'azul_marinho', corte: 'reto', formalidade: 'casual', clima: 'qualquer', nome: 'um jeans escuro', foto: 'calca-jeans-lavagem-escura', peca: 'calca', categoria: 'calca' },
-    { id: 'camiseta-branca', tipo: 'camiseta', cor: 'branco', corte: 'regular', formalidade: 'casual', clima: 'qualquer', nome: 'uma camiseta branca', foto: 'camiseta-branca', peca: 'camiseta', categoria: 'camiseta' },
-    { id: 'camiseta-preta', tipo: 'camiseta', cor: 'preto', corte: 'regular', formalidade: 'casual', clima: 'qualquer', nome: 'uma camiseta preta', foto: 'camiseta-preta', peca: 'camiseta', categoria: 'camiseta' },
-    { id: 'sueter-preto', tipo: 'malha', cor: 'preto', corte: 'regular', formalidade: 'misto', clima: 'frio', nome: 'um suéter preto', foto: 'sueter-preto', peca: '', categoria: '' },
-    // Sem foto: aparecem num desenho da peça, na cor certa
-    { id: 'camisa-azul-clara', tipo: 'camisa', cor: 'azul_claro', corte: 'regular', formalidade: 'misto', clima: 'qualquer', nome: 'uma camisa azul-clara', desenho: 'camisa', peca: 'camisa', categoria: 'camisa' },
-    { id: 'polo-marinho', tipo: 'polo', cor: 'azul_marinho', corte: 'regular', formalidade: 'casual', clima: 'qualquer', nome: 'uma polo azul-marinho', desenho: 'polo', peca: 'polo', categoria: 'polo' },
-    { id: 'blazer-marinho', tipo: 'blazer', cor: 'azul_marinho', corte: 'regular', formalidade: 'misto', clima: 'qualquer', nome: 'um blazer azul-marinho', desenho: 'blazer', peca: 'blazer', categoria: 'blazer' },
-    { id: 'sarja-bege', tipo: 'calca_sarja', cor: 'bege', corte: 'reto', formalidade: 'misto', clima: 'qualquer', nome: 'uma calça de sarja bege', desenho: 'calca', peca: 'calca', categoria: 'calca' },
-    { id: 'calca-cinza', tipo: 'calca', cor: 'cinza', corte: 'reto', formalidade: 'misto', clima: 'qualquer', nome: 'uma calça de alfaiataria cinza', desenho: 'calca', peca: 'calca', categoria: 'calca' },
-    { id: 'bermuda-bege', tipo: 'bermuda', cor: 'bege', corte: 'regular', formalidade: 'casual', clima: 'calor', nome: 'uma bermuda bege', desenho: 'bermuda', peca: 'bermuda', categoria: 'bermuda' },
-    { id: 'camiseta-off', tipo: 'camiseta', cor: 'off_white', corte: 'regular', formalidade: 'casual', clima: 'qualquer', nome: 'uma camiseta off-white', desenho: 'camiseta', peca: 'camiseta', categoria: 'camiseta' },
-    { id: 'mocassim-marrom', tipo: 'mocassim', cor: 'marrom', corte: '', formalidade: 'misto', clima: 'qualquer', nome: 'um mocassim marrom', desenho: 'sapato', peca: '', categoria: '' }
-  ];
-
   // Desenhos simples das peças, para as sugestões sem foto
   var DESENHOS_SUGESTAO = {
     camisa: 'M24 9l-12 5-5 38h8l3-26v32h28V26l3 26h8l-5-38-12-5-8 10zM32 19v35',
@@ -1189,59 +1168,69 @@
     try { return JSON.parse(localStorage.getItem(DESCARTADAS)) || []; } catch (e) { return []; }
   }
 
-  function melhorSugestao() {
-    var fora = descartadas();
-    var melhor = null;
-    PARA_COMPRAR.forEach(function (s) {
-      if (fora.indexOf(s.id) !== -1) return;
-      if (pecas.some(function (p) { return p.tipo === s.tipo && p.cor === s.cor; })) return;
-      var nova = { id: 'sugestao-' + s.id, tipo: s.tipo, cor: s.cor, corte: s.corte, formalidade: s.formalidade, clima: s.clima, tecido: '' };
-      var looks = motor.looksCom(pecas, nova);
-      if (looks.length >= 2 && (!melhor || looks.length > melhor.looks.length)) melhor = { item: s, looks: looks, nova: nova };
-    });
-    return melhor;
+  var compradas = [];
+
+  // A cor certa no desenho, quando não há foto
+  function desenhoDaPeca(desenho, corId) {
+    var parecido = { terno: 'blazer', colete: 'blazer', jaqueta: 'blazer' };
+    return desenhoDaSugestao({ desenho: parecido[desenho] || desenho, cor: corId });
   }
 
-  function linkDeCompra(s) {
-    var produto = (produtosDaColecao || []).filter(function (p) { return s.categoria && p.categoria === s.categoria && p.situacao === 'publicado'; })[0];
-    if (produto) return { href: 'produto.html?p=' + encodeURIComponent(produto.slug), texto: 'Ver na coleção' };
-    if (s.peca) return { href: 'pedido-exclusivo.html?peca=' + s.peca, texto: 'Encomendar sob medida' };
-    return { href: app.linkWhatsapp('Olá! Quero ' + s.nome + ' sob medida.'), texto: 'Pedir pelo WhatsApp' };
-  }
+  function reaisCurto(c) { return 'R$ ' + (c / 100).toFixed(2).replace('.', ','); }
 
   function desenharSugestao(ativa) {
     var caixa = $('gr-sugestao');
-    sugestaoAtual = ativa ? melhorSugestao() : null;
+    sugestaoAtual = ativa && window.AR_SUGESTAO ? window.AR_SUGESTAO.melhor(pecas, produtosDaColecao, compradas, descartadas()) : null;
     caixa.hidden = !sugestaoAtual;
+    caixa.classList.toggle('gr-sugestao-sob-medida', Boolean(sugestaoAtual && sugestaoAtual.tipo === 'sob_medida'));
+    desenharPotencial();
     if (!sugestaoAtual) return;
-    var s = sugestaoAtual.item;
-    var total = motor.totalDeLooks(pecas);
-    var n = sugestaoAtual.looks.length;
+    var s = sugestaoAtual;
+    var n = s.looks.length;
+    var nome = window.AR_SUGESTAO.nomeComCor(s);
     var moldura = $('gr-sugestao-img').parentNode;
     var antigo = moldura.querySelector('svg');
     if (antigo) antigo.remove();
-    $('gr-sugestao-img').hidden = !s.foto;
-    if (s.foto) $('gr-sugestao-img').src = 'assets/img/sugeridas/' + s.foto + '.webp';
-    else moldura.appendChild(desenhoDaSugestao(s));
-    $('gr-sugestao-titulo').textContent = 'Encontramos uma peça que combina com o seu guarda-roupa';
-    $('gr-sugestao-detalhe').textContent = 'Com ' + s.nome + ', você teria mais ' + n + (n === 1 ? ' look' : ' looks') +
-      ' além dos ' + total + ' que já tem.';
-    var compra = linkDeCompra(s);
-    $('gr-sugestao-comprar').href = compra.href;
-    $('gr-sugestao-comprar').textContent = compra.texto;
-    if (compra.href.indexOf('https://') === 0) { $('gr-sugestao-comprar').target = '_blank'; $('gr-sugestao-comprar').rel = 'noopener'; }
-    else { $('gr-sugestao-comprar').removeAttribute('target'); }
+    var foto = s.tipo === 'colecao' && s.produto.fotos && s.produto.fotos[0];
+    $('gr-sugestao-img').hidden = !foto;
+    if (foto) $('gr-sugestao-img').src = foto;
+    else moldura.appendChild(desenhoDaPeca(s.tipo === 'colecao' ? s.produto.categoria : s.item.desenho, s.tipo === 'colecao' ? s.corGr : s.item.cor));
+    if (s.tipo === 'colecao') {
+      $('gr-sugestao-selo').textContent = 'Da coleção Rauber, para o seu guarda-roupa';
+      $('gr-sugestao-titulo').textContent = 'Com ' + nome + ', você teria mais ' + n + (n === 1 ? ' look' : ' looks');
+      $('gr-sugestao-detalhe').textContent = 'Hoje suas peças rendem ' + s.total + ' looks. Esta combina com o que você já tem e abre ' + n +
+        (n === 1 ? ' combinação nova' : ' combinações novas') + '. ' + reaisCurto(s.produto.precoCentavos) + ', feita nas suas medidas.';
+      $('gr-sugestao-comprar').textContent = 'Conhecer a peça';
+    } else {
+      $('gr-sugestao-selo').textContent = 'Uma ideia para o seu guarda-roupa';
+      $('gr-sugestao-titulo').textContent = nome.charAt(0).toUpperCase() + nome.slice(1) + ', mais ou menos assim, abriria mais ' + n + (n === 1 ? ' look' : ' looks');
+      $('gr-sugestao-detalhe').textContent = 'Ainda não temos essa peça na coleção, mas podemos fazer do seu jeito, nas suas medidas. Quer saber quanto custaria?';
+      $('gr-sugestao-comprar').textContent = 'Pedir um orçamento sob medida';
+    }
+    $('gr-sugestao-comprar').href = window.AR_SUGESTAO.linkDaPeca(s);
+    $('gr-sugestao-comprar').removeAttribute('target');
     var lista = $('gr-sugestao-lista');
     lista.textContent = '';
-    sugestaoAtual.looks.slice(0, 5).forEach(function (look) {
-      var nomes = look.pecas.map(function (p) {
-        return p.id === sugestaoAtual.nova.id ? s.nome.replace(/^(um|uma) /, '').replace(/^./, function (l) { return l.toUpperCase(); }) : (p.apelido || gr.descrever(p));
-      });
+    var rotulo = nome.replace(/^(um|uma|o|a) /, '').replace(/^./, function (l) { return l.toUpperCase(); });
+    s.looks.slice(0, 5).forEach(function (look) {
+      var nomes = look.pecas.map(function (p) { return p.id === s.nova.id ? rotulo : (p.apelido || gr.descrever(p)); });
       var li = criar('li');
       li.appendChild(criar('span', '', nomes.join(' + ')));
       lista.appendChild(li);
     });
     $('gr-sugestao-ver').setAttribute('aria-expanded', String(!lista.hidden));
+  }
+
+  // Na aba Peças: quanto o guarda-roupa já rende e quanto renderia com a peça sugerida
+  function desenharPotencial() {
+    var caixa = $('gr-potencial');
+    if (!caixa) return;
+    var s = sugestaoAtual || (window.AR_SUGESTAO ? window.AR_SUGESTAO.melhor(pecas, produtosDaColecao, compradas, descartadas()) : null);
+    caixa.hidden = !s;
+    if (!s) return;
+    $('gr-potencial-numero').textContent = String(s.total);
+    $('gr-potencial-mais').textContent = '+' + s.looks.length;
+    $('gr-potencial-texto').textContent = 'Com ' + window.AR_SUGESTAO.nomeComCor(s) + ', seriam ' + (s.total + s.looks.length) + ' looks.';
   }
 
   $('gr-sugestao-ver').addEventListener('click', function () {
@@ -1254,7 +1243,7 @@
   $('gr-sugestao-descartar').addEventListener('click', function () {
     if (!sugestaoAtual) return;
     var fora = descartadas();
-    fora.push(sugestaoAtual.item.id);
+    fora.push(sugestaoAtual.id);
     try { localStorage.setItem(DESCARTADAS, JSON.stringify(fora)); } catch (e) { /* segue sem lembrar */ }
     $('gr-sugestao-lista').hidden = true;
     $('gr-sugestao-ver').textContent = 'Ver combinações';
@@ -1265,6 +1254,12 @@
   // As peças da coleção, para a compra levar direto à página da peça
   api.get('api/produtos.php').then(function (r) {
     if (r.ok) produtosDaColecao = r.dados.produtos;
+    if (pecas.length) desenharPotencial();
+  });
+  var potencial = $('gr-potencial-ver');
+  if (potencial) potencial.addEventListener('click', function () {
+    abrirAba('looks');
+    window.setTimeout(function () { $('gr-sugestao').scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 150);
   });
 
   function desenharLooks() {
@@ -1854,6 +1849,7 @@
     }
     pecas = r.dados.pecas;
     excluidas = r.dados.excluidas;
+    compradas = r.dados.compradas || [];
     usos = r.dados.usos || [];
     maximo = r.dados.maximoPecas;
     consentiu = r.dados.consentiu;
@@ -1863,6 +1859,7 @@
     $('gr-dentro').hidden = false;
     $('gr-fab').hidden = false;
     desenharPecas();
+    desenharPotencial();
     var inicial = location.hash.slice(1);
     abrirAba(ABAS.indexOf(inicial) !== -1 ? inicial : 'pecas');
   });

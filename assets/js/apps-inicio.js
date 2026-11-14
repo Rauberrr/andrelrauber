@@ -102,6 +102,38 @@
       semana + ' de ' + estado.perfil.dias + ' treinos nesta semana.', endereco);
   }
 
+  // O destaque do guarda-roupa: quantos looks as peças rendem e a peça que faria mais diferença
+  function destaqueDoEstilo(dados, produtos) {
+    if (!dados || !dados.pecas || !dados.pecas.length || !window.AR_LOOKS) return;
+    var pecas = dados.pecas;
+    var total = window.AR_LOOKS.totalDeLooks(pecas);
+    $('estilo-pecas').textContent = String(pecas.length);
+    $('estilo-looks').textContent = String(total);
+    $('estilo-numeros').hidden = false;
+    $('estilo-texto').textContent = 'Suas peças já rendem ' + total + ' looks. Veja as combinações para hoje e descubra o que falta para render ainda mais.';
+    $('estilo-botao').textContent = 'Ver meus looks';
+    $('estilo-botao').href = 'apps/guarda-roupa/#looks';
+    var s = window.AR_SUGESTAO ? window.AR_SUGESTAO.melhor(pecas, produtos, dados.compradas || [], []) : null;
+    if (!s) return;
+    var nome = window.AR_SUGESTAO.nomeComCor(s);
+    $('estilo-mais').textContent = '+' + s.looks.length;
+    $('estilo-mais-caixa').hidden = false;
+    $('estilo-sugestao-selo').textContent = s.tipo === 'colecao' ? 'Da coleção Rauber' : 'Ideia sob medida';
+    $('estilo-sugestao-titulo').textContent = 'Com ' + nome + ', mais ' + s.looks.length + ' looks';
+    $('estilo-sugestao').href = s.tipo === 'colecao' ? window.AR_SUGESTAO.linkDaPeca(s) : 'apps/guarda-roupa/#looks';
+    var foto = $('estilo-sugestao-foto');
+    foto.textContent = '';
+    if (s.tipo === 'colecao' && s.produto.fotos && s.produto.fotos[0]) {
+      var img = document.createElement('img');
+      img.src = s.produto.fotos[0];
+      img.alt = '';
+      foto.appendChild(img);
+    } else {
+      foto.appendChild(app.icone('cabide'));
+    }
+    $('estilo-sugestao').hidden = false;
+  }
+
   function resumirGuardaRoupa(dados, clima) {
     var endereco = 'apps/guarda-roupa/';
     if (!dados) {
@@ -177,8 +209,10 @@
       api.get('api/alimentacao.php'),
       api.get('api/apps.php?app=ocasioes'),
       api.get('api/apps.php?app=treino'),
-      api.get('api/apps.php?app=habitos')
+      api.get('api/apps.php?app=habitos'),
+      api.get('api/produtos.php')
     ]).then(function (r) {
+      if (r[0].ok) destaqueDoEstilo(r[0].dados, r[6].ok ? r[6].dados.produtos : []);
       if (r[5].ok && r[5].dados.dados) resumirHabitos(maisRecente(locais.habitos, r[5].dados.dados));
       resumirGuardaRoupa(r[0].ok ? r[0].dados : null, r[1].ok ? r[1].dados : null);
       if (r[2].ok && r[2].dados.dados) resumirAlimentacao(maisRecente(locais.alimentacao, r[2].dados.dados));

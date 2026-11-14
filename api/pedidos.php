@@ -287,6 +287,14 @@ function encomendar(): void
         'INSERT INTO pedidos (usuario_id, codigo, descricao, valor_centavos, frete_centavos, criado_em, atualizado_em) VALUES (?, ?, ?, ?, ?, ?, ?)',
         [$id, $codigo, $descricao, (int) $produto['preco_centavos'], (int) $produto['frete_centavos'], $momento, $momento]
     );
+    try {
+        consultar(
+            'INSERT INTO pedidos_itens (pedido_id, produto_id, nome, cor, quantidade, preco_centavos) VALUES (?, ?, ?, ?, 1, ?)',
+            [(int) banco()->lastInsertId(), (int) $produto['id'], mb_substr((string) $produto['nome'], 0, 90), mb_substr($cor, 0, 30), (int) $produto['preco_centavos']]
+        );
+    } catch (PDOException $erro) {
+        // Banco ainda sem a tabela das peças do pedido
+    }
     registrar_evento($id, 'pedido_criado', null, $descricao);
     $pedido = consultar('SELECT * FROM pedidos WHERE codigo = ?', [$codigo])->fetch();
     responder(201, ['pedido' => pedido_publico($pedido)]);

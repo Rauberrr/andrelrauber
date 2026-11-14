@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
   <link rel="stylesheet" href="assets/css/style.css?v=20261112d">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261112e">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261113a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app app-inicio">
@@ -38,18 +38,56 @@
     <div class="app-cabeca">
       <p class="app-data" id="inicio-data"></p>
       <h1 class="app-titulo" id="inicio-ola">Apps</h1>
-      <p class="app-subtitulo">O que vestir, o que comer, como se preparar para cada ocasião. Tudo ligado à sua conta da Rauber.</p>
+      <p class="app-subtitulo">Organização, estilo e evolução pessoal. Para quem cuida da própria imagem e da forma como organiza a vida.</p>
     </div>
 
-    <nav aria-label="Escolha um app">
-      <ul class="app-icones">
-        <li><a class="app-icone" href="apps/guarda-roupa/"><span class="app-icone-fundo app-icone-guarda-roupa"><svg data-icone="cabide"></svg></span>Guarda-roupa</a></li>
-        <li><a class="app-icone" href="apps/alimentacao/"><span class="app-icone-fundo app-icone-alimentacao"><svg data-icone="folha"></svg></span>Alimentação</a></li>
-        <li><a class="app-icone" href="apps/ocasioes/"><span class="app-icone-fundo app-icone-ocasioes"><svg data-icone="calendario"></svg></span>Ocasiões</a></li>
-        <li><a class="app-icone" href="apps/treino/"><span class="app-icone-fundo app-icone-treino"><svg data-icone="haltere"></svg></span>Treino</a></li>
-        <li><a class="app-icone" href="apps/habitos/"><span class="app-icone-fundo app-icone-habitos"><svg data-icone="chama"></svg></span>Hábitos</a></li>
+    <!-- Estilo e imagem: o guarda-roupa em destaque -->
+    <section class="inicio-estilo" aria-labelledby="estilo-titulo">
+      <p class="inicio-estilo-selo"><svg data-icone="cabide"></svg>Estilo e imagem</p>
+      <h2 class="inicio-estilo-titulo" id="estilo-titulo">Seu guarda-roupa digital</h2>
+      <p class="inicio-estilo-texto" id="estilo-texto">Cadastre as roupas que você já tem e descubra quantos looks elas rendem e qual peça faria mais diferença.</p>
+      <div class="inicio-estilo-numeros" id="estilo-numeros" hidden>
+        <div><strong id="estilo-pecas">0</strong><span>peças</span></div>
+        <div><strong id="estilo-looks">0</strong><span>looks possíveis</span></div>
+        <div class="inicio-estilo-mais" id="estilo-mais-caixa" hidden><strong id="estilo-mais">+0</strong><span>com uma peça</span></div>
+      </div>
+      <a class="inicio-estilo-sugestao" id="estilo-sugestao" href="apps/guarda-roupa/#looks" hidden>
+        <span class="inicio-estilo-sugestao-foto" id="estilo-sugestao-foto" aria-hidden="true"></span>
+        <span class="inicio-estilo-sugestao-texto"><small id="estilo-sugestao-selo">Da coleção Rauber</small><strong id="estilo-sugestao-titulo"></strong></span>
+        <svg data-icone="seguir" aria-hidden="true"></svg>
+      </a>
+      <ul class="inicio-estilo-lista">
+        <li>Guarda-roupa digital</li><li>Combinações de looks</li><li>Sugestões de peças</li><li>Organização do vestuário</li>
       </ul>
-    </nav>
+      <a class="botao inicio-estilo-botao" id="estilo-botao" href="apps/guarda-roupa/">Começar meu guarda-roupa</a>
+    </section>
+
+    <!-- Os quatro pilares -->
+    <section class="app-secao" aria-labelledby="pilares-titulo">
+      <h2 class="app-secao-titulo" id="pilares-titulo">Os quatro pilares</h2>
+      <div class="inicio-pilares">
+        <a class="inicio-pilar" href="apps/guarda-roupa/">
+          <span class="app-icone-fundo app-icone-guarda-roupa" aria-hidden="true"><svg data-icone="cabide"></svg></span>
+          <span class="inicio-pilar-texto"><strong>Estilo e imagem</strong><small>Guarda-roupa digital, combinações de looks, sugestões de peças e organização do vestuário.</small></span>
+          <span class="inicio-pilar-apps">Guarda-roupa</span>
+        </a>
+        <a class="inicio-pilar" href="apps/habitos/">
+          <span class="app-icone-fundo app-icone-habitos" aria-hidden="true"><svg data-icone="chama"></svg></span>
+          <span class="inicio-pilar-texto"><strong>Organização pessoal</strong><small>Hábitos, lembretes, planejamento e a construção de uma rotina que fica.</small></span>
+          <span class="inicio-pilar-apps">Hábitos e lembretes</span>
+        </a>
+        <div class="inicio-pilar inicio-pilar-duplo">
+          <span class="app-icone-fundo app-icone-treino" aria-hidden="true"><svg data-icone="haltere"></svg></span>
+          <span class="inicio-pilar-texto"><strong>Saúde e desempenho</strong><small>Treinos, alimentação e o acompanhamento da sua rotina.</small></span>
+          <span class="inicio-pilar-links"><a href="apps/treino/">Treino</a><a href="apps/alimentacao/">Alimentação</a></span>
+        </div>
+        <a class="inicio-pilar" href="apps/ocasioes/">
+          <span class="app-icone-fundo app-icone-ocasioes" aria-hidden="true"><svg data-icone="calendario"></svg></span>
+          <span class="inicio-pilar-texto"><strong>Experiências e ocasiões</strong><small>Viagens, eventos e compromissos, com o que preparar para cada um.</small></span>
+          <span class="inicio-pilar-apps">Ocasiões</span>
+        </a>
+      </div>
+    </section>
 
     <section class="app-secao" aria-labelledby="hoje-titulo">
       <h2 class="app-secao-titulo" id="hoje-titulo">Hoje</h2>
@@ -109,6 +147,9 @@
   <script src="assets/js/config.js?v=20261111a"></script>
   <script src="assets/js/conta-api.js?v=20261112a"></script>
   <script src="assets/js/apps.js?v=20261112c"></script>
-  <script src="assets/js/apps-inicio.js?v=20261111a"></script>
+  <script src="assets/js/guarda-roupa-dados.js?v=20261112c"></script>
+  <script src="assets/js/guarda-roupa-looks.js?v=20261112c"></script>
+  <script src="assets/js/guarda-roupa-sugestao.js?v=20261113a"></script>
+  <script src="assets/js/apps-inicio.js?v=20261113a"></script>
 </body>
 </html>

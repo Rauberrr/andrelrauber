@@ -606,7 +606,23 @@ function listar(): void
         'notas' => $notas,
         'maximoPecas' => GR_MAXIMO_PECAS,
         'consentiu' => $usuario['consentiu_em'] !== null,
+        'compradas' => pecas_compradas($id),
     ]);
+}
+
+// Peças da coleção que a pessoa já pediu (não sugere de novo). Pedido cancelado não conta.
+function pecas_compradas(int $id): array
+{
+    try {
+        return consultar(
+            "SELECT DISTINCT pr.slug FROM pedidos_itens i
+             JOIN pedidos pe ON pe.id = i.pedido_id JOIN produtos pr ON pr.id = i.produto_id
+             WHERE pe.usuario_id = ? AND pe.situacao <> 'cancelado'",
+            [$id]
+        )->fetchAll(PDO::FETCH_COLUMN);
+    } catch (PDOException $erro) {
+        return [];
+    }
 }
 
 // Confere a descrição e devolve só o que está nas listas permitidas
