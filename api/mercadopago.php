@@ -20,6 +20,18 @@ function mp_ativo(): bool
     return trim((string) (config()['mercadopago_token'] ?? '')) !== '';
 }
 
+// O corpo do pedido em JSON. Alguns servidores escrevem 19.9 como 19.899999999999999
+// (serialize_precision = 17), e o Mercado Pago só aceita valores com duas casas.
+// Com -1, o PHP escreve o número mais curto que representa o valor: 19.9, 1000, 0.5.
+function mp_json(array $corpo): string
+{
+    $precisao = ini_get('serialize_precision');
+    ini_set('serialize_precision', '-1');
+    $json = (string) json_encode($corpo, JSON_UNESCAPED_UNICODE);
+    ini_set('serialize_precision', (string) $precisao);
+    return $json;
+}
+
 // Devolve os dados da resposta, ou null se o Mercado Pago não respondeu como esperado
 function mp_pedir(string $metodo, string $caminho, ?array $corpo = null): ?array
 {
@@ -28,7 +40,7 @@ function mp_pedir(string $metodo, string $caminho, ?array $corpo = null): ?array
     $cabecalhos = ['Authorization: Bearer ' . trim((string) ($c['mercadopago_token'] ?? '')), 'Accept: application/json'];
     $json = null;
     if ($corpo !== null) {
-        $json = json_encode($corpo, JSON_UNESCAPED_UNICODE);
+        $json = mp_json($corpo);
         $cabecalhos[] = 'Content-Type: application/json';
     }
 
@@ -116,7 +128,7 @@ function mp_criar_cobranca(array $pedido, array $usuario): ?string
         'title' => (string) $pedido['descricao'],
         'quantity' => 1,
         'currency_id' => 'BRL',
-        'unit_price' => (int) $pedido['valor_centavos'] / 100,
+        'unit_price' => round((int) $pedido['valor_centavos'] / 100, 2),
     ]];
     if ((int) $pedido['frete_centavos'] > 0) {
         $itens[] = [
@@ -124,7 +136,7 @@ function mp_criar_cobranca(array $pedido, array $usuario): ?string
             'title' => 'Frete',
             'quantity' => 1,
             'currency_id' => 'BRL',
-            'unit_price' => (int) $pedido['frete_centavos'] / 100,
+            'unit_price' => round((int) $pedido['frete_centavos'] / 100, 2),
         ];
     }
 
@@ -362,7 +374,7 @@ function mp_criar_assinatura(array $usuario, array $plano, ?string $primeiraCobr
     $recorrencia = [
         'frequency' => 1,
         'frequency_type' => 'months',
-        'transaction_amount' => (int) $plano['precoCentavos'] / 100,
+        'transaction_amount' => round((int) $plano['precoCentavos'] / 100, 2),
         'currency_id' => 'BRL',
     ];
     if ($primeiraCobranca !== null && strtotime($primeiraCobranca) > time()) {
