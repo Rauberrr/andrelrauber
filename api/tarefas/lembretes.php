@@ -24,13 +24,16 @@ marcar_tarefa('lembretes');
 require_once __DIR__ . '/../mercadopago.php';
 if (mp_ativo()) {
     try {
-        foreach (consultar("SELECT preapproval_id FROM assinaturas_mp WHERE status IN ('authorized', 'paused')")->fetchAll(PDO::FETCH_COLUMN) as $pre) {
+        $recentes = date('Y-m-d H:i:s', time() - 7 * 86400);
+        foreach (consultar("SELECT preapproval_id FROM assinaturas_mp WHERE status IN ('authorized', 'paused') OR (status = 'pending' AND criado_em > ?)", [$recentes])->fetchAll(PDO::FETCH_COLUMN) as $pre) {
             mp_sincronizar_assinatura((string) $pre);
         }
     } catch (PDOException $erro) {
         // Banco ainda sem a tabela das assinaturas
     }
 }
+
+cancelar_pedidos_vencidos();
 
 const LEMBRETE_ALIMENTO_DIAS = 2;
 const LEMBRETE_ENCOMENDA_DIAS = 3;

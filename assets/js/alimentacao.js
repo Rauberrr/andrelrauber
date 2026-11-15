@@ -353,6 +353,7 @@
     if (passo === 'compras') desenharCompras();
     if (passo === 'compras' || passo === 'plano') desenharPonteTreino();
     if (passo === 'acompanhamento') desenharAcompanhamento();
+    if (passo === 'comida') prepararGuia();
     $('passo-' + passo).focus({ preventScroll: true });
     window.scrollTo({ top: $('alim-topo').getBoundingClientRect().top + window.scrollY - 90 });
   }
@@ -671,6 +672,307 @@
       ? 'Pelo que você marcou, são cerca de ' + kcal(n.kcal) + ' por dia.'
       : 'Nada marcado ainda.';
   }
+
+
+  /* --- Passo a passo: uma refeição por vez, um alimento por vez ------------------------------- */
+
+  // guia.ref: refeição atual; guia.fase: 'escolher', 'qtd' ou 'freq'; guia.pos: alimento atual
+  var guia = null;
+
+  function nomeDe(id) { return D.porAlimento[id] ? D.porAlimento[id].nome : id; }
+
+  function prepararGuia() {
+    if (guia) { desenharGuia(); return; }
+    if (!estado.itens.length) abrirGuia(0);
+    else fecharGuia();
+  }
+
+  function abrirGuia(indiceRef) {
+    fecharEditor();
+    guia = { ref: indiceRef, fase: 'escolher', pos: 0, escolhidos: [], rascunho: {} };
+    carregarRefeicao();
+    desenharGuia();
+  }
+
+  function fecharGuia() {
+    guia = null;
+    $('alim-guia').hidden = true;
+    $('alim-guia').textContent = '';
+    $('alim-revisao').hidden = false;
+    desenharItens();
+  }
+
+  // O que já está marcado na refeição vem escolhido, com a quantidade de antes
+  function carregarRefeicao() {
+    var ref = C.REFEICOES[guia.ref];
+    guia.escolhidos = [];
+    guia.rascunho = {};
+    estado.itens.forEach(function (item) {
+      if (item.refeicao !== ref.id || !D.porAlimento[item.alimento] || guia.rascunho[item.alimento]) return;
+      guia.escolhidos.push(item.alimento);
+      guia.rascunho[item.alimento] = C.novoItem(ref.id, item.alimento, item.qtd, item.medida, { freq: item.freq || 'diario' });
+    });
+    guia.fase = 'escolher';
+    guia.pos = 0;
+  }
+
+  function sugestaoDe(refId, alimento) {
+    var s = (SUGESTOES[refId] || []).filter(function (x) { return x[0] === alimento; })[0];
+    return s ? { qtd: s[1], medida: s[2] || 0 } : { qtd: 1, medida: 0 };
+  }
+
+  function rascunhoDe(alimento) {
+    var ref = C.REFEICOES[guia.ref];
+    if (!guia.rascunho[alimento]) {
+      var s = sugestaoDe(ref.id, alimento);
+      guia.rascunho[alimento] = C.novoItem(ref.id, alimento, s.qtd, s.medida, { freq: 'diario' });
+    }
+    return guia.rascunho[alimento];
+  }
+
+  // Grava a refeição: o que foi escolhido no passo a passo substitui o que havia nela
+  function gravarRefeicao() {
+    var ref = C.REFEICOES[guia.ref];
+    var novos = guia.escolhidos.map(function (id) {
+      var r = guia.rascunho[id];
+      return C.novoItem(ref.id, r.alimento, r.qtd, r.medida, { freq: r.freq || 'diario' });
+    });
+    estado.itens = estado.itens.filter(function (i) { return i.refeicao !== ref.id; }).concat(novos);
+    salvar();
+  }
+
+  function avancar() {
+    if (guia.fase === 'escolher') {
+      if (!guia.escolhidos.length) { gravarRefeicao(); proximaRefeicao(); return; }
+      guia.fase = 'qtd';
+      guia.pos = 0;
+    } else if (guia.fase === 'qtd') {
+      guia.fase = 'freq';
+    } else if (guia.pos < guia.escolhidos.length - 1) {
+      guia.pos += 1;
+      guia.fase = 'qtd';
+    } else {
+      gravarRefeicao();
+      proximaRefeicao();
+      return;
+    }
+    desenharGuia();
+  }
+
+  function proximaRefeicao() {
+    if (guia.ref >= C.REFEICOES.length - 1) {
+      fecharGuia();
+      retorno('Pronto. Confira tudo aqui embaixo e, se quiser, ajuste algum item.');
+      $('alim-revisao').scrollIntoView({ block: 'start' });
+      return;
+    }
+    guia.ref += 1;
+    carregarRefeicao();
+    desenharGuia();
+  }
+
+  function voltar() {
+    if (guia.fase === 'freq') guia.fase = 'qtd';
+    else if (guia.fase === 'qtd' && guia.pos > 0) { guia.pos -= 1; guia.fase = 'freq'; }
+    else if (guia.fase === 'qtd') guia.fase = 'escolher';
+    else if (guia.ref > 0) { guia.ref -= 1; carregarRefeicao(); }
+    desenharGuia();
+  }
+
+  function desenharGuia() {
+    var caixa = $('alim-guia');
+    var ref = C.REFEICOES[guia.ref];
+    $('alim-revisao').hidden = true;
+    caixa.hidden = false;
+    caixa.textContent = '';
+
+    // Onde a pessoa está: as refeições como pontos, e o alimento atual
+    var topo = criar('div', 'alim-guia-topo');
+    var pontos = criar('ol', 'alim-guia-pontos');
+    pontos.setAttribute('aria-label', 'Refeições');
+    C.REFEICOES.forEach(function (r, i) {
+      var li = criar('li', i < guia.ref ? 'feito' : (i === guia.ref ? 'atual' : ''));
+      li.title = r.rotulo;
+      if (i === guia.ref) li.setAttribute('aria-current', 'step');
+      li.appendChild(criar('span', 'visualmente-oculto', r.rotulo));
+      pontos.appendChild(li);
+    });
+    topo.appendChild(pontos);
+    topo.appendChild(criar('p', 'alim-guia-onde', 'Refeição ' + (guia.ref + 1) + ' de ' + C.REFEICOES.length));
+    caixa.appendChild(topo);
+
+    var corpo = criar('div', 'alim-guia-corpo');
+    caixa.appendChild(corpo);
+    if (guia.fase === 'escolher') desenharEscolha(corpo, ref);
+    else if (guia.fase === 'qtd') desenharQuantidade(corpo, ref);
+    else desenharFrequencia(corpo, ref);
+
+    var rodape = criar('div', 'alim-guia-rodape');
+    if (guia.ref > 0 || guia.fase !== 'escolher') rodape.appendChild(botao('Voltar', 'texto-botao', voltar));
+    if (estado.itens.length) rodape.appendChild(botao('Sair do passo a passo', 'texto-botao', fecharGuia));
+    caixa.appendChild(rodape);
+
+    var foco = caixa.querySelector('[data-foco]') || caixa.querySelector('h3');
+    if (foco) foco.focus({ preventScroll: true });
+    var alto = $('alim-topo').getBoundingClientRect().top + window.scrollY - 90;
+    if (window.scrollY > alto) window.scrollTo({ top: alto });
+  }
+
+  function desenharEscolha(corpo, ref) {
+    var titulo = criar('h3', 'alim-guia-titulo', ref.rotulo);
+    titulo.tabIndex = -1;
+    corpo.appendChild(titulo);
+    corpo.appendChild(criar('p', 'alim-guia-pergunta', 'O que você costuma comer? Toque em tudo o que entra, mesmo que não seja todo dia.'));
+
+    var lista = criar('div', 'alim-atalhos alim-guia-opcoes');
+    var ids = (SUGESTOES[ref.id] || []).map(function (s) { return s[0]; });
+    guia.escolhidos.forEach(function (id) { if (ids.indexOf(id) === -1) ids.push(id); });
+    ids.filter(function (id) { return D.porAlimento[id]; }).forEach(function (id) {
+      var marcado = guia.escolhidos.indexOf(id) !== -1;
+      var b = botao(nomeDe(id), 'alim-atalho' + (marcado ? ' incluido' : ''));
+      b.setAttribute('aria-pressed', String(marcado));
+      b.addEventListener('click', function () {
+        var i = guia.escolhidos.indexOf(id);
+        if (i === -1) guia.escolhidos.push(id); else guia.escolhidos.splice(i, 1);
+        var tem = i === -1;
+        b.classList.toggle('incluido', tem);
+        b.setAttribute('aria-pressed', String(tem));
+        atualizarSeguir();
+      });
+      lista.appendChild(b);
+    });
+    corpo.appendChild(lista);
+
+    // Outro alimento: a lista completa, por grupo
+    var outro = criar('div', 'alim-guia-outro');
+    var rotulo = criar('label', 'alim-campo');
+    rotulo.appendChild(criar('span', '', 'Não está aqui? Procure na lista'));
+    var sel = document.createElement('select');
+    sel.appendChild(new Option('Escolha um alimento', ''));
+    D.GRUPOS.forEach(function (g) {
+      var grupo = document.createElement('optgroup');
+      grupo.label = g.rotulo;
+      D.ALIMENTOS.filter(function (a) { return a.grupo === g.id; }).forEach(function (a) { grupo.appendChild(new Option(a.nome, a.id)); });
+      grupo.children.length && sel.appendChild(grupo);
+    });
+    sel.addEventListener('change', function () {
+      var id = sel.value;
+      if (!D.porAlimento[id]) return;
+      if (guia.escolhidos.indexOf(id) === -1) guia.escolhidos.push(id);
+      desenharGuia();
+      retorno('Incluído: ' + minusculo(nomeDe(id)) + '.');
+    });
+    rotulo.appendChild(sel);
+    outro.appendChild(rotulo);
+    corpo.appendChild(outro);
+
+    var seguir = botao('', 'botao botao-cheio alim-guia-seguir', avancar);
+    seguir.setAttribute('data-foco', '');
+    function atualizarSeguir() {
+      var n = guia.escolhidos.length;
+      seguir.textContent = n ? 'Continuar com ' + n + (n === 1 ? ' alimento' : ' alimentos') : 'Não como nada nessa refeição';
+      seguir.classList.toggle('botao-cheio', n > 0);
+    }
+    atualizarSeguir();
+    corpo.appendChild(seguir);
+  }
+
+  function desenharQuantidade(corpo, ref) {
+    var item = rascunhoDe(guia.escolhidos[guia.pos]);
+    var a = D.porAlimento[item.alimento];
+    var unidade = a.grupo === 'bebidas' ? ' ml' : ' g';
+    corpo.appendChild(criar('p', 'alim-guia-contagem', ref.rotulo + ' · ' + (guia.pos + 1) + ' de ' + guia.escolhidos.length));
+    var titulo = criar('h3', 'alim-guia-titulo', a.nome);
+    titulo.tabIndex = -1;
+    corpo.appendChild(titulo);
+
+    // Variações do mesmo alimento (pão francês, integral...)
+    var familia = (D.familiaDe[item.alimento] || [item.alimento]).filter(function (id) { return D.porAlimento[id]; });
+    if (familia.length > 1) {
+      corpo.appendChild(criar('p', 'alim-guia-pergunta', 'Qual tipo?'));
+      var tipos = criar('div', 'alim-atalhos alim-guia-opcoes');
+      familia.forEach(function (id) {
+        var b = botao(nomeDe(id), 'alim-atalho' + (id === item.alimento ? ' incluido' : ''));
+        b.setAttribute('aria-pressed', String(id === item.alimento));
+        b.addEventListener('click', function () {
+          if (id === item.alimento) return;
+          var antigo = item.alimento;
+          if (guia.escolhidos.indexOf(id) !== -1) { retorno(nomeDe(id) + ' já está nesta refeição.'); return; }
+          guia.escolhidos[guia.pos] = id;
+          delete guia.rascunho[antigo];
+          guia.rascunho[id] = C.novoItem(ref.id, id, item.qtd, 0, { freq: item.freq });
+          desenharGuia();
+        });
+        tipos.appendChild(b);
+      });
+      corpo.appendChild(tipos);
+    }
+
+    corpo.appendChild(criar('p', 'alim-guia-pergunta', 'Em que medida?'));
+    var medidas = criar('div', 'alim-atalhos alim-guia-opcoes');
+    a.medidas.forEach(function (m, i) {
+      var b = botao(m.rotulo + ' · ' + m.g + unidade, 'alim-atalho' + (i === item.medida ? ' incluido' : ''));
+      b.setAttribute('aria-pressed', String(i === item.medida));
+      b.addEventListener('click', function () {
+        item.medida = i;
+        medidas.querySelectorAll('.alim-atalho').forEach(function (x, j) {
+          x.classList.toggle('incluido', j === i);
+          x.setAttribute('aria-pressed', String(j === i));
+        });
+        mostrar();
+      });
+      medidas.appendChild(b);
+    });
+    corpo.appendChild(medidas);
+
+    corpo.appendChild(criar('p', 'alim-guia-pergunta', 'Quantas de uma vez?'));
+    var linha = criar('div', 'alim-guia-qtd');
+    var numero = criar('output', 'alim-guia-numero');
+    numero.setAttribute('aria-live', 'polite');
+    var menos = botao('−', 'alim-guia-mais-menos', function () { item.qtd = Math.max(0.5, item.qtd - 0.5); mostrar(); });
+    var mais = botao('+', 'alim-guia-mais-menos', function () { item.qtd = Math.min(30, item.qtd + 0.5); mostrar(); });
+    menos.setAttribute('aria-label', 'Diminuir');
+    mais.setAttribute('aria-label', 'Aumentar');
+    linha.appendChild(menos);
+    linha.appendChild(numero);
+    linha.appendChild(mais);
+    corpo.appendChild(linha);
+    var previa = criar('p', 'alim-guia-previa');
+    corpo.appendChild(previa);
+
+    function mostrar() {
+      numero.textContent = String(item.qtd).replace('.', ',');
+      var gramas = Math.round(a.medidas[item.medida].g * item.qtd);
+      previa.textContent = C.descreverItem(item) + ' · cerca de ' + gramas + unidade + ' e ' + kcal(C.nutrientes([C.novoItem(ref.id, item.alimento, item.qtd, item.medida)]).kcal);
+    }
+    mostrar();
+
+    var seguir = botao('Próximo', 'botao botao-cheio alim-guia-seguir', avancar);
+    seguir.setAttribute('data-foco', '');
+    corpo.appendChild(seguir);
+  }
+
+  function desenharFrequencia(corpo, ref) {
+    var item = rascunhoDe(guia.escolhidos[guia.pos]);
+    corpo.appendChild(criar('p', 'alim-guia-contagem', ref.rotulo + ' · ' + (guia.pos + 1) + ' de ' + guia.escolhidos.length));
+    var titulo = criar('h3', 'alim-guia-titulo', 'Com que frequência?');
+    titulo.tabIndex = -1;
+    corpo.appendChild(titulo);
+    corpo.appendChild(criar('p', 'alim-guia-pergunta', C.descreverItem(item) + ', no ' + minusculo(ref.rotulo) + '.'));
+    var lista = criar('div', 'alim-guia-frequencias');
+    C.FREQUENCIAS.forEach(function (f) {
+      var b = botao(f.rotulo, 'alim-guia-frequencia' + (item.freq === f.id ? ' incluido' : ''), function () {
+        item.freq = f.id;
+        avancar();
+      });
+      b.setAttribute('aria-pressed', String(item.freq === f.id));
+      if (item.freq === f.id) b.setAttribute('data-foco', '');
+      lista.appendChild(b);
+    });
+    corpo.appendChild(lista);
+  }
+
+  $('alim-guia-abrir').addEventListener('click', function () { abrirGuia(0); });
 
   $('alim-ir-plano').addEventListener('click', function () { irPara('plano'); });
   $('alim-limpar').addEventListener('click', function () {

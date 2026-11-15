@@ -367,14 +367,31 @@ function mp_id_valido(string $id): bool
 /**
  * Cria a assinatura e devolve o endereço da tela do Mercado Pago, ou null.
  * $primeiraCobranca: quem assina durante o teste grátis só paga quando o teste acaba.
+ * $emailPagador: o e-mail da conta com que a pessoa vai pagar no Mercado Pago. Ele confere
+ * esse e-mail na hora do pagamento e recusa o cartão se for outro.
  */
-function mp_criar_assinatura(array $usuario, array $plano, ?string $primeiraCobranca = null): ?string
+function mp_criar_assinatura(array $usuario, array $plano, ?string $primeiraCobranca = null, ?string $emailPagador = null): ?string
 {
     $site = mp_endereco_do_site();
+    $email = mb_strtolower(trim((string) ($emailPagador ?? $usuario['email'])));
+    $valor = round((int) $plano['precoCentavos'] / 100, 2);
+    // Tentativa anterior que não foi paga: com o mesmo e-mail e valor, reaproveita a mesma tela;
+    // com outro, cancela a antiga (o Mercado Pago não deixa duas pendentes para o mesmo e-mail)
+    foreach (consultar("SELECT preapproval_id FROM assinaturas_mp WHERE usuario_id = ? AND status = 'pending'", [(int) $usuario['id']])->fetchAll(PDO::FETCH_COLUMN) as $antiga) {
+        $pre = mp_pedir('GET', '/preapproval/' . $antiga);
+        if (is_array($pre) && ($pre['status'] ?? '') === 'pending' && mb_strtolower((string) ($pre['payer_email'] ?? '')) === $email
+            && (float) ($pre['auto_recurring']['transaction_amount'] ?? 0) === (float) $valor && strpos((string) ($pre['init_point'] ?? ''), 'http') === 0) {
+            return (string) $pre['init_point'];
+        }
+        if (is_array($pre) && ($pre['status'] ?? '') === 'pending') {
+            mp_pedir('PUT', '/preapproval/' . $antiga, ['status' => 'cancelled']);
+        }
+        consultar("UPDATE assinaturas_mp SET status = 'cancelled', atualizado_em = ? WHERE preapproval_id = ?", [agora(), $antiga]);
+    }
     $recorrencia = [
         'frequency' => 1,
         'frequency_type' => 'months',
-        'transaction_amount' => round((int) $plano['precoCentavos'] / 100, 2),
+        'transaction_amount' => $valor,
         'currency_id' => 'BRL',
     ];
     if ($primeiraCobranca !== null && strtotime($primeiraCobranca) > time()) {
@@ -383,7 +400,7 @@ function mp_criar_assinatura(array $usuario, array $plano, ?string $primeiraCobr
     $resposta = mp_pedir('POST', '/preapproval', [
         'reason' => mb_substr((string) $plano['nome'], 0, 60) . ' (mensal)',
         'external_reference' => 'assinatura-' . (int) $usuario['id'],
-        'payer_email' => (string) $usuario['email'],
+        'payer_email' => $email,
         'auto_recurring' => $recorrencia,
         'back_url' => $site . '/assinatura.html?assinatura=voltou',
         'status' => 'pending',
@@ -392,7 +409,6 @@ function mp_criar_assinatura(array $usuario, array $plano, ?string $primeiraCobr
         return null;
     }
     $momento = agora();
-    consultar('DELETE FROM assinaturas_mp WHERE usuario_id = ? AND status = ?', [(int) $usuario['id'], 'pending']);
     consultar(
         'INSERT INTO assinaturas_mp (preapproval_id, usuario_id, status, criado_em, atualizado_em) VALUES (?, ?, ?, ?, ?)',
         [(string) $resposta['id'], (int) $usuario['id'], 'pending', $momento, $momento]
@@ -438,6 +454,7 @@ function mp_sincronizar_assinatura(string $id): bool
         }
         if ((string) $linha['status'] !== 'authorized') {
             registrar_evento($usuarioId, 'assinatura_ativa');
+            mp_avisar_assinatura_ativa($usuarioId, $proxima);
         }
     } elseif (($status === 'cancelled' || $status === 'paused') && $atual && $atual['origem'] === 'mercadopago') {
         // Sem prazo guardado, o acesso acaba agora
@@ -449,6 +466,45 @@ function mp_sincronizar_assinatura(string $id): bool
         }
     }
     return true;
+}
+
+// Confirmação por e-mail para a pessoa e aviso para a marca, uma vez, quando a assinatura começa
+function mp_avisar_assinatura_ativa(int $usuarioId, int $proxima): void
+{
+    $u = consultar('SELECT nome, email FROM usuarios WHERE id = ?', [$usuarioId])->fetch();
+    if (!$u) {
+        return;
+    }
+    $plano = assinatura_config();
+    $dia = date('d/m/Y', $proxima);
+    $cobranca = $proxima > time() + 86400
+        ? 'A próxima cobrança no cartão é em ' . $dia . '.'
+        : 'O cartão foi aprovado.';
+    enviar_email(
+        (string) $u['email'],
+        'Sua assinatura está ativa',
+        'Tudo certo: a assinatura do ' . $plano['nome'] . ' está ativa e todos os apps estão liberados para você. ' . $cobranca
+        . ' Ela renova sozinha todo mês, e você pode cancelar quando quiser em ' . mp_endereco_do_site() . '/assinatura.html'
+    );
+    avisar_dono('Nova assinatura no site', $u['nome'] . ' (' . $u['email'] . ') assinou o ' . $plano['nome'] . '. ' . $cobranca . ' Veja em ' . mp_endereco_do_site() . '/painel.html');
+}
+
+/** Confere no Mercado Pago as tentativas de assinatura da pessoa que ainda não foram confirmadas. */
+function mp_conferir_pendentes(int $usuarioId): void
+{
+    try {
+        $ids = consultar(
+            "SELECT preapproval_id FROM assinaturas_mp WHERE usuario_id = ? AND status = 'pending' AND criado_em > ? ORDER BY criado_em DESC LIMIT 3",
+            [$usuarioId, date('Y-m-d H:i:s', time() - 3 * 86400)]
+        )->fetchAll(PDO::FETCH_COLUMN);
+    } catch (PDOException $erro) {
+        return;
+    }
+    foreach ($ids as $pre) {
+        // Marca a consulta mesmo se o Mercado Pago não responder, para não insistir a cada clique
+        consultar('UPDATE assinaturas_mp SET atualizado_em = ? WHERE preapproval_id = ?', [agora(), $pre]);
+        mp_sincronizar_assinatura((string) $pre);
+    }
 }
 
 // O aviso de cada cobrança traz o pagamento autorizado; dele sai a assinatura

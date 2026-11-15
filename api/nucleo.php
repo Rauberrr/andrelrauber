@@ -690,6 +690,9 @@ function ja_usava_antes(array $usuario, array $plano): bool
 // O que os apps precisam saber: o modo, se a pessoa usa e quantos dias de teste faltam
 function situacao_da_assinatura(?array $usuario): array
 {
+    if ($usuario !== null) {
+        conferir_assinatura_pendente((int) $usuario['id']);
+    }
     $plano = assinatura_config();
     $modo = modo_para($usuario, $plano);
     $situacao = ['modo' => $modo, 'liberado' => acesso_aos_apps($usuario), 'diasDeTeste' => 0];
@@ -701,6 +704,56 @@ function situacao_da_assinatura(?array $usuario): array
         }
     }
     return $situacao;
+}
+
+/**
+ * Quem cadastrou o cartão no Mercado Pago e não voltou ao site: o site confere sozinho,
+ * na próxima vez que a pessoa abre os apps (no máximo uma vez por minuto).
+ */
+function conferir_assinatura_pendente(int $usuarioId): void
+{
+    try {
+        $tem = consultar(
+            "SELECT 1 FROM assinaturas_mp WHERE usuario_id = ? AND status = 'pending' AND criado_em > ? AND atualizado_em < ? LIMIT 1",
+            [$usuarioId, date('Y-m-d H:i:s', time() - 3 * 86400), date('Y-m-d H:i:s', time() - 60)]
+        )->fetchColumn();
+    } catch (PDOException $erro) {
+        return;
+    }
+    if ($tem === false) {
+        return;
+    }
+    require_once __DIR__ . '/mercadopago.php';
+    if (mp_ativo()) {
+        mp_conferir_pendentes($usuarioId);
+    }
+}
+
+/** Pedido da pessoa que ficou 24 horas sem pagamento é cancelado. Devolve quantos cancelou. */
+const PEDIDO_PRAZO_HORAS = 24;
+function cancelar_pedidos_vencidos(?int $usuarioId = null): int
+{
+    $limite = date('Y-m-d H:i:s', time() - PEDIDO_PRAZO_HORAS * 3600);
+    try {
+        $sql = "SELECT id, usuario_id, descricao FROM pedidos WHERE situacao = 'aguardando' AND criado_em < ?";
+        $vencidos = $usuarioId === null
+            ? consultar($sql . ' LIMIT 500', [$limite])->fetchAll()
+            : consultar($sql . ' AND usuario_id = ?', [$limite, $usuarioId])->fetchAll();
+    } catch (PDOException $erro) {
+        return 0;
+    }
+    $total = 0;
+    foreach ($vencidos as $p) {
+        $mudou = consultar(
+            "UPDATE pedidos SET situacao = 'cancelado', atualizado_em = ? WHERE id = ? AND situacao = 'aguardando'",
+            [agora(), (int) $p['id']]
+        )->rowCount();
+        if ($mudou === 1) {
+            $total++;
+            registrar_evento((int) $p['usuario_id'], 'pedido_cancelado', null, mb_substr('Sem pagamento em ' . PEDIDO_PRAZO_HORAS . ' horas: ' . $p['descricao'], 0, 250));
+        }
+    }
+    return $total;
 }
 
 // Para as APIs dos apps: com a cobrança ligada, quem não assina recebe 402

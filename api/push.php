@@ -170,7 +170,9 @@ function enviar_push(string $endereco, ?array $aviso = null, string $p256dh = ''
     }
     $chaves = chaves_vapid();
     $corpo = '';
-    $cabecalhos = ['TTL: 43200', 'Urgency: high', 'Authorization: vapid t=' . token_vapid($endereco, $chaves) . ', k=' . $chaves['publica']];
+    // Lembrete tem hora: se o aparelho ficar mais de uma hora sem sinal, o aviso vencido é descartado
+    // em vez de chegar horas depois
+    $cabecalhos = ['TTL: 3600', 'Urgency: high', 'Authorization: vapid t=' . token_vapid($endereco, $chaves) . ', k=' . $chaves['publica']];
     if ($aviso !== null && chaves_do_navegador_validas($p256dh, $auth)) {
         $corpo = cifrar_push((string) json_encode($aviso, JSON_UNESCAPED_UNICODE), $p256dh, $auth);
         $cabecalhos[] = 'Content-Encoding: aes128gcm';

@@ -23,6 +23,9 @@ define('AR_API', true);
 require __DIR__ . '/../nucleo.php';
 require __DIR__ . '/../push.php';
 
+// Aproveita a tarefa que roda a cada poucos minutos: pedidos sem pagamento há 24 horas são cancelados
+cancelar_pedidos_vencidos();
+
 const HAB_JANELA_MINUTOS = 20;
 const HAB_HORA_RESGATE = '20:00';
 

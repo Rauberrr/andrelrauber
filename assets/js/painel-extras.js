@@ -271,6 +271,8 @@
       $('as-form').hidden = false;
       $('as-liberados-caixa').hidden = false;
       desenharLiberados(r.dados.liberados);
+      $('as-pagamentos-caixa').hidden = false;
+      desenharPagamentos(r.dados.pagamentos || []);
       $('as-pagamento').textContent = r.dados.pagamentoOnline
         ? 'Pagamento online ligado: a assinatura é cobrada no cartão, todo mês, pelo Mercado Pago. Assinantes ativos: ' + r.dados.assinantesMp + '.'
         : 'Pagamento online desligado: falta o token do Mercado Pago no config.php. Quem tentar assinar recebe o link do WhatsApp.';
@@ -340,6 +342,50 @@
     api.post(ASSINATURA + 'testador', { acao: 'incluir', email: $('as-testador-email').value.trim() }).then(function (r) {
       if (!r.ok) { $('as-testador-erro').textContent = r.erro || 'Não foi possível incluir.'; return; }
       $('as-testador-form').reset();
+      carregados.assinatura = false;
+      carregarAssinatura();
+    });
+  });
+
+  var SITUACAO_PAGAMENTO = { pago: 'Pago', pendente: 'Não concluiu', pausada: 'Pausada', cancelada: 'Cancelada' };
+  function desenharPagamentos(lista) {
+    var ul = $('as-pagamentos');
+    ul.textContent = '';
+    var contagem = { pago: 0, pendente: 0, pausada: 0, cancelada: 0 };
+    lista.forEach(function (p) { contagem[p.situacao] = (contagem[p.situacao] || 0) + 1; });
+    var resumo = $('as-pagamentos-resumo');
+    resumo.textContent = '';
+    [['pago', 'pagando'], ['pendente', 'não concluíram'], ['pausada', 'pausadas'], ['cancelada', 'canceladas']].forEach(function (c) {
+      resumo.appendChild(criar('span', '', contagem[c[0]] + ' ' + c[1]));
+    });
+    if (!lista.length) { ul.appendChild(criar('li', 'as-item as-item-vazio', 'Ninguém abriu o Mercado Pago para assinar ainda.')); return; }
+    lista.forEach(function (p) {
+      var li = criar('li', 'as-item' + (p.acesso ? '' : ' as-item-inativo'));
+      var texto = criar('div');
+      var nome = criar('strong', '', p.nome);
+      nome.appendChild(criar('span', 'as-selo as-selo-' + p.situacao, SITUACAO_PAGAMENTO[p.situacao] || p.situacao));
+      texto.appendChild(nome);
+      var detalhe = p.email + ' · ';
+      if (p.situacao === 'pago') detalhe += p.proximaCobranca ? 'próxima cobrança em ' + dataBr(p.proximaCobranca) : 'acesso liberado';
+      else if (p.situacao === 'pendente') detalhe += 'abriu o Mercado Pago em ' + dataBr(p.desde) + ' e não concluiu';
+      else detalhe += p.acesso && p.validaAte ? 'usa até ' + dataBr(p.validaAte) + ', depois fica bloqueado' : 'sem acesso';
+      texto.appendChild(criar('span', '', detalhe));
+      li.appendChild(texto);
+      ul.appendChild(li);
+    });
+  }
+
+  $('as-sincronizar').addEventListener('click', function () {
+    var b = $('as-sincronizar');
+    b.disabled = true;
+    b.textContent = 'Conferindo...';
+    $('as-sincronizar-erro').textContent = '';
+    api.post(ASSINATURA + 'sincronizar', {}).then(function (r) {
+      b.disabled = false;
+      b.textContent = 'Conferir agora no Mercado Pago';
+      if (!r.ok) { $('as-sincronizar-erro').textContent = r.erro || 'Não foi possível conferir agora.'; return; }
+      desenharPagamentos(r.dados.pagamentos || []);
+      if (r.dados.falhas) $('as-sincronizar-erro').textContent = 'O Mercado Pago não respondeu para ' + r.dados.falhas + ' assinatura(s). Tente de novo em instantes.';
       carregados.assinatura = false;
       carregarAssinatura();
     });

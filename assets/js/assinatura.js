@@ -27,15 +27,46 @@
     return 'https://wa.me/' + numero + '?text=' + encodeURIComponent('Olá! Quero assinar o ' + plano.nome + '.');
   }
 
-  // Abre a tela do Mercado Pago, onde a pessoa cadastra o cartão
+  // Antes do Mercado Pago, o e-mail da conta com que a pessoa vai pagar lá
+  var LEMBRAR_EMAIL = 'ar-email-mercado-pago';
   function assinar(botao, nota, plano) {
+    var modal = $('assin-email-modal');
+    var guardado = '';
+    try { guardado = localStorage.getItem(LEMBRAR_EMAIL) || ''; } catch (e) { guardado = ''; }
+    app.sessao.then(function (usuario) {
+      $('assin-email').value = guardado || (usuario && usuario.email) || '';
+      $('assin-email-erro').textContent = '';
+      modal.showModal();
+      $('assin-email').focus();
+    });
+    var form = $('assin-email-form');
+    form.onsubmit = function (e) {
+      e.preventDefault();
+      var email = $('assin-email').value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { $('assin-email-erro').textContent = 'Confira o e-mail.'; return; }
+      try { localStorage.setItem(LEMBRAR_EMAIL, email); } catch (erro) { /* segue sem lembrar */ }
+      abrirMercadoPago(botao, nota, plano, email);
+    };
+  }
+
+  // Abre a tela do Mercado Pago, onde a pessoa cadastra o cartão
+  function abrirMercadoPago(botao, nota, plano, email) {
+    var ir = $('assin-email-ir');
+    ir.disabled = true;
+    ir.textContent = 'Abrindo o Mercado Pago...';
     botao.disabled = true;
     var textoAntes = botao.textContent;
-    botao.textContent = 'Abrindo o Mercado Pago...';
-    api.post('api/assinatura.php?acao=assinar', {}).then(function (resposta) {
+    api.post('api/assinatura.php?acao=assinar', { emailMercadoPago: email }).then(function (resposta) {
       if (resposta.ok && resposta.dados.link) { location.href = resposta.dados.link; return; }
+      ir.disabled = false;
+      ir.textContent = 'Continuar para o Mercado Pago';
       botao.disabled = false;
       botao.textContent = textoAntes;
+      if (resposta.dados && resposta.dados.campos && resposta.dados.campos.emailMercadoPago) {
+        $('assin-email-erro').textContent = resposta.erro;
+        return;
+      }
+      $('assin-email-modal').close();
       if (resposta.dados && resposta.dados.whatsapp) {
         nota.textContent = 'O pagamento online ainda não está ligado. Por enquanto, ';
         var w = criar('a', '', 'fale com a gente pelo WhatsApp');
@@ -59,12 +90,40 @@
     });
   }
 
-  // Na volta do Mercado Pago, o site confere a assinatura lá antes de mostrar a página
+  // Na volta do Mercado Pago, o site confere a assinatura lá antes de mostrar a página.
+  // A confirmação pode levar alguns segundos: tenta algumas vezes antes de desistir.
   var parametros = new URLSearchParams(location.search);
   var voltou = parametros.get('assinatura') === 'voltou';
-  var conferido = voltou
-    ? api.post('api/assinatura.php?acao=conferir', {}).then(function (r) { return r.ok ? r.dados.minha : null; }, function () { return null; })
-    : Promise.resolve(null);
+  function esperar(ms) { return new Promise(function (ok) { window.setTimeout(ok, ms); }); }
+  function conferirAteConfirmar(tentativas) {
+    return api.post('api/assinatura.php?acao=conferir', {}).then(function (r) {
+      var minha = r.ok ? r.dados.minha : null;
+      if (!r.ok || (minha && minha.assinante) || tentativas <= 1) return minha;
+      return esperar(4000).then(function () { return conferirAteConfirmar(tentativas - 1); });
+    }, function () { return null; });
+  }
+  if (voltou) $('assin-carregando').textContent = 'Confirmando seu pagamento com o Mercado Pago...';
+  var conferido = voltou ? conferirAteConfirmar(8) : Promise.resolve(null);
+
+  function dataBr(iso) { return iso ? iso.split('-').reverse().join('/') : ''; }
+
+  // O quadro verde de quem assinou: cartão aprovado, apps liberados e a próxima cobrança
+  function mostrarConfirmado(minha, plano) {
+    var lista = $('assin-confirmado-lista');
+    lista.textContent = '';
+    $('assin-confirmado-titulo').textContent = voltou ? 'Pagamento confirmado' : 'Assinatura ativa';
+    [
+      'Cartão aprovado pelo Mercado Pago',
+      'Todos os apps liberados para você',
+      minha.proximaCobranca ? 'Próxima cobrança: ' + dataBr(minha.proximaCobranca) + ', ' + reais(plano.precoCentavos) : 'Renova sozinha todo mês'
+    ].forEach(function (t) { lista.appendChild(criar('li', '', t)); });
+    $('assin-confirmado').hidden = false;
+    $('assin-titulo').textContent = voltou ? 'Tudo certo! Sua assinatura está ativa.' : 'Sua assinatura está ativa.';
+    var passos = document.querySelector('.assin-passos');
+    if (passos) passos.hidden = true;
+  }
+
+  $('assin-email-fechar').addEventListener('click', function () { $('assin-email-modal').close(); });
 
   conferido.then(function () { return api.get('api/assinatura.php?acao=publica'); }).then(function (r) {
     $('assin-carregando').hidden = true;
@@ -127,9 +186,10 @@
     } else if (minha.assinante) {
       var mp = minha.mercadoPago;
       var cancelada = mp && mp.status !== 'authorized';
+      if (!cancelada && mp) mostrarConfirmado(minha, plano);
       texto.textContent = cancelada
         ? 'Sua assinatura foi cancelada. Você continua usando todos os apps até ' + app.dataCurta(minha.validaAte) + '.'
-        : (voltou ? 'Pronto, assinatura confirmada! ' : '') + 'Sua assinatura está ativa. Obrigado por fazer parte.';
+        : 'Obrigado por fazer parte. Você também recebeu a confirmação por e-mail.';
       botao.textContent = 'Abrir os apps';
       botao.addEventListener('click', abrirApps);
       nota.textContent = '';
@@ -170,12 +230,20 @@
       entrar.href = 'entrar.html?voltar=assinatura.html';
       nota.appendChild(entrar);
     } else {
-      texto.textContent = voltou
-        ? 'Ainda não recebemos a confirmação do Mercado Pago. Se você terminou de assinar, ela chega em alguns minutos: atualize a página.'
+      var esperando = voltou || minha.aguardandoConfirmacao;
+      texto.textContent = esperando
+        ? 'Ainda não chegou a confirmação do Mercado Pago. Se você concluiu o pagamento, ela costuma chegar em poucos minutos: o acesso é liberado sozinho e você recebe um e-mail. Se o cartão foi recusado, confira se entrou lá com o mesmo e-mail informado aqui e tente de novo.'
         : (minha.testeAcabou ? 'Seu teste grátis terminou. ' : '') + 'Assine para continuar com todos os apps e tudo o que você já anotou.';
       botao.textContent = 'Assinar por ' + preco + ' por mês';
       nota.textContent = 'No cartão de crédito, renovando todo mês pelo Mercado Pago. Cancele quando quiser.';
       botao.addEventListener('click', function () { assinar(botao, nota, plano); });
+      if (esperando) {
+        nota.textContent = '';
+        var denovo2 = criar('button', 'assin-cancelar', 'Já paguei: conferir de novo');
+        denovo2.type = 'button';
+        denovo2.addEventListener('click', function () { location.replace('assinatura.html?assinatura=voltou'); });
+        nota.appendChild(denovo2);
+      }
     }
     if (parametros.get('cancelada') === '1') app.avisar('Assinatura cancelada. Você continua usando até o fim do mês pago.');
     app.desenharIcones();

@@ -123,6 +123,10 @@
 
     var resumo = resumoDoPagamento(p);
     if (resumo) item.appendChild(criar('p', 'pedido-nota', resumo));
+    if (p.pagarAte) {
+      var hora = p.pagarAte.split(' ')[1] || '';
+      item.appendChild(criar('p', 'pedido-nota pedido-prazo', 'Pague até ' + dataCurta(p.pagarAte) + (hora ? ' às ' + hora.slice(0, 5) : '') + '. Depois disso, o pedido é cancelado e você pode fazer outro.'));
+    }
     if (p.situacao === 'aguardando' || p.situacao === 'processando') {
       item.appendChild(areaDePagamento(p, indice, ativos));
     }

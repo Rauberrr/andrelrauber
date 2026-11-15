@@ -24,6 +24,7 @@ const SACOLA_MAXIMO_QUANTIDADE = 5;
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
     $usuario = exigir_login();
+    cancelar_pedidos_vencidos((int) $usuario['id']);
     $pedidos = consultar('SELECT * FROM pedidos WHERE usuario_id = ? ORDER BY id DESC', [(int) $usuario['id']])->fetchAll();
     responder(200, ['pedidos' => array_map('pedido_publico', $pedidos), 'pagamentosAtivos' => mp_ativo()]);
 }
@@ -69,6 +70,7 @@ function pedido_publico(array $p): array
         'parcelas' => (int) $p['parcelas'],
         'pagoEm' => $p['pago_em'],
         'criadoEm' => $p['criado_em'],
+        'pagarAte' => $p['situacao'] === 'aguardando' ? date('Y-m-d H:i:s', strtotime((string) $p['criado_em']) + PEDIDO_PRAZO_HORAS * 3600) : null,
         'itens' => array_map(function (array $i): array {
             return ['nome' => $i['nome'], 'cor' => $i['cor'], 'quantidade' => (int) $i['quantidade'], 'precoCentavos' => (int) $i['preco_centavos']];
         }, $itens),
@@ -116,6 +118,7 @@ function pagar(): void
     $dados = exigir_post();
     $usuario = exigir_login();
     $id = (int) $usuario['id'];
+    cancelar_pedidos_vencidos($id);
     $pedido = pedido_por_codigo($dados);
     // A outra pessoa não fica sabendo se o pedido existe
     if ((int) $pedido['usuario_id'] !== $id) {

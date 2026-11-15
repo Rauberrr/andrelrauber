@@ -1055,10 +1055,18 @@ html:not(.app-liberado) body.app .tr-cronometro { display: none !important; }
 .assin-gratis { display: grid; justify-items: start; gap: .2rem; padding: 2.5rem 0; }
 .assin-gratis .botao { margin-top: 1.2rem; }
 .assin-topo { padding: 1.5rem 0 2.5rem; border-bottom: 1px solid var(--app-linha); }
+.assin-confirmado { display: flex; gap: .9rem; align-items: flex-start; margin: 0 0 1.4rem; padding: 1rem 1.1rem; border-radius: 16px; background: rgba(65, 110, 50, .1); box-shadow: inset 0 0 0 1px rgba(65, 110, 50, .35); text-align: left; }
+.assin-confirmado-ico { flex: none; display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 50%; background: #3f6b2f; color: #fff; }
+.assin-confirmado-ico svg { width: 1.2rem; height: 1.2rem; }
+.assin-confirmado-titulo { margin: .1rem 0 .35rem; font-weight: 600; font-size: 1.05rem; color: #2c4f20; }
+.assin-confirmado-lista { margin: 0; padding: 0; list-style: none; font-size: .9rem; line-height: 1.55; color: var(--app-texto-2); }
+.assin-confirmado-lista li::before { content: "✓ "; color: #3f6b2f; font-weight: 600; }
 .assin-acao { margin-top: 1.6rem; }
 .app .assin-botao { width: 100%; min-height: 54px; font-size: 1rem; font-weight: 500; }
 .assin-acao-nota { margin: .7rem 0 0; color: var(--app-texto-2); font-size: .86rem; line-height: 1.45; text-align: center; }
 .assin-acao-nota a { color: var(--bordo-vivo); }
+.assin-modal .botao { width: 100%; margin-top: .4rem; }
+.assin-email-dica { font-size: .84rem; }
 .assin-cancelar { padding: 0; border: 0; background: none; color: var(--bordo-vivo); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .assin-h2 { margin: 0 0 1.2rem; font-family: var(--serifa); font-size: 1.45rem; font-weight: 400; }
 .assin-beneficios, .assin-passos, .assin-plano, .assin-perguntas { padding: 2.4rem 0 0; }
@@ -1210,3 +1218,33 @@ a.inicio-pilar:active { transform: scale(.99); }
 @media (prefers-reduced-motion: reduce) { .hb-comemora, .hb-comemora .hb-feito, .hb-comemora .hb-pouco { animation: none; } }
 
 @media (max-width: 420px) { .app-abas a { font-size: .56rem; letter-spacing: -.02em; white-space: nowrap; } }
+
+/* Alimentação: passo a passo do que a pessoa come */
+.alim-guia { margin: 1rem 0 1.5rem; padding: 1.25rem; border-radius: 18px; background: var(--app-cartao); box-shadow: inset 0 0 0 1px var(--app-linha); }
+.alim-guia-topo { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.1rem; }
+.alim-guia-pontos { display: flex; gap: .35rem; margin: 0; padding: 0; list-style: none; flex: 1; }
+.alim-guia-pontos li { flex: 1; max-width: 3.2rem; height: 5px; border-radius: 99px; background: var(--app-linha); }
+.alim-guia-pontos li.feito { background: #7c8a45; }
+.alim-guia-pontos li.atual { background: #414c1d; }
+.alim-guia-onde, .alim-guia-contagem { margin: 0; font-size: .8rem; color: var(--cinza); white-space: nowrap; }
+.alim-guia-contagem { margin-bottom: .2rem; text-transform: uppercase; letter-spacing: .06em; }
+.alim-guia-titulo { margin: 0 0 .35rem; font-size: 1.45rem; line-height: 1.2; }
+.alim-guia-titulo:focus { outline: none; }
+.alim-guia-pergunta { margin: .9rem 0 .55rem; color: var(--cinza); }
+.alim-guia-opcoes { margin-bottom: .25rem; }
+.alim-guia-outro { margin-top: 1rem; max-width: 24rem; }
+.alim-guia-outro select { width: 100%; }
+.alim-guia-qtd { display: flex; align-items: center; gap: 1rem; }
+.alim-guia-mais-menos { width: 3.2rem; height: 3.2rem; border: 0; border-radius: 50%; background: var(--off-2, #ece8de); box-shadow: inset 0 0 0 1px var(--app-linha); color: var(--preto); font: inherit; font-size: 1.5rem; cursor: pointer; }
+.alim-guia-mais-menos:active { transform: scale(.94); }
+.alim-guia-numero { min-width: 3.5rem; text-align: center; font-size: 2rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.alim-guia-previa { margin: .8rem 0 0; font-size: .92rem; color: var(--cinza); }
+.alim-guia-seguir { display: block; width: 100%; max-width: 24rem; margin-top: 1.4rem; }
+.alim-guia-frequencias { display: grid; gap: .6rem; max-width: 24rem; margin-top: .6rem; }
+.alim-guia-frequencia { min-height: 54px; padding: .7rem 1rem; border: 0; border-radius: 14px; background: var(--off, #f8f6f1); box-shadow: inset 0 0 0 1px var(--app-linha); color: var(--preto); font: inherit; font-size: 1rem; text-align: left; cursor: pointer; }
+.alim-guia-frequencia:hover { box-shadow: inset 0 0 0 1px #7c8a45; }
+.alim-guia-frequencia.incluido { background: rgba(65, 76, 29, .12); box-shadow: inset 0 0 0 1.5px #414c1d; font-weight: 600; }
+.alim-guia-frequencia:active { transform: scale(.98); }
+.alim-guia-rodape { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1.5rem; margin-top: 1.2rem; }
+.alim-guia-refazer { margin: .25rem 0 1.1rem; }
+@media (max-width: 560px) { .alim-guia { padding: 1rem; margin-inline: -.25rem; } .alim-guia-titulo { font-size: 1.3rem; } }

@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261112d">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261114a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -148,6 +148,15 @@
           <a class="botao" href="assinatura.html" target="_blank" rel="noopener">Ver a página</a>
         </div>
       </form>
+
+      <section class="as-liberados" id="as-pagamentos-caixa" hidden>
+        <h2 class="titulo-s painel-subtitulo">Quem pagou e quem não pagou</h2>
+        <p class="painel-ajuda">Cada pessoa que abriu o Mercado Pago para assinar. <strong>Pago</strong>: cartão aprovado, acesso liberado. <strong>Não concluiu</strong>: abriu o Mercado Pago e não terminou, e fica bloqueada quando o teste grátis acaba. <strong>Pausada</strong> ou <strong>cancelada</strong>: o acesso vai até o fim do mês pago e depois é bloqueado.</p>
+        <p class="as-pagamentos-resumo" id="as-pagamentos-resumo"></p>
+        <button class="botao" type="button" id="as-sincronizar">Conferir agora no Mercado Pago</button>
+        <p class="erro" id="as-sincronizar-erro" role="alert"></p>
+        <ul class="as-lista" id="as-pagamentos"></ul>
+      </section>
 
       <section class="as-liberados" id="as-testadores-caixa" hidden>
         <h2 class="titulo-s painel-subtitulo">Usuários de teste</h2>
@@ -288,6 +297,6 @@
   <script src="assets/js/painel.js?v=20261111a"></script>
   <script src="assets/js/colecao-dados.js?v=20261111a"></script>
   <script src="assets/js/painel-colecao.js?v=20261112a"></script>
-  <script src="assets/js/painel-extras.js?v=20261113b"></script>
+  <script src="assets/js/painel-extras.js?v=20261114a"></script>
 </body>
 </html>

@@ -1826,3 +1826,11 @@ em { font-style: italic; }
 .as-acoes .painel-perigo { margin-left: 0; }
 .as-item-vazio { color: var(--cinza); font-size: .9rem; }
 @media (max-width: 640px) { .as-testador-form { grid-template-columns: 1fr; } }
+
+/* Painel: quem pagou e quem não pagou a assinatura */
+.as-pagamentos-resumo { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; margin: .4rem 0 .8rem; font-size: .9rem; }
+.as-selo { display: inline-block; margin-left: .5rem; padding: .05rem .5rem; border-radius: 99px; font-size: .75rem; font-weight: 600; vertical-align: middle; }
+.as-selo-pago { background: rgba(65, 110, 50, .14); color: #2c4f20; }
+.as-selo-pendente { background: rgba(190, 140, 20, .16); color: #6b4d00; }
+.as-selo-pausada, .as-selo-cancelada { background: rgba(140, 30, 40, .1); color: #7a1f2b; }
+#as-sincronizar { margin-bottom: .6rem; }

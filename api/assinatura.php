@@ -16,6 +16,7 @@
  * POST ?acao=liberar    (gestor) libera o acesso de uma pessoa  {email, ate: AAAA-MM-DD ou vazio}
  * POST ?acao=revogar    (gestor) tira o acesso liberado  {usuarioId}
  * GET  ?acao=tarefas    (gestor) quando cada tarefa do Cron rodou pela última vez
+ * POST ?acao=sincronizar (gestor) confere no Mercado Pago todas as assinaturas agora
  * POST ?acao=testador   (gestor) usuários de teste  {acao: incluir|tirar|recomecar|encerrar, email ou usuarioId}
  */
 declare(strict_types=1);
@@ -51,19 +52,35 @@ function minha_assinatura(?array $usuario): ?array
     if ($usuario === null) {
         return null;
     }
+    conferir_assinatura_pendente((int) $usuario['id']);
     $a = assinatura_da_pessoa((int) $usuario['id']);
     $plano = assinatura_config();
-    $fim = modo_para($usuario, $plano) === 'cobrando' && !ja_usava_antes($usuario, $plano) ? fim_do_teste($usuario, $plano) : null;
+    $assinante = $a !== null && assinatura_valida($a);
+    $fim = modo_para($usuario, $plano) === 'cobrando' && !ja_usava_antes($usuario, $plano) && !$assinante ? fim_do_teste($usuario, $plano) : null;
     $emTeste = $fim !== null && $fim > date('Y-m-d H:i:s');
+    $mp = assinatura_mp_da_pessoa((int) $usuario['id']);
+    // A data da próxima cobrança: o acesso vai até ela, mais a folga
+    $proxima = $assinante && $mp && $mp['status'] === 'authorized' && $a['origem'] === 'mercadopago' && $a['valida_ate']
+        ? date('Y-m-d', strtotime((string) $a['valida_ate']) - MP_ASSINATURA_FOLGA_DIAS * 86400) : null;
+    try {
+        $aguardando = !$assinante && consultar(
+            "SELECT 1 FROM assinaturas_mp WHERE usuario_id = ? AND status = 'pending' AND criado_em > ? LIMIT 1",
+            [(int) $usuario['id'], date('Y-m-d H:i:s', time() - 86400)]
+        )->fetchColumn() !== false;
+    } catch (PDOException $erro) {
+        $aguardando = false;
+    }
     return [
         'liberado' => acesso_aos_apps($usuario),
-        'assinante' => $a !== null && assinatura_valida($a),
+        'assinante' => $assinante,
+        'proximaCobranca' => $proxima,
+        'aguardandoConfirmacao' => $aguardando,
         'validaAte' => $a && $a['valida_ate'] ? substr((string) $a['valida_ate'], 0, 10) : null,
         'emTeste' => $emTeste,
         'testeAcabou' => $fim !== null && !$emTeste,
         'diasDeTeste' => $emTeste ? max(1, (int) ceil((strtotime($fim) - time()) / 86400)) : 0,
         'jaUsava' => ja_usava_antes($usuario, $plano),
-        'mercadoPago' => assinatura_mp_da_pessoa((int) $usuario['id']),
+        'mercadoPago' => $mp,
         'testador' => testador_desde($usuario, $plano) !== null,
     ];
 }
@@ -72,11 +89,57 @@ function minha_assinatura(?array $usuario): ?array
 function assinatura_mp_da_pessoa(int $usuarioId): ?array
 {
     try {
-        $linha = consultar("SELECT preapproval_id, status FROM assinaturas_mp WHERE usuario_id = ? AND status <> 'pending' ORDER BY atualizado_em DESC LIMIT 1", [$usuarioId])->fetch();
+        $linha = consultar("SELECT preapproval_id, status FROM assinaturas_mp WHERE usuario_id = ? AND status <> 'pending' ORDER BY CASE WHEN status = 'authorized' THEN 0 ELSE 1 END, atualizado_em DESC LIMIT 1", [$usuarioId])->fetch();
     } catch (PDOException $erro) {
         return null;
     }
     return $linha ? ['status' => $linha['status'], 'id' => $linha['preapproval_id']] : null;
+}
+
+/**
+ * Quem passou pelo Mercado Pago: a última tentativa de cada pessoa e se o acesso está valendo.
+ * pago: cartão aprovado e assinatura ativa; pendente: abriu o Mercado Pago e não concluiu;
+ * pausada: o Mercado Pago pausou (em geral, cobrança recusada); cancelada.
+ */
+function pagamentos_da_assinatura(): array
+{
+    try {
+        $linhas = consultar(
+            "SELECT m.usuario_id, m.status, m.criado_em, m.atualizado_em, u.nome, u.email, a.situacao, a.valida_ate, a.origem
+             FROM assinaturas_mp m
+             JOIN usuarios u ON u.id = m.usuario_id
+             LEFT JOIN assinaturas a ON a.usuario_id = m.usuario_id
+             ORDER BY CASE m.status WHEN 'authorized' THEN 0 WHEN 'pending' THEN 2 ELSE 1 END, m.atualizado_em DESC LIMIT 2000"
+        )->fetchAll();
+    } catch (PDOException $erro) {
+        return [];
+    }
+    // Uma linha por pessoa: a assinatura que valeu, ou a última tentativa se nunca concluiu
+    $vistos = [];
+    $linhas = array_values(array_filter($linhas, function (array $l) use (&$vistos): bool {
+        if (isset($vistos[$l['usuario_id']])) {
+            return false;
+        }
+        $vistos[$l['usuario_id']] = true;
+        return true;
+    }));
+    usort($linhas, function (array $x, array $y): int { return strcmp((string) $y['atualizado_em'], (string) $x['atualizado_em']); });
+    $linhas = array_slice($linhas, 0, 300);
+    return array_map(function (array $l): array {
+        $valida = $l['situacao'] !== null && assinatura_valida($l);
+        $situacao = ['authorized' => 'pago', 'pending' => 'pendente', 'paused' => 'pausada', 'cancelled' => 'cancelada'][$l['status']] ?? 'pendente';
+        return [
+            'usuarioId' => (int) $l['usuario_id'],
+            'nome' => $l['nome'],
+            'email' => $l['email'],
+            'situacao' => $situacao,
+            'acesso' => $valida,
+            'validaAte' => $valida && $l['valida_ate'] ? substr((string) $l['valida_ate'], 0, 10) : null,
+            'proximaCobranca' => $situacao === 'pago' && $l['valida_ate'] ? date('Y-m-d', strtotime((string) $l['valida_ate']) - MP_ASSINATURA_FOLGA_DIAS * 86400) : null,
+            'desde' => substr((string) $l['criado_em'], 0, 10),
+            'atualizado' => substr((string) $l['atualizado_em'], 0, 16),
+        ];
+    }, $linhas);
 }
 
 function salvar_plano(array $plano): void
@@ -124,7 +187,14 @@ switch ($_GET['acao'] ?? '') {
         contar_tentativa($limite);
         // Durante o teste grátis, a primeira cobrança fica para o dia em que o teste acaba
         $fimDoTeste = !ja_usava_antes($usuario, $plano) && em_teste($usuario) ? fim_do_teste($usuario, $plano) : null;
-        $link = mp_criar_assinatura($usuario, $plano, $fimDoTeste);
+        // O e-mail da conta do Mercado Pago com que a pessoa vai pagar (pode ser diferente do da Rauber)
+        $emailMp = mb_strtolower(trim(texto($dados, 'emailMercadoPago', 190)));
+        if ($emailMp === '') {
+            $emailMp = (string) $usuario['email'];
+        } elseif (problema_no_email($emailMp) !== null) {
+            falhar(422, 'Confira o e-mail da sua conta do Mercado Pago.', ['campos' => ['emailMercadoPago' => 'E-mail inválido.']]);
+        }
+        $link = mp_criar_assinatura($usuario, $plano, $fimDoTeste, $emailMp);
         if ($link === null) {
             falhar(502, 'Não foi possível abrir o Mercado Pago. ' . mp_motivo_da_recusa());
         }
@@ -138,7 +208,7 @@ switch ($_GET['acao'] ?? '') {
         $limite = chave_limite('conferir-assinatura', (string) $id);
         exigir_limite($limite, 30, 3600);
         contar_tentativa($limite);
-        foreach (consultar('SELECT preapproval_id FROM assinaturas_mp WHERE usuario_id = ? ORDER BY atualizado_em DESC LIMIT 3', [$id])->fetchAll(PDO::FETCH_COLUMN) as $pre) {
+        foreach (consultar("SELECT preapproval_id FROM assinaturas_mp WHERE usuario_id = ? AND status IN ('pending', 'authorized', 'paused') ORDER BY criado_em DESC LIMIT 3", [$id])->fetchAll(PDO::FETCH_COLUMN) as $pre) {
             mp_sincronizar_assinatura((string) $pre);
         }
         $usuario = consultar('SELECT * FROM usuarios WHERE id = ?', [$id])->fetch();
@@ -164,7 +234,7 @@ switch ($_GET['acao'] ?? '') {
         $plano = assinatura_config();
         $liberados = consultar(
             "SELECT a.usuario_id, a.situacao, a.valida_ate, a.origem, a.criado_em, u.nome, u.email,
-                    (SELECT m.status FROM assinaturas_mp m WHERE m.usuario_id = a.usuario_id AND m.status <> 'pending' ORDER BY m.atualizado_em DESC LIMIT 1) AS mp_status
+                    (SELECT m.status FROM assinaturas_mp m WHERE m.usuario_id = a.usuario_id AND m.status <> 'pending' ORDER BY CASE WHEN m.status = 'authorized' THEN 0 ELSE 1 END, m.atualizado_em DESC LIMIT 1) AS mp_status
              FROM assinaturas a JOIN usuarios u ON u.id = a.usuario_id ORDER BY a.atualizado_em DESC LIMIT 300"
         )->fetchAll();
         responder(200, [
@@ -181,6 +251,7 @@ switch ($_GET['acao'] ?? '') {
                     'desde' => substr((string) $a['criado_em'], 0, 10),
                 ];
             }, $liberados),
+            'pagamentos' => pagamentos_da_assinatura(),
             'pessoas' => (int) consultar('SELECT COUNT(*) FROM usuarios')->fetchColumn(),
             'liberarAntigos' => $plano['liberarAntigos'],
             'pagamentoOnline' => mp_ativo(),
@@ -201,6 +272,25 @@ switch ($_GET['acao'] ?? '') {
                 ];
             }, $plano['testadores']))),
         ]);
+        break;
+
+    case 'sincronizar':
+        exigir_post();
+        exigir_gestor_assinatura();
+        if (!mp_ativo()) {
+            falhar(503, 'O pagamento online não está ligado.');
+        }
+        $ids = consultar(
+            "SELECT preapproval_id FROM assinaturas_mp WHERE status IN ('authorized', 'paused') OR (status = 'pending' AND criado_em > ?) LIMIT 300",
+            [date('Y-m-d H:i:s', time() - 7 * 86400)]
+        )->fetchAll(PDO::FETCH_COLUMN);
+        $falhas = 0;
+        foreach ($ids as $pre) {
+            if (!mp_sincronizar_assinatura((string) $pre)) {
+                $falhas++;
+            }
+        }
+        responder(200, ['conferidas' => count($ids), 'falhas' => $falhas, 'pagamentos' => pagamentos_da_assinatura()]);
         break;
 
     case 'salvar':

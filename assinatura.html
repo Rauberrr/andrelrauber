@@ -18,8 +18,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261112d">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261113b">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261114a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261114b">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app assin">
@@ -45,8 +45,15 @@
 
     <div id="assin-pagina" hidden>
       <section class="assin-topo">
+        <div class="assin-confirmado" id="assin-confirmado" role="status" hidden>
+          <span class="assin-confirmado-ico" aria-hidden="true"><svg data-icone="check"></svg></span>
+          <div>
+            <p class="assin-confirmado-titulo" id="assin-confirmado-titulo">Pagamento confirmado</p>
+            <ul class="assin-confirmado-lista" id="assin-confirmado-lista"></ul>
+          </div>
+        </div>
         <p class="assin-sobre">Rauber Apps</p>
-        <h1 class="assin-titulo">Vista-se, treine e coma melhor. Com tudo no mesmo lugar.</h1>
+        <h1 class="assin-titulo" id="assin-titulo">Vista-se, treine e coma melhor. Com tudo no mesmo lugar.</h1>
         <p class="assin-texto" id="assin-texto"></p>
         <div class="assin-acao">
           <button class="botao botao-cheio assin-botao" type="button" id="assin-assinar">Começar</button>
@@ -118,11 +125,27 @@
       </section>
     </div>
   </main>
+  <dialog class="modal-figura gr-modal assin-modal" id="assin-email-modal" aria-labelledby="assin-email-titulo">
+    <button class="modal-fechar" id="assin-email-fechar" type="button" aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+    <form class="gr-modal-corpo app-formulario" id="assin-email-form" novalidate>
+      <h2 class="titulo-m" id="assin-email-titulo">Seu e-mail no Mercado Pago</h2>
+      <p class="app-suave">O Mercado Pago só aceita a assinatura se este for o <strong>mesmo e-mail da conta com que você vai pagar lá</strong>. Se você entrar com outra conta, ele recusa o cartão.</p>
+      <div class="campo">
+        <label for="assin-email">E-mail da sua conta do Mercado Pago</label>
+        <div class="campo-entrada"><input id="assin-email" type="email" autocomplete="email" maxlength="190" required></div>
+        <p class="erro" id="assin-email-erro" role="alert"></p>
+      </div>
+      <p class="app-suave assin-email-dica">Não tem conta no Mercado Pago? Use o e-mail que você vai digitar lá na hora de pagar.</p>
+      <button class="botao botao-cheio" type="submit" id="assin-email-ir">Continuar para o Mercado Pago</button>
+    </form>
+  </dialog>
   <p class="app-aviso" id="app-aviso" role="status" aria-live="polite"></p>
 
   <script src="assets/js/config.js?v=20261111a"></script>
   <script src="assets/js/conta-api.js?v=20261112a"></script>
   <script src="assets/js/apps.js?v=20261112c"></script>
-  <script src="assets/js/assinatura.js?v=20261112e"></script>
+  <script src="assets/js/assinatura.js?v=20261114b"></script>
 </body>
 </html>

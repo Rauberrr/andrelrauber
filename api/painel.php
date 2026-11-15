@@ -19,6 +19,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
     falhar(405, 'Método não permitido.');
 }
 
+// Pedidos sem pagamento há mais de 24 horas são cancelados antes de aparecer no painel
+cancelar_pedidos_vencidos();
+
 $id = (int) ($_GET['id'] ?? 0);
 if ($id > 0) {
     $pessoa = consultar(

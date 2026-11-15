@@ -18,8 +18,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261112d">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261113b">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261114a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261114b">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -137,12 +137,16 @@
 
     <section class="alim-passo" id="passo-comida" tabindex="-1" hidden>
       <h2 class="titulo-m">O que você come num dia comum</h2>
-      <p class="alim-suave">Não precisa ser exato: marque o de sempre, mais ou menos. Toque num alimento, escolha a quantidade e confirme. Para mudar algo depois, use Editar.</p>
-      <div id="alim-refeicoes"></div>
-      <p class="alim-total" id="alim-total-hoje" role="status"></p>
-      <div class="alim-botoes">
-        <button class="botao botao-cheio" id="alim-ir-plano" type="button">Ver meu plano</button>
-        <button class="texto-botao" id="alim-limpar" type="button">Apagar o que marquei</button>
+      <div class="alim-guia" id="alim-guia" hidden></div>
+      <div id="alim-revisao">
+        <p class="alim-suave">Não precisa ser exato: o de sempre, mais ou menos. Para mudar um item, use Editar. Para incluir, toque num alimento.</p>
+        <button class="botao alim-guia-refazer" id="alim-guia-abrir" type="button">Responder passo a passo</button>
+        <div id="alim-refeicoes"></div>
+        <p class="alim-total" id="alim-total-hoje" role="status"></p>
+        <div class="alim-botoes">
+          <button class="botao botao-cheio" id="alim-ir-plano" type="button">Ver meu plano</button>
+          <button class="texto-botao" id="alim-limpar" type="button">Apagar o que marquei</button>
+        </div>
       </div>
     </section>
 
@@ -272,6 +276,6 @@
   <script src="assets/js/apps.js?v=20261112c"></script>
   <script src="assets/js/alimentacao-dados.js?v=20261112d"></script>
   <script src="assets/js/alimentacao-calculo.js?v=20261112d"></script>
-  <script src="assets/js/alimentacao.js?v=20261112d"></script>
+  <script src="assets/js/alimentacao.js?v=20261114a"></script>
 </body>
 </html>
