@@ -288,7 +288,7 @@ function encomendar(): void
     $codigo = bin2hex(random_bytes(16));
     consultar(
         'INSERT INTO pedidos (usuario_id, codigo, descricao, valor_centavos, frete_centavos, criado_em, atualizado_em) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [$id, $codigo, $descricao, (int) $produto['preco_centavos'], (int) $produto['frete_centavos'], $momento, $momento]
+        [$id, $codigo, $descricao, (int) $produto['preco_centavos'], frete_da_compra((int) $produto['preco_centavos'], frete_do_produto($produto)), $momento, $momento]
     );
     try {
         consultar(
@@ -374,9 +374,10 @@ function finalizar(): void
     $pecas = 0;
     foreach ($itens as $i) {
         $valor += (int) $i['produto']['preco_centavos'] * $i['quantidade'];
-        $frete = max($frete, (int) $i['produto']['frete_centavos']);
+        $frete = max($frete, frete_do_produto($i['produto']));
         $pecas += $i['quantidade'];
     }
+    $frete = frete_da_compra($valor, $frete);
     if ($valor < PEDIDO_VALOR_MINIMO || $valor > PEDIDO_VALOR_MAXIMO) {
         falhar(422, 'O valor deste pedido não é aceito. Fale conosco.');
     }

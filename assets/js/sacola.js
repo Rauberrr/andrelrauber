@@ -8,6 +8,10 @@
   var MAXIMO_ITENS = 10;
   var MAXIMO_QUANTIDADE = 5;
   var itens = ler();
+  // A partir deste valor, a compra sai com frete grátis (vem do painel, pela vitrine)
+  var CHAVE_FRETE = 'ar-sacola-frete-gratis';
+  var gratisAcima = 0;
+  try { gratisAcima = Number(localStorage.getItem(CHAVE_FRETE)) || 0; } catch (e) { gratisAcima = 0; }
   var gaveta = null;
   var ultimoFoco = null;
 
@@ -67,6 +71,7 @@
       '    <div class="sacola-vazia" hidden><p>Sua sacola está vazia.</p><a class="botao botao-cheio" href="colecao.html">Ver a coleção</a></div></div>' +
       '  <footer class="sacola-rodape">' +
       '    <dl class="sacola-totais"><div><dt>Subtotal</dt><dd class="sacola-subtotal"></dd></div><div><dt>Frete</dt><dd class="sacola-frete"></dd></div><div class="sacola-total"><dt>Total</dt><dd class="sacola-total-valor"></dd></div></dl>' +
+      '    <p class="sacola-frete-dica" hidden></p>' +
       '    <p class="sacola-medida">Cada peça é feita sob as suas medidas. O prazo começa depois do pagamento.</p>' +
       '    <label class="campo-marcar sacola-aceite"><input type="checkbox"> <span>Li e concordo com as <a href="condicoes-de-compra.html" target="_blank" rel="noopener">condições de compra</a>.</span></label>' +
       '    <p class="erro sacola-erro" role="alert"></p>' +
@@ -176,6 +181,17 @@
     var validos = itens.filter(function (i) { return !i.indisponivel; });
     var subtotal = validos.reduce(function (s, i) { return s + i.preco * i.quantidade; }, 0);
     var frete = validos.reduce(function (m, i) { return Math.max(m, i.frete || 0); }, 0);
+    var dica = gaveta.querySelector('.sacola-frete-dica');
+    dica.hidden = true;
+    if (gratisAcima > 0 && frete > 0) {
+      if (subtotal >= gratisAcima) {
+        frete = 0;
+        dica.textContent = 'Você ganhou frete grátis.';
+      } else {
+        dica.textContent = 'Faltam ' + reais(gratisAcima - subtotal) + ' para o frete grátis.';
+      }
+      dica.hidden = false;
+    }
     gaveta.querySelector('.sacola-subtotal').textContent = reais(subtotal);
     gaveta.querySelector('.sacola-frete').textContent = frete ? reais(frete) : 'Grátis';
     gaveta.querySelector('.sacola-total-valor').textContent = reais(subtotal + frete);
@@ -195,6 +211,10 @@
     if (!itens.length || !api) return;
     api.get('api/produtos.php').then(function (r) {
       if (!r.ok) return;
+      if (r.dados.frete) {
+        gratisAcima = r.dados.frete.gratisAcimaCentavos || 0;
+        try { localStorage.setItem(CHAVE_FRETE, String(gratisAcima)); } catch (e) { /* segue sem guardar */ }
+      }
       var porSlug = {};
       r.dados.produtos.forEach(function (p) { porSlug[p.slug] = p; });
       itens.forEach(function (i) {

@@ -120,10 +120,42 @@
       el('conta-email').hidden = false;
     }
 
+    el('conta-aviso-cadastro').hidden = !!c.concluido_em;
+    mostrarAssinatura();
     el('conta-painel').hidden = !u.admin;
     el('conta-senha').hidden = !u.temSenha;
     el('carregando').hidden = true;
     el('conta-conteudo').hidden = false;
+  }
+
+  // A assinatura fica aqui, discreta: a situação e o caminho para ver ou cancelar
+  function dataBr(iso) { return iso ? iso.split('-').reverse().join('/') : ''; }
+  function mostrarAssinatura() {
+    api.get('api/assinatura.php?acao=publica').then(function (r) {
+      if (!r.ok || !r.dados.minha) return;
+      var m = r.dados.minha;
+      var modo = r.dados.plano && r.dados.plano.modo;
+      var mp = m.mercadoPago;
+      var texto = '';
+      if (m.assinante && mp && mp.status === 'authorized') {
+        texto = 'Ativa, no cartão pelo Mercado Pago.' + (m.proximaCobranca ? ' Próxima cobrança em ' + dataBr(m.proximaCobranca) + '.' : '');
+      } else if (m.assinante && mp) {
+        texto = 'Cancelada. Você usa os apps até ' + dataBr(m.validaAte) + ', sem novas cobranças.';
+      } else if (m.assinante) {
+        texto = 'Acesso liberado' + (m.validaAte ? ' até ' + dataBr(m.validaAte) : '') + '.';
+      } else if (modo !== 'cobrando' && !mp) {
+        return;
+      } else if (m.jaUsava) {
+        texto = 'Os apps continuam grátis para você.';
+      } else if (m.emTeste) {
+        texto = 'Teste grátis: ' + (m.diasDeTeste === 1 ? 'falta 1 dia.' : 'faltam ' + m.diasDeTeste + ' dias.');
+      } else {
+        texto = 'Sem assinatura ativa.';
+      }
+      el('conta-assinatura-texto').textContent = texto;
+      el('conta-assinatura-link').textContent = m.assinante && mp && mp.status === 'authorized' ? 'Ver ou cancelar a assinatura' : 'Ver a assinatura';
+      el('conta-assinatura').hidden = false;
+    });
   }
 
   el('conta-email-reenviar').addEventListener('click', function () {

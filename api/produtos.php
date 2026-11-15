@@ -62,6 +62,9 @@ switch ($acao) {
     case 'fotos':
         mudar_fotos();
         break;
+    case 'frete':
+        salvar_frete();
+        break;
     case 'apagar':
         apagar_produto();
         break;
@@ -170,7 +173,7 @@ function produto_publico(array $p, bool $completo): array
         'categoria' => $p['categoria'],
         'resumo' => $p['resumo'],
         'precoCentavos' => (int) $p['preco_centavos'],
-        'freteCentavos' => (int) $p['frete_centavos'],
+        'freteCentavos' => frete_do_produto($p),
         'situacao' => $p['situacao'],
         'fotos' => array_map(function ($f) { return 'api/produtos.php?acao=foto&f=' . $f; }, $fotos),
         'cores' => lista_json($p['cores']),
@@ -188,6 +191,8 @@ function produto_publico(array $p, bool $completo): array
             'colecaoId' => $p['colecao_id'] === null ? null : (int) $p['colecao_id'],
             'ordem' => (int) $p['ordem'],
             'arquivos' => $fotos,
+            'freteProprioCentavos' => (int) $p['frete_centavos'],
+            'freteGratis' => frete_gratis_na_peca((int) $p['id']),
             'lancaEm' => $p['lanca_em'],
         ];
     }
@@ -221,7 +226,14 @@ function vitrine(): void
             return ['nome' => $c['nome'], 'descricao' => $c['descricao'], 'lancaEm' => $c['lanca_em'], 'total' => (int) $c['total']];
         }, $proximas),
         'agora' => agora(),
+        'frete' => frete_publico(),
     ]);
+}
+
+function frete_publico(): array
+{
+    $c = frete_config();
+    return ['padraoCentavos' => $c['padraoCentavos'], 'gratisAcimaCentavos' => $c['gratisAcimaCentavos']];
 }
 
 function um_produto(): void
@@ -236,7 +248,7 @@ function um_produto(): void
     if (!$p || (!visivel($p) && !$gestor)) {
         falhar(404, 'Produto não encontrado.');
     }
-    responder(200, ['produto' => produto_publico($p, true), 'previa' => !visivel($p)]);
+    responder(200, ['produto' => produto_publico($p, true), 'previa' => !visivel($p), 'frete' => frete_publico()]);
 }
 
 function entregar_foto(): void
@@ -278,6 +290,7 @@ function gestor(): void
         }, $colecoes),
         'exclusivos' => array_map('exclusivo_publico', $exclusivos),
         'agora' => agora(),
+        'frete' => frete_publico(),
     ]);
 }
 
@@ -337,7 +350,7 @@ function salvar_produto(): void
     $textoFrete = texto($dados, 'frete', 20);
     $frete = $textoFrete === '' ? 0 : centavos($textoFrete);
     if ($frete === null || $frete > 100000) {
-        $erros['frete'] = 'Informe o frete em reais, ou deixe em branco para frete grátis.';
+        $erros['frete'] = 'Informe o frete em reais, ou deixe em branco para usar o frete padrão.';
     }
     $prazo = $dados['prazoDias'] ?? 20;
     if (!is_int($prazo) || $prazo < 1 || $prazo > 180) {
@@ -399,8 +412,42 @@ function salvar_produto(): void
         );
         $id = (int) banco()->lastInsertId();
     }
+    // Frete grátis nesta peça: guardado na lista do frete
+    if (array_key_exists('freteGratis', $dados)) {
+        $c = frete_config();
+        $lista = array_values(array_diff($c['pecasGratis'], [$id]));
+        if ($dados['freteGratis'] === true) {
+            $lista[] = $id;
+        }
+        $c['pecasGratis'] = $lista;
+        gravar_ajuste('frete', $c);
+    }
     $p = produtos_com_colecao('WHERE p.id = ?', [$id])[0];
     responder($atual ? 200 : 201, ['produto' => produto_publico($p, true)]);
+}
+
+/** O frete padrão e o valor a partir do qual a compra não paga frete  {padrao, gratisAcima} */
+function salvar_frete(): void
+{
+    $dados = exigir_post();
+    exigir_gestor();
+    $erros = [];
+    $padrao = centavos(texto($dados, 'padrao', 20) === '' ? '0' : texto($dados, 'padrao', 20));
+    if ($padrao === null || $padrao > 100000) {
+        $erros['padrao'] = 'Informe o frete em reais, como 29,90. Zero deixa o frete grátis.';
+    }
+    $acima = centavos(texto($dados, 'gratisAcima', 20) === '' ? '0' : texto($dados, 'gratisAcima', 20));
+    if ($acima === null || $acima > 10000000) {
+        $erros['gratisAcima'] = 'Informe o valor em reais, como 399,00. Em branco: sem frete grátis por valor.';
+    }
+    if ($erros) {
+        falhar(422, 'Confira os campos marcados.', ['campos' => $erros]);
+    }
+    $c = frete_config();
+    $c['padraoCentavos'] = $padrao;
+    $c['gratisAcimaCentavos'] = $acima;
+    gravar_ajuste('frete', $c);
+    responder(200, ['frete' => frete_publico()]);
 }
 
 // A foto é regravada e reduzida: some a localização do celular e a página carrega rápido

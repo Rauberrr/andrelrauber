@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261114a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261115a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -89,6 +89,18 @@
         <a class="botao" href="colecao.html" target="_blank" rel="noopener">Ver a coleção no site</a>
       </div>
       <p class="carregando" id="colecao-carregando">Carregando...</p>
+
+      <form class="painel-frete" id="frete-form" novalidate hidden>
+        <h2 class="titulo-s painel-subtitulo">Frete</h2>
+        <p class="painel-ajuda">O frete padrão vale para as peças sem um frete próprio. As peças de uma compra vão juntas: vale o maior frete entre elas. A partir do valor mínimo, a compra inteira sai com frete grátis.</p>
+        <div class="painel-campos">
+          <div class="campo"><label for="frete-padrao">Frete padrão (R$)</label><div class="campo-entrada"><input id="frete-padrao" inputmode="decimal" placeholder="29,90"></div><p class="erro" data-erro="padrao"></p></div>
+          <div class="campo"><label for="frete-acima">Frete grátis a partir de (R$)</label><div class="campo-entrada"><input id="frete-acima" inputmode="decimal" placeholder="399,00"></div><p class="painel-ajuda">Em branco: sem frete grátis por valor.</p><p class="erro" data-erro="gratisAcima"></p></div>
+        </div>
+        <p class="erro" id="frete-erro" role="alert"></p>
+        <button class="botao" type="submit">Salvar frete</button>
+        <span class="painel-ajuda" id="frete-salvo" role="status"></span>
+      </form>
 
       <h2 class="titulo-s painel-subtitulo">Coleções agendadas</h2>
       <p class="painel-ajuda">As peças ligadas a uma coleção só aparecem no site na data e na hora do lançamento. Até lá, a página da coleção mostra a contagem regressiva.</p>
@@ -227,7 +239,9 @@
         <div class="campo"><label for="pf-categoria">Categoria</label><div class="campo-entrada"><select id="pf-categoria" name="categoria"></select></div><p class="erro" data-erro="categoria"></p></div>
         <div class="campo"><label for="pf-situacao">Situação</label><div class="campo-entrada"><select id="pf-situacao" name="situacao"></select></div><p class="painel-ajuda" id="pf-situacao-aviso"></p><p class="erro" data-erro="situacao"></p></div>
         <div class="campo"><label for="pf-preco">Preço (R$)</label><div class="campo-entrada"><input id="pf-preco" name="preco" inputmode="decimal" placeholder="189,90"></div><p class="erro" data-erro="preco"></p></div>
-        <div class="campo"><label for="pf-frete">Frete (R$)</label><div class="campo-entrada"><input id="pf-frete" name="frete" inputmode="decimal" placeholder="Em branco: frete grátis"></div><p class="erro" data-erro="frete"></p></div>
+        <div class="campo"><label for="pf-frete">Frete desta peça (R$)</label><div class="campo-entrada"><input id="pf-frete" name="frete" inputmode="decimal" placeholder="Em branco: frete padrão"></div>
+          <label class="campo-marcar pf-frete-gratis"><input type="checkbox" id="pf-frete-gratis"> <span>Frete grátis nesta peça</span></label>
+          <p class="erro" data-erro="frete"></p></div>
         <div class="campo"><label for="pf-prazo">Prazo de confecção (dias)</label><div class="campo-entrada"><input id="pf-prazo" name="prazoDias" type="number" min="1" max="180" value="20"></div><p class="erro" data-erro="prazoDias"></p></div>
         <div class="campo"><label for="pf-modelagem">Modelagem</label><div class="campo-entrada"><select id="pf-modelagem" name="modelagem"></select></div></div>
         <div class="campo"><label for="pf-colecao">Coleção</label><div class="campo-entrada"><select id="pf-colecao" name="colecaoId"></select></div><p class="erro" data-erro="colecaoId"></p></div>
@@ -296,7 +310,7 @@
   <script src="assets/js/guarda-roupa-dados.js?v=20261112c"></script>
   <script src="assets/js/painel.js?v=20261111a"></script>
   <script src="assets/js/colecao-dados.js?v=20261111a"></script>
-  <script src="assets/js/painel-colecao.js?v=20261112a"></script>
+  <script src="assets/js/painel-colecao.js?v=20261115a"></script>
   <script src="assets/js/painel-extras.js?v=20261114a"></script>
 </body>
 </html>

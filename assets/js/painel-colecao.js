@@ -58,6 +58,24 @@
     });
   });
 
+  /* --- Tabelas no celular ------------------------------------------------------------------------ */
+
+  // No celular, cada linha vira um cartão: cada célula ganha o nome da coluna ao lado
+  function rotularTabela(corpo) {
+    var titulos = Array.prototype.map.call(corpo.parentNode.querySelectorAll('thead th'), function (th) {
+      return th.querySelector('.visualmente-oculto') ? '' : th.textContent.trim();
+    });
+    Array.prototype.forEach.call(corpo.rows, function (tr) {
+      Array.prototype.forEach.call(tr.cells, function (td, i) {
+        if (i > 0 && titulos[i]) td.setAttribute('data-rotulo', titulos[i]);
+      });
+    });
+  }
+  document.querySelectorAll('.painel-tabela tbody').forEach(function (corpo) {
+    rotularTabela(corpo);
+    new MutationObserver(function () { rotularTabela(corpo); }).observe(corpo, { childList: true });
+  });
+
   /* --- Carregar ---------------------------------------------------------------------------------- */
 
   function carregar() {
@@ -66,11 +84,34 @@
       if (!r.ok) { $('colecao-carregando').hidden = false; $('colecao-carregando').textContent = r.erro || 'Não foi possível carregar.'; return; }
       carregou = true;
       dados = r.dados;
+      mostrarFrete(r.dados.frete);
       desenharColecoes();
       desenharProdutos();
       desenharExclusivos();
     });
   }
+
+  /* --- Frete ------------------------------------------------------------------------------------ */
+
+  function mostrarFrete(frete) {
+    if (!frete) return;
+    $('frete-padrao').value = centavosParaTexto(frete.padraoCentavos) || '0,00';
+    $('frete-acima').value = centavosParaTexto(frete.gratisAcimaCentavos);
+    $('frete-form').hidden = false;
+  }
+
+  $('frete-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var f = $('frete-form');
+    limparErros(f);
+    $('frete-salvo').textContent = '';
+    api.post(ENDERECO + '?acao=frete', { padrao: $('frete-padrao').value.trim(), gratisAcima: $('frete-acima').value.trim() }).then(function (r) {
+      if (!r.ok) { mostrarErros(f, r); return; }
+      mostrarFrete(r.dados.frete);
+      $('frete-salvo').textContent = 'Frete salvo.';
+      carregar();
+    });
+  });
 
   /* --- Coleções ---------------------------------------------------------------------------------- */
 
@@ -161,8 +202,8 @@
       tr.appendChild(criar('td', 'painel-situacao-' + p.situacao, situacaoParaCliente(p, porColecao)));
       tr.appendChild(criar('td', '', p.colecaoId && porColecao[p.colecaoId] ? porColecao[p.colecaoId].nome : '—'));
       tr.appendChild(criar('td', '', String(p.fotos.length)));
-      var acoes = criar('td');
-      acoes.appendChild(botao('Editar', 'texto-botao', function () { abrirProduto(p); }));
+      var acoes = criar('td', 'painel-acao-linha');
+      acoes.appendChild(botao('Editar', 'botao painel-editar', function () { abrirProduto(p); }));
       tr.appendChild(acoes);
       corpo.appendChild(tr);
     });
@@ -222,7 +263,8 @@
     $('pf-categoria').value = p ? p.categoria : 'camiseta';
     $('pf-situacao').value = p ? p.situacao : 'rascunho';
     $('pf-preco').value = p ? centavosParaTexto(p.precoCentavos) : '';
-    $('pf-frete').value = p ? centavosParaTexto(p.freteCentavos) : '';
+    $('pf-frete').value = p ? centavosParaTexto(p.freteProprioCentavos) : '';
+    $('pf-frete-gratis').checked = !!(p && p.freteGratis);
     $('pf-prazo').value = p ? p.prazoDias : 20;
     $('pf-modelagem').value = p ? p.modelagem : 'regular';
     $('pf-colecao').value = p && p.colecaoId ? String(p.colecaoId) : '';
@@ -332,7 +374,7 @@
     api.post(ENDERECO + '?acao=salvar', {
       id: editando ? editando.id : 0,
       nome: $('pf-nome').value, categoria: $('pf-categoria').value, situacao: $('pf-situacao').value,
-      preco: $('pf-preco').value, frete: $('pf-frete').value, prazoDias: Number($('pf-prazo').value) || 0,
+      preco: $('pf-preco').value, frete: $('pf-frete').value, freteGratis: $('pf-frete-gratis').checked, prazoDias: Number($('pf-prazo').value) || 0,
       modelagem: $('pf-modelagem').value, colecaoId: colecao ? Number(colecao) : null, ordem: Number($('pf-ordem').value) || 0,
       resumo: $('pf-resumo').value, descricao: $('pf-descricao').value, tecido: $('pf-tecido').value,
       composicao: $('pf-composicao').value, gramatura: $('pf-gramatura').value, cuidados: $('pf-cuidados').value,

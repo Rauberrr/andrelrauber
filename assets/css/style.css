@@ -1834,3 +1834,27 @@ em { font-style: italic; }
 .as-selo-pendente { background: rgba(190, 140, 20, .16); color: #6b4d00; }
 .as-selo-pausada, .as-selo-cancelada { background: rgba(140, 30, 40, .1); color: #7a1f2b; }
 #as-sincronizar { margin-bottom: .6rem; }
+
+/* Frete, aviso do cadastro e assinatura em Minha conta */
+.sacola-frete-dica { margin: -.4rem 0 .8rem; font-size: .84rem; color: #3f6b2f; }
+.pf-frete-gratis { margin-top: .5rem; font-size: .9rem; }
+.painel-frete { margin: 0 0 1.5rem; padding: 1rem 1.1rem; border: 1px solid var(--linha); }
+.painel-frete .botao { margin-top: .4rem; }
+.conta-aviso-cadastro, .medidas-aviso-apps { margin-top: 1rem; padding: .8rem 1rem; border-left: 3px solid #7c8a45; background: rgba(124, 138, 69, .08); font-size: .92rem; line-height: 1.5; }
+.medidas-aviso-apps a { text-decoration: underline; text-underline-offset: 3px; }
+.conta-assinatura { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--linha); }
+.conta-assinatura p { margin: .4rem 0 .6rem; color: var(--cinza); }
+
+/* Painel no celular: as tabelas viram cartões, com o botão Editar à vista */
+@media (max-width: 760px) {
+  .painel-tabela { min-width: 0; }
+  .painel-tabela thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .painel-tabela, .painel-tabela tbody, .painel-tabela tr, .painel-tabela td { display: block; }
+  .painel-tabela tr { padding: .9rem 0; border-bottom: 1px solid var(--linha); }
+  .painel-tabela td { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: .2rem 0; border: 0; font-size: .92rem; text-align: right; }
+  .painel-tabela td:first-child { display: block; padding-bottom: .45rem; text-align: left; font-size: 1rem; }
+  .painel-tabela td[data-rotulo]::before { content: attr(data-rotulo); flex: none; color: var(--cinza); font-size: .8rem; text-align: left; }
+  .painel-tabela td:empty { display: none; }
+  .painel-tabela .painel-acao-linha { display: block; padding-top: .6rem; }
+  .painel-tabela .painel-editar { width: 100%; }
+}

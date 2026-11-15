@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261114a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261115a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -76,6 +76,7 @@
         <p id="conta-status-texto"></p>
         <div class="progresso" role="progressbar" aria-label="Progresso do cadastro" aria-valuemin="0" aria-valuemax="100" id="conta-progresso"><span id="conta-barra"></span></div>
         <a class="botao botao-cheio" id="conta-acao" href="medidas.html"></a>
+        <p class="conta-aviso-cadastro" id="conta-aviso-cadastro" hidden><strong>Para usar os apps, não precisa terminar o cadastro.</strong> Ele só é necessário para comprar peças da coleção, que são feitas com as suas medidas.</p>
       </section>
 
       <section class="conta-resumo" aria-labelledby="conta-resumo-titulo">
@@ -91,11 +92,17 @@
         </div>
       </section>
 
+      <section class="conta-assinatura" id="conta-assinatura" aria-labelledby="conta-assinatura-titulo" hidden>
+        <h2 class="titulo-s" id="conta-assinatura-titulo">Assinatura dos apps</h2>
+        <p id="conta-assinatura-texto"></p>
+        <a class="texto-botao" href="assinatura.html" id="conta-assinatura-link">Ver minha assinatura</a>
+      </section>
+
       <section class="conta-rodape">
         <div class="conta-botoes">
           <a class="botao" href="apps/">Apps</a>
           <button class="botao" type="button" id="conta-sair">Sair</button>
-          <a class="botao" id="conta-painel" href="painel.html" hidden>Painel de clientes</a>
+          <a class="botao" id="conta-painel" href="painel.html" hidden>Painel do gestor</a>
           <a class="botao" id="conta-senha" href="esqueci-senha.html" hidden>Trocar senha</a>
         </div>
 
@@ -138,7 +145,7 @@
   <script src="assets/js/medidas-dados.js?v=20261111a"></script>
   <script src="assets/js/main.js?v=20261111a"></script>
   <script src="assets/js/conta-api.js?v=20261112a"></script>
-  <script src="assets/js/minha-conta.js?v=20261111a"></script>
+  <script src="assets/js/minha-conta.js?v=20261115a"></script>
   <script src="assets/js/pedidos.js?v=20261114a"></script>
 </body>
 </html>

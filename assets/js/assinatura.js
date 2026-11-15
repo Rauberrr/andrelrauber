@@ -82,7 +82,7 @@
   }
 
   function cancelar(link, minha) {
-    if (!window.confirm('Cancelar a assinatura? Você continua usando até ' + app.dataCurta(minha.validaAte) + ', e nada do que anotou se perde.')) return;
+    if (!window.confirm('Cancelar a assinatura? Você continua usando até o fim do período já pago (ou até o fim do teste grátis, se ainda não houve cobrança). Nada do que você anotou se perde.')) return;
     link.disabled = true;
     api.post('api/assinatura.php?acao=cancelar', {}).then(function (r) {
       if (!r.ok) { link.disabled = false; app.avisar(r.erro || 'Não foi possível cancelar agora.'); return; }
@@ -245,7 +245,7 @@
         nota.appendChild(denovo2);
       }
     }
-    if (parametros.get('cancelada') === '1') app.avisar('Assinatura cancelada. Você continua usando até o fim do mês pago.');
+    if (parametros.get('cancelada') === '1') app.avisar('Assinatura cancelada. Nenhuma nova cobrança será feita.');
     app.desenharIcones();
   });
 })();

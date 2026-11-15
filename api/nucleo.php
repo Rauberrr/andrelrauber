@@ -729,6 +729,47 @@ function conferir_assinatura_pendente(int $usuarioId): void
     }
 }
 
+/**
+ * Frete da coleção, definido no painel:
+ * - padraoCentavos: o frete de cada peça que não tem um valor próprio;
+ * - gratisAcimaCentavos: compras a partir deste valor não pagam frete (0 desliga);
+ * - pecasGratis: as peças marcadas com frete grátis.
+ */
+const FRETE_PADRAO_CENTAVOS = 2990;
+const FRETE_GRATIS_ACIMA_CENTAVOS = 39900;
+function frete_config(): array
+{
+    $c = ajuste('frete', []);
+    $c = is_array($c) ? $c : [];
+    return [
+        'padraoCentavos' => max(0, (int) ($c['padraoCentavos'] ?? FRETE_PADRAO_CENTAVOS)),
+        'gratisAcimaCentavos' => max(0, (int) ($c['gratisAcimaCentavos'] ?? FRETE_GRATIS_ACIMA_CENTAVOS)),
+        'pecasGratis' => array_values(array_unique(array_map('intval', is_array($c['pecasGratis'] ?? null) ? $c['pecasGratis'] : []))),
+    ];
+}
+
+function frete_gratis_na_peca(int $produtoId): bool
+{
+    return in_array($produtoId, frete_config()['pecasGratis'], true);
+}
+
+/** O frete de uma peça sozinha: grátis se marcada, o valor próprio se tiver, senão o padrão. */
+function frete_do_produto(array $p): int
+{
+    $c = frete_config();
+    if (in_array((int) $p['id'], $c['pecasGratis'], true)) {
+        return 0;
+    }
+    return (int) $p['frete_centavos'] > 0 ? (int) $p['frete_centavos'] : $c['padraoCentavos'];
+}
+
+/** O frete da compra: as peças vão juntas (vale o maior frete), e acima do valor mínimo é grátis. */
+function frete_da_compra(int $subtotalCentavos, int $maiorFrete): int
+{
+    $acima = frete_config()['gratisAcimaCentavos'];
+    return $acima > 0 && $subtotalCentavos >= $acima ? 0 : $maiorFrete;
+}
+
 /** Pedido da pessoa que ficou 24 horas sem pagamento é cancelado. Devolve quantos cancelou. */
 const PEDIDO_PRAZO_HORAS = 24;
 function cancelar_pedidos_vencidos(?int $usuarioId = null): int

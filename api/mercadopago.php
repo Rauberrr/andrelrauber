@@ -457,9 +457,24 @@ function mp_sincronizar_assinatura(string $id): bool
             mp_avisar_assinatura_ativa($usuarioId, $proxima);
         }
     } elseif (($status === 'cancelled' || $status === 'paused') && $atual && $atual['origem'] === 'mercadopago') {
-        // Sem prazo guardado, o acesso acaba agora
-        if ($atual['valida_ate'] === null) {
-            consultar('UPDATE assinaturas SET valida_ate = ?, atualizado_em = ? WHERE usuario_id = ?', [$momento, $momento, $usuarioId]);
+        // O acesso pago vai só até onde foi pago:
+        // - nunca cobrada (cancelou no teste grátis, antes da primeira cobrança): acaba agora,
+        //   e a pessoa segue só com o que resta do teste;
+        // - já cobrada: até a data da próxima cobrança, sem a folga de quem continua assinando;
+        // - sem prazo guardado: acaba agora.
+        $cobradas = isset($pre['summarized']['charged_quantity']) ? (int) $pre['summarized']['charged_quantity'] : null;
+        $ate = $atual['valida_ate'];
+        if ($ate === null || $cobradas === 0) {
+            // Um segundo antes de agora: no mesmo segundo, o acesso ainda contaria como válido
+            $ate = date('Y-m-d H:i:s', time() - 1);
+        } elseif ((string) $linha['status'] === 'authorized') {
+            $proxima = strtotime((string) ($pre['next_payment_date'] ?? ''));
+            if ($proxima && date('Y-m-d H:i:s', $proxima) < (string) $ate) {
+                $ate = date('Y-m-d H:i:s', max($proxima, time()));
+            }
+        }
+        if ($ate !== $atual['valida_ate']) {
+            consultar('UPDATE assinaturas SET valida_ate = ?, atualizado_em = ? WHERE usuario_id = ?', [$ate, $momento, $usuarioId]);
         }
         if ((string) $linha['status'] === 'authorized') {
             registrar_evento($usuarioId, 'assinatura_cancelada');

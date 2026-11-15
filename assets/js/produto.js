@@ -75,6 +75,21 @@
     ficha.appendChild(linha);
   }
 
+  // "Frete: R$ 29,90. Levando 2, o frete sai grátis." Quantas peças chegam ao valor do frete grátis.
+  var frete = { gratisAcimaCentavos: 0 };
+  function textoDoFrete(p) {
+    if (!p.freteCentavos) return 'Frete grátis, pelos Correios';
+    var texto = 'Frete: ' + C.reais(p.freteCentavos) + ', pelos Correios.';
+    var acima = frete.gratisAcimaCentavos;
+    if (acima > 0 && p.precoCentavos > 0) {
+      var pecas = Math.ceil(acima / p.precoCentavos);
+      texto += pecas <= 1
+        ? ' Esta peça já sai com frete grátis.'
+        : pecas <= 5 ? ' Levando ' + pecas + ' peças, o frete sai grátis.' : ' Frete grátis em compras a partir de ' + C.reais(acima) + '.';
+    }
+    return texto;
+  }
+
   function mostrar(p, previa) {
     produto = p;
     document.title = p.nome + ' | Rauber';
@@ -83,7 +98,7 @@
     $('produto-categoria').textContent = (C.porCategoria[p.categoria] || {}).rotulo || '';
     $('produto-nome').textContent = p.nome;
     $('produto-preco').textContent = C.reais(p.precoCentavos);
-    $('produto-frete').textContent = p.freteCentavos ? 'Frete: ' + C.reais(p.freteCentavos) + ', pelos Correios' : 'Frete grátis, pelos Correios';
+    $('produto-frete').textContent = textoDoFrete(p);
     $('produto-resumo').textContent = p.resumo || '';
     $('produto-prazo').textContent = 'Fica pronta em até ' + p.prazoDias + ' dias depois do pagamento. O molde parte das medidas salvas na sua conta.';
 
@@ -202,6 +217,7 @@
       $('produto-sumiu').hidden = false;
       return;
     }
+    if (r.dados.frete) frete = r.dados.frete;
     mostrar(r.dados.produto, r.dados.previa);
   });
 })();
