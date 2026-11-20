@@ -1248,3 +1248,22 @@ a.inicio-pilar:active { transform: scale(.99); }
 .alim-guia-rodape { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1.5rem; margin-top: 1.2rem; }
 .alim-guia-refazer { margin: .25rem 0 1.1rem; }
 @media (max-width: 560px) { .alim-guia { padding: 1rem; margin-inline: -.25rem; } .alim-guia-titulo { font-size: 1.3rem; } }
+
+/* --- Digital Closet: barra de baixo com quatro abas, Ocasiões e o resto da rotina ------------- */
+.app-abas.app-abas-closet { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.app-abas.app-abas-closet a { font-size: .68rem; }
+@media (min-width: 900px) { .app-abas.app-abas-closet { width: 440px; } }
+.inicio-ocasioes { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .9rem; align-items: center; padding: 1.1rem 1.1rem; border-radius: 20px; background: var(--app-cartao); box-shadow: inset 0 0 0 1px var(--app-linha); color: var(--preto); text-decoration: none; transition: box-shadow .15s, transform .12s; }
+.inicio-ocasioes:hover { box-shadow: inset 0 0 0 1px #7c8a45; }
+.inicio-ocasioes:active { transform: scale(.985); }
+.inicio-ocasioes .app-icone-fundo { width: 50px; height: 50px; border-radius: 15px; }
+.inicio-ocasioes-texto { display: grid; gap: .25rem; }
+.inicio-ocasioes-texto strong { font-size: 1.05rem; }
+.inicio-ocasioes-texto small { color: var(--app-texto-2); font-size: .86rem; line-height: 1.45; }
+.inicio-ocasioes > svg { width: 20px; height: 20px; color: var(--app-texto-2); }
+.inicio-mais .app-secao-titulo { font-size: 1rem; }
+.inicio-mais-lista { display: flex; flex-wrap: wrap; gap: .5rem; }
+.inicio-mais-lista a { display: inline-flex; align-items: center; gap: .55rem; padding: .4rem .9rem .4rem .45rem; border-radius: 999px; background: var(--app-cartao); box-shadow: inset 0 0 0 1px var(--app-linha); color: var(--preto); font-size: .9rem; text-decoration: none; }
+.inicio-mais-lista .app-icone-fundo { width: 30px; height: 30px; border-radius: 50%; }
+.inicio-mais-lista .app-icone-fundo svg { width: 16px; height: 16px; }
+.app .cat-rauber { background: var(--preto); color: var(--off); }

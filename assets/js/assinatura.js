@@ -114,7 +114,7 @@
     $('assin-confirmado-titulo').textContent = voltou ? 'Pagamento confirmado' : 'Assinatura ativa';
     [
       'Cartão aprovado pelo Mercado Pago',
-      'Todos os apps liberados para você',
+      'Digital Closet liberado para você',
       minha.proximaCobranca ? 'Próxima cobrança: ' + dataBr(minha.proximaCobranca) + ', ' + reais(plano.precoCentavos) : 'Renova sozinha todo mês'
     ].forEach(function (t) { lista.appendChild(criar('li', '', t)); });
     $('assin-confirmado').hidden = false;
@@ -162,8 +162,8 @@
     $('assin-nome').textContent = plano.nome;
     $('assin-preco').textContent = preco;
     $('assin-faq-teste').textContent = teste > 0
-      ? 'Você usa todos os apps por ' + dias(teste) + ', sem pagar e sem cadastrar cartão. No fim do teste, escolhe se quer assinar por ' + preco + ' por mês.'
-      : 'Enquanto os apps estão em teste, quem tem conta usa tudo sem pagar. Avisamos antes de a assinatura começar.';
+      ? 'Você usa o Digital Closet completo por ' + dias(teste) + ', sem pagar e sem cadastrar cartão. No fim do teste, escolhe se quer assinar por ' + preco + ' por mês.'
+      : 'Enquanto o Digital Closet está em teste, quem tem conta usa tudo sem pagar. Avisamos antes de a assinatura começar.';
     var incluso = $('assin-incluso');
     incluso.textContent = '';
     plano.beneficios.forEach(function (b) {
@@ -188,9 +188,9 @@
       var cancelada = mp && mp.status !== 'authorized';
       if (!cancelada && mp) mostrarConfirmado(minha, plano);
       texto.textContent = cancelada
-        ? 'Sua assinatura foi cancelada. Você continua usando todos os apps até ' + app.dataCurta(minha.validaAte) + '.'
+        ? 'Sua assinatura foi cancelada. Você continua usando o Digital Closet até ' + app.dataCurta(minha.validaAte) + '.'
         : 'Obrigado por fazer parte. Você também recebeu a confirmação por e-mail.';
-      botao.textContent = 'Abrir os apps';
+      botao.textContent = 'Abrir o Digital Closet';
       botao.addEventListener('click', abrirApps);
       nota.textContent = '';
       if (mp && !cancelada) {
@@ -208,12 +208,12 @@
         nota.textContent = 'Válida até ' + app.dataCurta(minha.validaAte) + '.';
       }
     } else if (minha.jaUsava) {
-      texto.textContent = 'Você já usava os apps antes da assinatura começar. Para você, tudo continua grátis. Obrigado por estar com a gente desde o início.';
-      botao.textContent = 'Abrir os apps';
+      texto.textContent = 'Você já usava o Digital Closet antes da assinatura começar. Para você, tudo continua grátis. Obrigado por estar com a gente desde o início.';
+      botao.textContent = 'Abrir o Digital Closet';
       botao.addEventListener('click', abrirApps);
       nota.textContent = '';
     } else if (minha.emTeste) {
-      texto.textContent = 'Você está no teste grátis: ' + (minha.diasDeTeste === 1 ? 'falta 1 dia' : 'faltam ' + minha.diasDeTeste + ' dias') + '. Aproveite todos os apps.';
+      texto.textContent = 'Você está no teste grátis: ' + (minha.diasDeTeste === 1 ? 'falta 1 dia' : 'faltam ' + minha.diasDeTeste + ' dias') + '. Aproveite o Digital Closet.';
       botao.textContent = 'Continuar usando';
       botao.addEventListener('click', abrirApps);
       nota.textContent = 'Depois do teste, ' + preco + ' por mês. Assinando agora, a primeira cobrança só vem quando o teste acabar. ';
@@ -233,7 +233,7 @@
       var esperando = voltou || minha.aguardandoConfirmacao;
       texto.textContent = esperando
         ? 'Ainda não chegou a confirmação do Mercado Pago. Se você concluiu o pagamento, ela costuma chegar em poucos minutos: o acesso é liberado sozinho e você recebe um e-mail. Se o cartão foi recusado, confira se entrou lá com o mesmo e-mail informado aqui e tente de novo.'
-        : (minha.testeAcabou ? 'Seu teste grátis terminou. ' : '') + 'Assine para continuar com todos os apps e tudo o que você já anotou.';
+        : (minha.testeAcabou ? 'Seu teste grátis terminou. ' : '') + 'Assine para continuar com o Digital Closet e tudo o que você já anotou.';
       botao.textContent = 'Assinar por ' + preco + ' por mês';
       nota.textContent = 'No cartão de crédito, renovando todo mês pelo Mercado Pago. Cancele quando quiser.';
       botao.addEventListener('click', function () { assinar(botao, nota, plano); });

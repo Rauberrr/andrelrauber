@@ -127,6 +127,22 @@ const GR_TIPOS_FEMININOS = ['vestido', 'saia', 'blusa'];
 const GR_TIPOS_UNISSEX = ['moletom', 'calca_moletom', 'bone', 'tenis', 'oculos', 'relogio'];
 // Peças cadastradas pelo gestor: o código é loja-ID e a foto fica em api/fotos-catalogo
 const GR_PREFIXO_LOJA = 'loja-';
+// Peças da coleção Rauber à venda: entram sozinhas no catálogo, uma por cor. O código é rauber-ID-cor.
+const GR_PREFIXO_COLECAO = 'rauber-';
+// Categoria da coleção -> tipo, formalidade e clima no guarda-roupa
+const GR_DA_CATEGORIA = [
+    'camiseta' => ['camiseta', 'casual', 'qualquer'], 'polo' => ['polo', 'casual', 'qualquer'], 'camisa' => ['camisa', 'misto', 'qualquer'],
+    'calca' => ['calca', 'misto', 'qualquer'], 'bermuda' => ['bermuda', 'casual', 'calor'], 'blazer' => ['blazer', 'misto', 'qualquer'],
+    'terno' => ['terno', 'social', 'qualquer'], 'colete' => ['colete', 'misto', 'qualquer'], 'jaqueta' => ['jaqueta', 'casual', 'frio'],
+];
+const GR_CORTE_DA_MODELAGEM = ['ajustada' => 'slim', 'regular' => 'regular', 'solta' => 'relaxed'];
+// Acompanha as cores de assets/js/guarda-roupa-dados.js
+const GR_HEX_DAS_CORES = [
+    'preto' => '141414', 'branco' => 'f5f5f3', 'off_white' => 'e8e2d2', 'cinza' => '9a9a98', 'grafite' => '44464a',
+    'azul_marinho' => '1b2a4a', 'azul' => '2f62b0', 'azul_claro' => 'a3c3e0', 'bege' => 'cdbb9b', 'caqui' => 'a39566',
+    'marrom' => '54392a', 'caramelo' => 'a2672f', 'verde_oliva' => '555b38', 'verde' => '2d7a4b', 'bordo' => '5c1322',
+    'vermelho' => 'b5261e', 'rosa' => 'e0a3b2', 'amarelo' => 'e2bd36', 'laranja' => 'd9702a', 'roxo' => '5e3a87',
+];
 const GR_MAXIMO_CATALOGO = 300;
 
 const GR_MAXIMO_PECAS = 60;
@@ -217,6 +233,9 @@ function foto_da_peca(array $p): string
 {
     if (eh_sugerida($p)) {
         $codigo = substr((string) $p['arquivo'], strlen(GR_PREFIXO_SUGERIDA));
+        if (strpos($codigo, GR_PREFIXO_COLECAO) === 0) {
+            return foto_do_produto((int) explode('-', $codigo)[1]);
+        }
         if (strpos($codigo, GR_PREFIXO_LOJA) === 0) {
             return 'api/guarda-roupa.php?acao=foto-catalogo&id=' . (int) substr($codigo, strlen(GR_PREFIXO_LOJA));
         }
@@ -301,6 +320,111 @@ function publicos_do_gestor(): array
     }
 }
 
+/* --- Peças da coleção no catálogo ----------------------------------------------------------- */
+
+function sem_acento(string $t): string
+{
+    $t = mb_strtolower(trim($t));
+    $t = strtr($t, ['á' => 'a', 'à' => 'a', 'â' => 'a', 'ã' => 'a', 'é' => 'e', 'ê' => 'e', 'í' => 'i', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ú' => 'u', 'ç' => 'c']);
+    return (string) preg_replace('/[\s-]+/', '_', $t);
+}
+
+/** A cor da coleção na lista do guarda-roupa: pelo nome (preto, preta, azul-marinho) ou pela cor mais próxima. */
+function cor_do_guarda_roupa(array $cor): string
+{
+    $nome = sem_acento((string) ($cor['nome'] ?? ''));
+    $femininos = ['preta' => 'preto', 'branca' => 'branco', 'vermelha' => 'vermelho', 'amarela' => 'amarelo', 'roxa' => 'roxo', 'marinho' => 'azul_marinho', 'off' => 'off_white', 'offwhite' => 'off_white', 'oliva' => 'verde_oliva', 'vinho' => 'bordo', 'chumbo' => 'grafite', 'areia' => 'bege', 'creme' => 'off_white'];
+    if (isset(GR_HEX_DAS_CORES[$nome])) {
+        return $nome;
+    }
+    if (isset($femininos[$nome])) {
+        return $femininos[$nome];
+    }
+    $hex = strtolower(ltrim((string) ($cor['hex'] ?? ''), '#'));
+    if (preg_match('/^[0-9a-f]{6}$/', $hex) !== 1) {
+        return 'preto';
+    }
+    $alvo = [hexdec(substr($hex, 0, 2)), hexdec(substr($hex, 2, 2)), hexdec(substr($hex, 4, 2))];
+    $melhor = 'preto';
+    $distancia = PHP_INT_MAX;
+    foreach (GR_HEX_DAS_CORES as $id => $h) {
+        $d = ($alvo[0] - hexdec(substr($h, 0, 2))) ** 2 + ($alvo[1] - hexdec(substr($h, 2, 2))) ** 2 + ($alvo[2] - hexdec(substr($h, 4, 2))) ** 2;
+        if ($d < $distancia) {
+            $distancia = $d;
+            $melhor = $id;
+        }
+    }
+    return $melhor;
+}
+
+function tecido_do_produto(string $texto): string
+{
+    $t = sem_acento($texto);
+    foreach (['linho' => 'linho', 'jeans' => 'jeans', 'sarja' => 'sarja', 'moletom' => 'moletom', 'alfaiataria' => 'alfaiataria', 'la_fria' => 'alfaiataria', 'malha' => 'malha', 'algodao' => 'algodao', 'tricot' => 'tricot', 'veludo' => 'veludo', 'seda' => 'seda'] as $chave => $tecido) {
+        if (strpos($t, $chave) !== false) {
+            return $tecido;
+        }
+    }
+    return '';
+}
+
+/** A primeira foto de uma peça da coleção (também para quem já tem a peça e ela saiu da vitrine). */
+function foto_do_produto(int $id): string
+{
+    static $fotos = [];
+    if (!array_key_exists($id, $fotos)) {
+        $linha = consultar('SELECT fotos FROM produtos WHERE id = ?', [$id])->fetchColumn();
+        $lista = json_decode((string) $linha, true);
+        $fotos[$id] = is_array($lista) && isset($lista[0]) && is_string($lista[0]) ? 'api/produtos.php?acao=foto&f=' . $lista[0] : 'assets/img/sugeridas/camiseta-bege.webp';
+    }
+    return $fotos[$id];
+}
+
+/** Peças da coleção à venda (publicadas ou esgotadas, com a coleção já lançada), uma por cor. */
+function pecas_da_colecao(): array
+{
+    try {
+        $produtos = consultar(
+            "SELECT p.id, p.slug, p.nome, p.categoria, p.modelagem, p.tecido, p.cores, p.fotos, p.criado_em
+             FROM produtos p LEFT JOIN colecoes c ON c.id = p.colecao_id
+             WHERE p.situacao IN ('publicado', 'esgotado') AND (p.colecao_id IS NULL OR c.lanca_em IS NULL OR c.lanca_em <= ?)
+             ORDER BY p.ordem, p.id DESC",
+            [agora()]
+        )->fetchAll();
+    } catch (PDOException $erro) {
+        return [];
+    }
+    $recente = date('Y-m-d H:i:s', time() - 30 * 86400);
+    $lista = [];
+    foreach ($produtos as $p) {
+        $base = GR_DA_CATEGORIA[$p['categoria']] ?? null;
+        $fotos = json_decode((string) $p['fotos'], true);
+        if ($base === null || !is_array($fotos) || !isset($fotos[0])) {
+            continue;
+        }
+        $cores = json_decode((string) $p['cores'], true);
+        $cores = is_array($cores) && $cores ? array_slice($cores, 0, 8) : [['nome' => '', 'hex' => '']];
+        $vistas = [];
+        foreach ($cores as $c) {
+            $cor = cor_do_guarda_roupa(is_array($c) ? $c : []);
+            if (isset($vistas[$cor])) {
+                continue;
+            }
+            $vistas[$cor] = true;
+            $nomeCor = is_array($c) ? trim((string) ($c['nome'] ?? '')) : '';
+            $lista[GR_PREFIXO_COLECAO . $p['id'] . '-' . $cor] = [
+                'linha' => [$base[0], $cor, GR_CORTE_DA_MODELAGEM[$p['modelagem']] ?? 'regular', tecido_do_produto((string) $p['tecido']), $base[1], $base[2],
+                    mb_substr($p['nome'] . ($nomeCor !== '' ? ' ' . mb_strtolower($nomeCor) : ''), 0, 60)],
+                'foto' => 'api/produtos.php?acao=foto&f=' . $fotos[0],
+                'novo' => (string) $p['criado_em'] >= $recente,
+                'publico' => 'masculino',
+                'colecao' => (string) $p['slug'],
+            ];
+        }
+    }
+    return $lista;
+}
+
 function linha_do_catalogo(array $c): array
 {
     return [$c['tipo'], $c['cor'], $c['corte'], $c['tecido'], $c['formalidade'], $c['clima'], $c['nome']];
@@ -327,7 +451,8 @@ function pecas_do_catalogo(): array
             'publico' => $publicos[(int) $c['id']] ?? publico_da_marca('', (string) $c['tipo']),
         ];
     }
-    return $lista;
+    // As peças da coleção Rauber vêm primeiro
+    return pecas_da_colecao() + $lista;
 }
 
 function catalogo(): void
@@ -351,6 +476,7 @@ function catalogo(): void
             'nome' => $p[6],
             'foto' => $c['foto'],
             'novo' => $c['novo'],
+            'colecao' => $c['colecao'] ?? null,
             'publico' => $c['publico'],
             'situacao' => $minhas[(string) $codigo] ?? 'livre',
         ];

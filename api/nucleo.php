@@ -546,7 +546,7 @@ function ajuste(string $chave, $padrao = null)
 const ASSINATURA_MODOS = ['oculta', 'aviso', 'cobrando'];
 const ASSINATURA_PADRAO = [
     'modo' => 'oculta',
-    'nome' => 'Rauber Apps',
+    'nome' => 'Digital Closet',
     'precoCentavos' => 1990,
     // Dias de teste grátis com a cobrança ligada: contam da criação da conta ou do dia em que a cobrança começou
     'testeDias' => 7,
@@ -802,7 +802,7 @@ function exigir_acesso_apps(array $liberadas = []): void
 {
     $usuario = usuario_logado();
     if ($usuario !== null && !in_array($_GET['acao'] ?? '', $liberadas, true) && !acesso_aos_apps($usuario)) {
-        falhar(402, 'Os apps agora são por assinatura. Assine para continuar.', ['assinatura' => true]);
+        falhar(402, 'O Digital Closet agora é por assinatura. Assine para continuar.', ['assinatura' => true]);
     }
 }
 

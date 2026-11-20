@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261115a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261120a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -140,7 +140,7 @@
       <p class="carregando" id="as-carregando">Carregando...</p>
       <form class="painel-form as-form" id="as-form" novalidate hidden>
         <fieldset class="as-modos">
-          <legend>Como os apps estão agora</legend>
+          <legend>Como o Digital Closet está agora</legend>
           <label class="as-modo"><input type="radio" name="as-modo" value="oculta"><span><strong>Grátis, página oculta</strong><small>Os apps são grátis para quem tem conta. A página da assinatura só aparece para você, como prévia.</small></span></label>
           <label class="as-modo"><input type="radio" name="as-modo" value="aviso"><span><strong>Grátis, com aviso do valor</strong><small>Os apps continuam grátis, e todos veem a página: teste grátis e o valor da assinatura depois.</small></span></label>
           <label class="as-modo as-modo-cobrar"><input type="radio" name="as-modo" value="cobrando"><span><strong>Cobrando</strong><small>Cada pessoa tem os dias de teste grátis. Depois, só quem assina usa os apps; os outros são levados para a página do plano. Você sempre tem acesso.</small></span></label>
@@ -149,7 +149,7 @@
         <p class="painel-ajuda as-pagamento" id="as-pagamento"></p>
         <p class="as-alerta" id="as-alerta" hidden>Com a cobrança ativa, quem não está no teste grátis nem tem a assinatura é levado para a página do plano.</p>
         <div class="painel-campos">
-          <div class="campo"><label for="as-nome">Nome do plano</label><div class="campo-entrada"><input id="as-nome" maxlength="60" placeholder="Rauber Apps"></div><p class="erro" data-erro="nome"></p></div>
+          <div class="campo"><label for="as-nome">Nome do plano</label><div class="campo-entrada"><input id="as-nome" maxlength="60" placeholder="Digital Closet"></div><p class="erro" data-erro="nome"></p></div>
           <div class="campo"><label for="as-preco">Valor por mês (R$)</label><div class="campo-entrada"><input id="as-preco" inputmode="decimal" placeholder="19,90"></div><p class="erro" data-erro="preco"></p></div>
           <div class="campo"><label for="as-teste">Dias de teste grátis</label><div class="campo-entrada"><input id="as-teste" type="number" inputmode="numeric" min="0" max="60" value="7"></div><p class="painel-ajuda">Com a cobrança ligada, cada pessoa usa grátis por esses dias, contando da criação da conta ou do dia em que a cobrança começou. 0 desliga o teste.</p><p class="erro" data-erro="testeDias"></p></div>
           <div class="campo campo-inteiro"><label for="as-beneficios">O que o plano inclui (um por linha)</label><div class="campo-entrada"><textarea id="as-beneficios" rows="5"></textarea></div></div>

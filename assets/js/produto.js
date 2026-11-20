@@ -156,15 +156,41 @@
       comprar.textContent = 'Esgotado';
       $('produto-nota').textContent = 'Quer uma parecida? Faça um pedido exclusivo.';
     } else {
-      $('produto-nota').textContent = 'Feita a partir das suas medidas. Se ainda não salvou as suas, o site pede antes de pagar.';
+      $('produto-nota').textContent = 'Feita a partir das suas medidas. Se ainda não salvou as suas, o site pede assim que a peça entra na sacola.';
     }
     document.title = p.nome + ' | Rauber';
   }
 
+  // As medidas da pessoa: true (salvas), false (faltam) ou 'visitante' (sem conta). null: ainda não se sabe.
+  var medidas = null;
+  if (!exemplo && api) {
+    api.get('api/perfil.php').then(function (r) {
+      if (r.status === 401) { medidas = 'visitante'; return; }
+      if (r.ok) medidas = Boolean(r.dados.cadastro && r.dados.cadastro.concluido_em);
+    });
+  }
+
+  // Sem as medidas, a peça entra na sacola e o site já pede as medidas, antes de chegar a pagar
+  function pedirMedidas() {
+    var ir = $('produto-medidas-ir');
+    if (medidas === 'visitante') {
+      $('produto-medidas-titulo').textContent = 'Agora, crie sua conta e salve suas medidas.';
+      $('produto-medidas-texto').textContent = 'Cada peça é cortada a partir das suas medidas. Crie sua conta e preencha uma vez só, com o guia ilustrado. A peça continua guardada na sacola.';
+      ir.textContent = 'Criar conta e salvar medidas';
+      ir.href = 'criar-conta.html?voltar=medidas.html';
+    }
+    $('produto-medidas-modal').showModal();
+  }
+  $('produto-medidas-fechar').addEventListener('click', function () { $('produto-medidas-modal').close(); });
+  $('produto-medidas-depois').addEventListener('click', function () { location.href = 'colecao.html'; });
+
   function colocarNaSacola(abrir) {
     $('produto-erro').textContent = '';
     if (!window.AR_SACOLA) return;
+    var faltam = medidas === false || medidas === 'visitante';
+    if (faltam) abrir = false;
     var problema = window.AR_SACOLA.adicionar(produto, corEscolhida, abrir);
+    if (!problema && faltam) { pedirMedidas(); return; }
     if (problema) { $('produto-erro').textContent = problema; return; }
     if (!abrir) {
       $('produto-adicionado').textContent = produto.nome + (corEscolhida ? ' (' + corEscolhida + ')' : '') + ' está na sua sacola.';

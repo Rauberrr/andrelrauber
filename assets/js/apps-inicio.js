@@ -137,7 +137,7 @@
   function resumirGuardaRoupa(dados, clima) {
     var endereco = 'apps/guarda-roupa/';
     if (!dados) {
-      widget('guarda-roupa', 'Guarda-roupa', 'cabide', 'Looks com o que você tem', 'Fotografe suas peças e receba sugestões de combinações.', endereco);
+      widget('guarda-roupa', 'Meu closet', 'cabide', 'Looks com o que você tem', 'Fotografe suas peças e receba sugestões de combinações.', endereco);
       return;
     }
     var salvos = dados.looks.filter(function (l) { return l.situacao === 'salvo'; }).length;
@@ -149,7 +149,7 @@
         Math.round(clima.minima) + '° a ' + Math.round(clima.maxima) + '° em ' + clima.cidade, palavra + ': veja os looks para ' + (amanha ? 'amanhã' : 'hoje') + '. ' + contagem, endereco + '#looks');
       return;
     }
-    widget('guarda-roupa', 'Guarda-roupa', 'cabide', dados.pecas.length ? 'Escolha o look de hoje' : 'Comece pelas suas peças', contagem, endereco + '#looks');
+    widget('guarda-roupa', 'Meu closet', 'cabide', dados.pecas.length ? 'Escolha o look de hoje' : 'Comece pelas suas peças', contagem, endereco + '#looks');
   }
 
   // Hábitos de hoje: quantos já foram feitos e quantos faltam

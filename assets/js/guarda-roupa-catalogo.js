@@ -84,8 +84,8 @@
     var mostrar = itens.filter(function (i) { return doPublico(i) && (!grupo || tipoDe(i.tipo).grupo === grupo); });
     // As que a pessoa ainda não tem primeiro; as novidades do gestor no topo
     mostrar.sort(function (a, b) {
-      var pa = (a.situacao === 'tem' ? 2 : 0) - (a.novo ? 1 : 0);
-      var pb = (b.situacao === 'tem' ? 2 : 0) - (b.novo ? 1 : 0);
+      var pa = (a.situacao === 'tem' ? 4 : 0) - (a.colecao ? 2 : 0) - (a.novo ? 1 : 0);
+      var pb = (b.situacao === 'tem' ? 4 : 0) - (b.colecao ? 2 : 0) - (b.novo ? 1 : 0);
       return pa - pb;
     });
     mostrar.forEach(function (i, n) { lista.appendChild(cartao(i, n < 9)); });
@@ -106,7 +106,8 @@
     img.width = 1000;
     img.height = 1250;
     fig.appendChild(img);
-    if (i.novo) fig.appendChild(criar('span', 'cat-novo', 'Novo'));
+    if (i.colecao) fig.appendChild(criar('span', 'cat-novo cat-rauber', 'Coleção Rauber'));
+    else if (i.novo) fig.appendChild(criar('span', 'cat-novo', 'Novo'));
     b.appendChild(fig);
     var nome = criar('span', 'cat-nome');
     var cor = corDe(i.cor);

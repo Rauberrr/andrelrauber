@@ -172,7 +172,7 @@ switch ($_GET['acao'] ?? '') {
         registrar_evento($id, 'assinatura_interesse');
         $plano = assinatura_config();
         if (modo_para($usuario, $plano) !== 'cobrando') {
-            falhar(409, 'Os apps estão grátis agora. Não há nada para pagar.');
+            falhar(409, 'O Digital Closet está grátis agora. Não há nada para pagar.');
         }
         $mp = assinatura_mp_da_pessoa($id);
         $a = assinatura_da_pessoa($id);

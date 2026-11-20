@@ -5,10 +5,10 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Assinatura | Rauber</title>
-  <meta name="description" content="Guarda-roupa, Treino, Alimentação, Hábitos e Ocasiões: os apps da Rauber numa assinatura só, com teste grátis.">
+  <meta name="description" content="Digital Closet: seu armário no celular, com o look do dia pronto. Teste grátis.">
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#f4f1ea">
-  <link rel="manifest" href="assets/apps.webmanifest?v=20261109d">
+  <link rel="manifest" href="assets/apps.webmanifest?v=20261120a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Rauber">
@@ -18,15 +18,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261115a">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261114b">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261120a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261120a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app assin">
   <a class="pular" href="assinatura.html#principal">Pular para o conteúdo</a>
 
   <header class="app-barra">
-    <a class="app-voltar" href="apps/"><svg data-icone="voltar"></svg>Apps</a>
+    <a class="app-voltar" href="apps/"><svg data-icone="voltar"></svg>Closet</a>
     <p class="app-barra-titulo" aria-hidden="true">Assinatura</p>
     <a class="app-conta app-conta-visitante" id="app-conta" href="entrar.html?voltar=assinatura.html" aria-label="Entrar na minha conta"></a>
   </header>
@@ -37,10 +37,10 @@
 
     <!-- Página oculta, para quem não é gestor -->
     <section class="assin-gratis" id="assin-gratis" hidden>
-      <p class="assin-sobre">Rauber Apps</p>
-      <h1 class="assin-titulo">Os apps estão liberados.</h1>
+      <p class="assin-sobre">Digital Closet</p>
+      <h1 class="assin-titulo">O Digital Closet está liberado.</h1>
       <p class="assin-texto">Durante o teste, tudo está aberto para quem tem conta. Aproveite.</p>
-      <a class="botao botao-cheio" href="apps/">Ir para os apps</a>
+      <a class="botao botao-cheio" href="apps/">Abrir o Digital Closet</a>
     </section>
 
     <div id="assin-pagina" hidden>
@@ -52,8 +52,8 @@
             <ul class="assin-confirmado-lista" id="assin-confirmado-lista"></ul>
           </div>
         </div>
-        <p class="assin-sobre">Rauber Apps</p>
-        <h1 class="assin-titulo" id="assin-titulo">Vista-se, treine e coma melhor. Com tudo no mesmo lugar.</h1>
+        <p class="assin-sobre">Digital Closet</p>
+        <h1 class="assin-titulo" id="assin-titulo">Saiba o que vestir, todos os dias, com o que você já tem.</h1>
         <p class="assin-texto" id="assin-texto"></p>
         <div class="assin-acao">
           <button class="botao botao-cheio assin-botao" type="button" id="assin-assinar">Começar</button>
@@ -90,7 +90,7 @@
       <section class="assin-passos" aria-labelledby="assin-passos-titulo">
         <h2 class="assin-h2" id="assin-passos-titulo">Como funciona</h2>
         <ol>
-          <li><strong id="assin-passo-1">Use tudo grátis por 7 dias</strong><span>Todos os apps liberados, sem cartão de crédito.</span></li>
+          <li><strong id="assin-passo-1">Use tudo grátis por 7 dias</strong><span>O Digital Closet completo, sem cartão de crédito.</span></li>
           <li><strong>Gostou? Assine</strong><span id="assin-passo-2">Por um valor mensal pequeno, no cartão.</span></li>
           <li><strong>Cancele quando quiser</strong><span>Sem fidelidade. O que você anotou continua guardado na sua conta.</span></li>
         </ol>
@@ -98,7 +98,7 @@
 
       <section class="assin-plano" aria-labelledby="assin-nome">
         <div class="assin-plano-topo">
-          <h2 class="assin-plano-nome" id="assin-nome">Rauber Apps</h2>
+          <h2 class="assin-plano-nome" id="assin-nome">Digital Closet</h2>
           <p class="assin-plano-preco"><span id="assin-preco">R$ 19,90</span> por mês, depois do teste</p>
         </div>
         <ul class="assin-incluso" id="assin-incluso"></ul>
@@ -108,7 +108,7 @@
         <h2 class="assin-h2" id="assin-perguntas-titulo">Perguntas</h2>
         <details>
           <summary>Como funciona o teste grátis?</summary>
-          <p id="assin-faq-teste">Você usa todos os apps por 7 dias, sem pagar e sem cadastrar cartão. No fim do teste, escolhe se quer assinar.</p>
+          <p id="assin-faq-teste">Você usa o Digital Closet completo por 7 dias, sem pagar e sem cadastrar cartão. No fim do teste, escolhe se quer assinar.</p>
         </details>
         <details>
           <summary>Como eu pago?</summary>
@@ -145,7 +145,7 @@
 
   <script src="assets/js/config.js?v=20261111a"></script>
   <script src="assets/js/conta-api.js?v=20261112a"></script>
-  <script src="assets/js/apps.js?v=20261112c"></script>
-  <script src="assets/js/assinatura.js?v=20261115a"></script>
+  <script src="assets/js/apps.js?v=20261120a"></script>
+  <script src="assets/js/assinatura.js?v=20261120a"></script>
 </body>
 </html>

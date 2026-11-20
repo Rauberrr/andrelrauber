@@ -1,7 +1,7 @@
 {
-  "name": "Rauber Apps",
-  "short_name": "Rauber",
-  "description": "Guarda-roupa, Alimentação, Ocasiões, Treino e Hábitos da Rauber.",
+  "name": "Digital Closet",
+  "short_name": "Closet",
+  "description": "Digital Closet da Rauber: seu armário no celular, com o look do dia pronto.",
   "lang": "pt-BR",
   "start_url": "/apps/",
   "scope": "/",

@@ -498,7 +498,7 @@ function mp_avisar_assinatura_ativa(int $usuarioId, int $proxima): void
     enviar_email(
         (string) $u['email'],
         'Sua assinatura está ativa',
-        'Tudo certo: a assinatura do ' . $plano['nome'] . ' está ativa e todos os apps estão liberados para você. ' . $cobranca
+        'Tudo certo: a assinatura do ' . $plano['nome'] . ' está ativa e o Digital Closet está liberado para você. ' . $cobranca
         . ' Ela renova sozinha todo mês, e você pode cancelar quando quiser em ' . mp_endereco_do_site() . '/assinatura.html'
     );
     avisar_dono('Nova assinatura no site', $u['nome'] . ' (' . $u['email'] . ') assinou o ' . $plano['nome'] . '. ' . $cobranca . ' Veja em ' . mp_endereco_do_site() . '/painel.html');

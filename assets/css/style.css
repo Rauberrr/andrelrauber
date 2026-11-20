@@ -1858,3 +1858,77 @@ em { font-style: italic; }
   .painel-tabela .painel-acao-linha { display: block; padding-top: .6rem; }
   .painel-tabela .painel-editar { width: 100%; }
 }
+
+/* --- Página inicial: Digital Closet ------------------------------------------------------------ */
+.dc { padding-block: var(--secao); background: var(--off-2); }
+.dc-grade { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: clamp(2.5rem, 6vw, 6rem); align-items: center; }
+.dc-texto .titulo-l { margin-top: 1.25rem; }
+.dc-texto .lead { margin-top: 1.6rem; }
+.dc-texto .suave { margin-top: 1rem; max-width: 34rem; }
+.dc-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; margin-top: 2.25rem; }
+.dc-nota { font-size: .88rem; color: var(--cinza); }
+.dc-celular { justify-self: center; width: min(100%, 330px); padding: 14px; border-radius: 42px; background: var(--preto); box-shadow: 0 40px 80px -30px rgba(11, 11, 10, .55); }
+.dc-tela { padding: 1.6rem 1.3rem 1.4rem; border-radius: 30px; background: var(--off); }
+.dc-tela-topo { display: flex; justify-content: space-between; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--cinza); }
+.dc-tela-titulo { margin-top: .9rem; font-family: var(--serifa); font-size: 1.35rem; line-height: 1.2; }
+.dc-look { margin: 1rem 0 0; padding: 0; list-style: none; }
+.dc-look li { display: flex; align-items: center; gap: .7rem; padding: .62rem 0; border-bottom: 1px solid var(--linha); font-size: .92rem; }
+.dc-look i { flex: none; width: 1.1rem; height: 1.1rem; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(11, 11, 10, .2); }
+.dc-numeros { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; margin-top: 1.2rem; text-align: center; }
+.dc-numeros p { padding: .6rem .2rem; border-radius: 14px; background: var(--off-2); }
+.dc-numeros b { display: block; font-family: var(--serifa); font-size: 1.3rem; font-weight: 400; }
+.dc-numeros small { display: block; font-size: .68rem; color: var(--cinza); line-height: 1.25; }
+.dc-numeros .dc-mais { background: var(--preto); color: var(--off); }
+.dc-numeros .dc-mais small { color: var(--claro); }
+.dc-dica { margin-top: .9rem; font-size: .8rem; line-height: 1.45; color: var(--cinza); }
+.dc-recursos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(1.75rem, 3.5vw, 3rem) clamp(1.5rem, 3vw, 2.5rem); margin: clamp(4rem, 8vw, 7rem) 0 0; padding: 0; list-style: none; }
+.dc-recursos li { padding-top: 1.25rem; border-top: 1px solid var(--linha); }
+.dc-num { display: block; font-family: var(--delicada); font-style: italic; font-size: 1.6rem; color: var(--bordo); }
+.dc-recursos .titulo-s { margin-top: .4rem; }
+.dc-recursos .suave { margin-top: .6rem; }
+.dc-frase { margin: clamp(4rem, 8vw, 6.5rem) auto 0; max-width: 46rem; font-family: var(--serifa); font-size: clamp(1.6rem, 3.2vw, 2.6rem); line-height: 1.25; text-align: center; }
+.dc-frase em { color: var(--bordo); }
+.dc-ocasioes { display: flex; gap: clamp(1.25rem, 3vw, 2.25rem); align-items: flex-start; margin-top: clamp(3.5rem, 7vw, 5.5rem); padding: clamp(1.5rem, 4vw, 2.5rem); background: var(--off); }
+.dc-ocasioes-icone { flex: none; display: grid; place-items: center; width: 3.4rem; height: 3.4rem; border-radius: 50%; background: var(--preto); }
+.dc-ocasioes-icone svg { width: 1.5rem; height: 1.5rem; fill: none; stroke: var(--off); stroke-width: 1.5; stroke-linecap: round; }
+.dc-ocasioes .titulo-m { margin-top: .6rem; }
+.dc-ocasioes .suave { margin-top: .6rem; max-width: 40rem; }
+.dc-ocasioes .link-seta { margin-top: 1.2rem; }
+.dc-extras { margin-top: 1.6rem; font-size: .92rem; color: var(--cinza); text-align: center; }
+.dc-extras a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.dc-extras a:hover { color: var(--preto); }
+@media (max-width: 860px) {
+  .dc-grade { grid-template-columns: 1fr; }
+  .dc-recursos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .dc-recursos { grid-template-columns: 1fr; }
+  .dc-ocasioes { flex-direction: column; }
+}
+
+/* Página inicial: a coleção e a história */
+.home-colecao .cab-secao { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem 2rem; }
+.home-colecao .colecao-proxima { margin-top: clamp(2rem, 4vw, 3rem); }
+.home-colecao-vazia { margin-top: clamp(2rem, 4vw, 3rem); padding: clamp(1.75rem, 4vw, 3rem); border: 1px solid var(--linha); }
+.home-colecao-vazia p { margin-top: .8rem; max-width: 40rem; color: var(--cinza); }
+.home-colecao-botoes { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.6rem; }
+.home-historia { border-top: 1px solid var(--linha); }
+
+/* Coleção: busca e filtros */
+.colecao-busca { margin-top: clamp(1.5rem, 3vw, 2.5rem); }
+.colecao-busca-linha { display: flex; flex-wrap: wrap; gap: .75rem; }
+.colecao-busca-campo { position: relative; flex: 1 1 18rem; }
+.colecao-busca-campo svg { position: absolute; left: .9rem; top: 50%; width: 1.1rem; height: 1.1rem; transform: translateY(-50%); fill: none; stroke: var(--cinza); stroke-width: 1.6; stroke-linecap: round; pointer-events: none; }
+.colecao-busca-campo input { width: 100%; padding-left: 2.6rem; }
+.colecao-ordem { flex: 0 1 12rem; min-height: 48px; padding: 0 .9rem; border: 1px solid var(--linha); background: transparent; color: inherit; font: inherit; }
+.colecao-filtros { display: flex; gap: .5rem; margin-top: 1rem; overflow-x: auto; padding-bottom: .25rem; scrollbar-width: none; }
+.colecao-filtros::-webkit-scrollbar { display: none; }
+.colecao-filtro { flex: none; min-height: 40px; padding: .4rem 1rem; border: 1px solid var(--linha); border-radius: 999px; background: none; color: inherit; font: inherit; font-size: .9rem; cursor: pointer; }
+.colecao-filtro[aria-pressed="true"] { border-color: var(--preto); background: var(--preto); color: var(--off); }
+.colecao-resultado { margin-top: .9rem; font-size: .9rem; color: var(--cinza); }
+.colecao-resultado:empty, .colecao-resultado span:empty + button[hidden] { display: none; }
+.colecao-busca-campo { display: flex; align-items: center; min-height: 48px; border: 1px solid var(--linha); }
+.colecao-busca-campo:focus-within { border-color: var(--preto); }
+.colecao-busca-campo input { flex: 1; height: 46px; padding: 0 .9rem 0 2.6rem; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; font-size: 1rem; -webkit-appearance: none; appearance: none; }
+.colecao-ordem { font-size: .95rem; }
+@media (max-width: 560px) { .colecao-ordem { flex: 1 1 100%; } }

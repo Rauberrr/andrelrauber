@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261115a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261120a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -39,7 +39,7 @@
         <ul class="nav-lista">
           <li><a href="index.html">Início</a></li>
           <li><a href="colecao.html" aria-current="page">Coleção</a></li>
-          <li><a href="apps/">Apps</a></li>
+          <li><a href="apps/">Digital Closet</a></li>
           <li><a href="contato.html">Contato</a></li>
           <li><a href="minha-conta.html">Minha conta</a></li>
         </ul>
@@ -127,7 +127,7 @@
           <ul>
             <li><a href="colecao.html">Coleção</a></li>
             <li><a href="pedido-exclusivo.html">Pedido exclusivo</a></li>
-            <li><a href="apps/">Apps</a></li>
+            <li><a href="apps/">Digital Closet</a></li>
             <li><a href="guia-de-medidas.html">Guia de Medidas</a></li>
             <li><a href="a-marca.html">A Marca</a></li>
             <li><a href="contato.html">Contato</a></li>
@@ -149,11 +149,26 @@
     </div>
   </footer>
 
+  <dialog class="modal-figura medidas-ok produto-medidas-modal" id="produto-medidas-modal" aria-labelledby="produto-medidas-titulo">
+    <button class="modal-fechar" id="produto-medidas-fechar" type="button" aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
+    </button>
+    <div class="modal-texto">
+      <span class="etiqueta">A peça está na sua sacola</span>
+      <h2 class="titulo-m" id="produto-medidas-titulo">Agora, as suas medidas.</h2>
+      <p id="produto-medidas-texto">Cada peça é cortada a partir das suas medidas. Preencha uma vez só, com o guia ilustrado: leva poucos minutos e fica salvo para as próximas compras. A peça continua guardada na sacola.</p>
+      <div class="medidas-ok-botoes">
+        <a class="botao botao-cheio" id="produto-medidas-ir" href="medidas.html">Preencher minhas medidas</a>
+        <button class="botao" type="button" id="produto-medidas-depois">Continuar vendo a coleção</button>
+      </div>
+    </div>
+  </dialog>
+
   <script src="assets/js/config.js?v=20261111a"></script>
   <script src="assets/js/main.js?v=20261111a"></script>
   <script src="assets/js/conta-api.js?v=20261112a"></script>
   <script src="assets/js/colecao-dados.js?v=20261111a"></script>
   <script src="assets/js/sacola.js?v=20261115a"></script>
-  <script src="assets/js/produto.js?v=20261115a"></script>
+  <script src="assets/js/produto.js?v=20261120a"></script>
 </body>
 </html>

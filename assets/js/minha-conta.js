@@ -140,13 +140,13 @@
       if (m.assinante && mp && mp.status === 'authorized') {
         texto = 'Ativa, no cartão pelo Mercado Pago.' + (m.proximaCobranca ? ' Próxima cobrança em ' + dataBr(m.proximaCobranca) + '.' : '');
       } else if (m.assinante && mp) {
-        texto = 'Cancelada. Você usa os apps até ' + dataBr(m.validaAte) + ', sem novas cobranças.';
+        texto = 'Cancelada. Você usa o Digital Closet até ' + dataBr(m.validaAte) + ', sem novas cobranças.';
       } else if (m.assinante) {
         texto = 'Acesso liberado' + (m.validaAte ? ' até ' + dataBr(m.validaAte) : '') + '.';
       } else if (modo !== 'cobrando' && !mp) {
         return;
       } else if (m.jaUsava) {
-        texto = 'Os apps continuam grátis para você.';
+        texto = 'O Digital Closet continua grátis para você.';
       } else if (m.emTeste) {
         texto = 'Teste grátis: ' + (m.diasDeTeste === 1 ? 'falta 1 dia.' : 'faltam ' + m.diasDeTeste + ' dias.');
       } else {

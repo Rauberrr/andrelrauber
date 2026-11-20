@@ -234,19 +234,18 @@ window.AR_APP = (function () {
   // itens: [ícone, título, texto]. No início, cada item é um app: [ícone, título, texto, classe do ícone].
   var PORTOES = {
     'apps/': {
-      classe: 'app-icone-portao', icone: 'apps', nome: 'Apps',
-      titulo: 'Vista-se melhor, coma melhor e chegue pronto a cada ocasião',
-      texto: 'Cinco apps que trabalham juntos para você. Crie sua conta grátis em menos de um minuto e libere todos eles agora.',
+      classe: 'app-icone-portao', icone: 'cabide', nome: 'Digital Closet',
+      titulo: 'Seu armário inteiro no bolso. E ele sabe o que você vai vestir hoje.',
+      texto: 'Fotografe suas roupas uma vez e receba looks prontos com o que você já tem. Crie sua conta grátis em menos de um minuto.',
       itens: [
-        ['cabide', 'Guarda-roupa', 'Seu armário no celular, com looks prontos para o clima do dia e o custo de cada peça.', 'app-icone-guarda-roupa'],
-        ['folha', 'Alimentação', 'Um plano para o seu objetivo, com a lista de compras e quanto custa no mercado da sua região.', 'app-icone-alimentacao'],
-        ['calendario', 'Ocasiões', 'O traje certo para cada evento, montado com as suas próprias peças, e a mala da viagem pronta.', 'app-icone-ocasioes'],
-        ['haltere', 'Treino', 'Um treino para o seu objetivo e o seu foco, na academia ou em casa, no tempo que você tem.', 'app-icone-treino'],
-        ['chama', 'Hábitos', 'Hábitos que ficam, com lembretes no celular e o resgate antes de você desistir.', 'app-icone-habitos']
+        ['varinha', 'O look do dia, pronto', 'Combinações com as suas roupas, para o clima de hoje e para onde você vai.', 'app-icone-guarda-roupa'],
+        ['camera', 'Fotografe uma vez', 'O fundo sai sozinho e tudo fica organizado por tipo e cor. Ou escolha a peça pronta no catálogo.', 'app-icone-guarda-roupa'],
+        ['tesoura', 'Compre a peça certa', 'Veja quantos looks o seu armário rende e qual peça faria mais diferença.', 'app-icone-guarda-roupa'],
+        ['calendario', 'Ocasiões', 'Casamento, entrevista ou viagem: o traje e a mala montados com as suas peças.', 'app-icone-ocasioes']
       ]
     },
     'apps/guarda-roupa/': {
-      classe: 'app-icone-guarda-roupa', icone: 'cabide', nome: 'Guarda-roupa',
+      classe: 'app-icone-guarda-roupa', icone: 'cabide', nome: 'Meu closet',
       titulo: 'Nunca mais pare na frente do armário sem saber o que vestir',
       texto: 'Fotografe suas roupas uma vez e receba, todo dia, looks prontos com o que você já tem.',
       itens: [
@@ -323,7 +322,7 @@ window.AR_APP = (function () {
     a.appendChild(criar('strong', '', 'Teste grátis'));
     a.appendChild(criar('span', '', diasRestantes
       ? (diasRestantes === 1 ? 'Falta 1 dia de teste.' : 'Faltam ' + diasRestantes + ' dias de teste.') + ' Veja como continuar depois.'
-      : 'Todos os apps estão liberados por enquanto. Veja como vai ser a assinatura.'));
+      : 'O Digital Closet está liberado por enquanto. Veja como vai ser a assinatura.'));
     a.appendChild(icone('seguir'));
     var cabeca = principal.querySelector('.app-cabeca');
     principal.insertBefore(a, cabeca ? cabeca.nextSibling : principal.firstChild);
@@ -373,7 +372,7 @@ window.AR_APP = (function () {
     portao.appendChild(lista);
 
     var garantias = criar('ul', 'app-portao-garantias');
-    ['Grátis, sem cartão de crédito', 'Uma conta só para todos os apps', 'O que você anota é visível só para você', 'Abre no celular e no computador'].forEach(function (g) {
+    ['Grátis, sem cartão de crédito', 'Uma conta só para tudo', 'O que você anota é visível só para você', 'Abre no celular e no computador'].forEach(function (g) {
       var li = criar('li');
       li.appendChild(icone('check'));
       li.appendChild(document.createTextNode(g));

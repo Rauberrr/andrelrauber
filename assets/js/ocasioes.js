@@ -920,7 +920,7 @@
     $('oc-lista-tela').hidden = detalhe;
     $('oc-detalhe-tela').hidden = !detalhe;
     $('oc-fab').hidden = detalhe;
-    $('oc-voltar-texto').textContent = detalhe ? 'Ocasiões' : 'Apps';
+    $('oc-voltar-texto').textContent = detalhe ? 'Ocasiões' : 'Closet';
     $('oc-voltar').href = detalhe ? 'apps/ocasioes/' : 'apps/';
     window.scrollTo(0, 0);
   }
