@@ -17,6 +17,7 @@ window.AR_APP = (function () {
     voltar: ['M15 5l-7 7 7 7'],
     seguir: ['M9 5l7 7-7 7'],
     mais: ['M12 5v14', 'M5 12h14'],
+    lupa: ['M10.5 4a6.5 6.5 0 1 0 0 13a6.5 6.5 0 0 0 0-13Z', 'M15.5 15.5L20 20'],
     lapis: ['M4 20h4L19 9a2.83 2.83 0 0 0-4-4L4 16v4Z', 'M13.5 6.5l4 4'],
     lixeira: ['M4 7h16', 'M9.5 7V4.5h5V7', 'M6.5 7l.9 12.5c.05.8.7 1.5 1.5 1.5h6.2c.8 0 1.45-.7 1.5-1.5L17.5 7', 'M10 11v6', 'M14 11v6'],
     camera: ['M5.5 7h2L9 4.5h6L16.5 7h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5v-9A1.5 1.5 0 0 1 5.5 7Z', 'M12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z'],
@@ -239,7 +240,7 @@ window.AR_APP = (function () {
       texto: 'Fotografe suas roupas uma vez e receba looks prontos com o que você já tem. Crie sua conta grátis em menos de um minuto.',
       itens: [
         ['varinha', 'O look do dia, pronto', 'Combinações com as suas roupas, para o clima de hoje e para onde você vai.', 'app-icone-guarda-roupa'],
-        ['camera', 'Fotografe uma vez', 'O fundo sai sozinho e tudo fica organizado por tipo e cor. Ou escolha a peça pronta no catálogo.', 'app-icone-guarda-roupa'],
+        ['lupa', 'Sem precisar fotografar', 'Escreva a peça e a cor e escolha a foto dela na internet. Ou fotografe a sua: o fundo sai sozinho.', 'app-icone-guarda-roupa'],
         ['tesoura', 'Compre a peça certa', 'Veja quantos looks o seu armário rende e qual peça faria mais diferença.', 'app-icone-guarda-roupa'],
         ['calendario', 'Ocasiões', 'Casamento, entrevista ou viagem: o traje e a mala montados com as suas peças.', 'app-icone-ocasioes']
       ]

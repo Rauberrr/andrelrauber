@@ -23,6 +23,12 @@
  * GET  ?acao=catalogo-gestor    (gestor) as peças cadastradas no painel
  * POST ?acao=catalogo-salvar    (gestor) cadastra ou altera uma peça, com a foto (multipart)
  * POST ?acao=catalogo-ativar    (gestor) mostra ou esconde uma peça do catálogo  {id, ativa}
+ *
+ * Foto da peça achada na internet (Brave Search; a chave fica no config.php, em brave_busca):
+ * GET  ?acao=buscar-foto&q=     imagens para a descrição da pessoa, com fundo branco
+ * GET  ?acao=foto-web&u=&a=     a imagem escolhida, trazida pelo site para passar pelo "tirar o fundo"
+ *
+ * O guarda-roupa de cada pessoa começa vazio: ela adiciona as peças pelo catálogo, pela foto ou pela busca.
  */
 declare(strict_types=1);
 
@@ -146,6 +152,11 @@ const GR_HEX_DAS_CORES = [
 const GR_MAXIMO_CATALOGO = 300;
 
 const GR_MAXIMO_PECAS = 60;
+// Comprimento das peças de cima, para as dicas de proporção
+const GR_COMPRIMENTOS = ['', 'curta', 'certa', 'longa'];
+// Busca da foto da peça na internet
+const GR_BUSCA_RESULTADOS = 24;
+const GR_FOTO_WEB_BYTES = 6000000;
 // Peças próprias somando as excluídas, cujas fotos continuam guardadas
 const GR_MAXIMO_COM_EXCLUIDAS = 120;
 const GR_MAXIMO_BYTES = 5242880;
@@ -167,6 +178,12 @@ if ($metodo === 'GET') {
             break;
         case 'catalogo-gestor':
             catalogo_gestor();
+            break;
+        case 'buscar-foto':
+            buscar_foto();
+            break;
+        case 'foto-web':
+            foto_web();
             break;
     }
     listar();
@@ -714,12 +731,222 @@ function peca_publica(array $p, ?int $preco = null): array
         'formalidade' => $p['formalidade'],
         'clima' => $p['clima'],
         'apelido' => $p['apelido'],
+        'comprimento' => comprimento_da_peca((int) $p['id'], (int) $p['usuario_id']),
         'fundoRemovido' => (int) $p['fundo_removido'] === 1,
         'sugerida' => eh_sugerida($p),
         'foto' => foto_da_peca($p),
         'criadoEm' => substr((string) $p['criado_em'], 0, 10),
         'preco' => $preco,
     ];
+}
+
+/* --- Foto achada na internet ------------------------------------------------------------------ */
+
+function chave_da_busca(): string
+{
+    return trim((string) (config()['brave_busca'] ?? ''));
+}
+
+// As imagens que o site aceita trazer são só as que a busca devolveu: cada uma leva uma assinatura
+function segredo_da_busca(): string
+{
+    $s = ajuste('segredo_busca_foto', '');
+    if (!is_string($s) || strlen($s) < 32) {
+        $s = bin2hex(random_bytes(32));
+        gravar_ajuste('segredo_busca_foto', $s);
+    }
+    return $s;
+}
+
+function assinar_endereco(string $url): string
+{
+    return substr(hash_hmac('sha256', $url, segredo_da_busca()), 0, 40);
+}
+
+function endereco_https(string $url): bool
+{
+    // Só https; nos testes locais, o servidor falso responde em http
+    $esquema = !empty(config()['teste_permitir_endereco_local']) ? 'https?' : 'https';
+    return strlen($url) <= 1500 && preg_match('~^' . $esquema . '://[^\s/?#]+[^\s]*$~i', $url) === 1;
+}
+
+/**
+ * A pessoa descreve a peça ("suéter vermelho gola V") e recebe fotos de produto.
+ * O fundo branco vai na pesquisa sem aparecer para ela, para as fotos saírem parecidas com as do catálogo.
+ */
+function buscar_foto(): void
+{
+    $usuario = exigir_login();
+    $chave = chave_da_busca();
+    if ($chave === '') {
+        falhar(503, 'A busca de fotos ainda não está ligada. Tire uma foto da peça ou escolha no catálogo.', ['semBusca' => true]);
+    }
+    $termo = trim(preg_replace('/\s+/', ' ', (string) ($_GET['q'] ?? '')));
+    if (mb_strlen($termo) < 3 || mb_strlen($termo) > 80) {
+        falhar(422, 'Escreva a peça e a cor, como "suéter vermelho".');
+    }
+    $limite = chave_limite('buscar-foto', (string) $usuario['id']);
+    exigir_limite($limite, 40, 3600);
+    contar_tentativa($limite);
+
+    $base = rtrim((string) (config()['brave_endereco'] ?? 'https://api.search.brave.com'), '/');
+    $url = $base . '/res/v1/images/search?' . http_build_query([
+        'q' => $termo . ' roupa fundo branco foto produto',
+        'count' => GR_BUSCA_RESULTADOS,
+        'safesearch' => 'strict',
+        'country' => 'BR',
+    ]);
+    $c = curl_init($url);
+    curl_setopt_array($c, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 12,
+        CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_HTTPHEADER => ['Accept: application/json', 'X-Subscription-Token: ' . $chave],
+    ]);
+    $corpo = curl_exec($c);
+    $codigo = (int) curl_getinfo($c, CURLINFO_RESPONSE_CODE);
+    curl_close($c);
+    if ($codigo !== 200 || !is_string($corpo)) {
+        error_log('Busca de fotos: a Brave respondeu ' . $codigo);
+        falhar(502, $codigo === 429 ? 'Muitas buscas agora. Tente de novo em instantes.' : 'A busca de fotos não respondeu agora. Tente de novo em instantes.');
+    }
+    $dados = json_decode($corpo, true);
+    $fotos = [];
+    foreach ((is_array($dados['results'] ?? null) ? $dados['results'] : []) as $r) {
+        $miniatura = (string) ($r['thumbnail']['src'] ?? '');
+        $original = (string) ($r['properties']['url'] ?? '');
+        if (!endereco_https($miniatura)) {
+            continue;
+        }
+        $foto = [
+            'miniatura' => $miniatura,
+            'assinaturaMiniatura' => assinar_endereco($miniatura),
+            'titulo' => mb_substr(trim((string) ($r['title'] ?? '')), 0, 90),
+            'origem' => mb_substr((string) ($r['source'] ?? ($r['meta_url']['hostname'] ?? '')), 0, 60),
+        ];
+        if (endereco_https($original)) {
+            $foto['original'] = $original;
+            $foto['assinaturaOriginal'] = assinar_endereco($original);
+        }
+        $fotos[] = $foto;
+        if (count($fotos) >= GR_BUSCA_RESULTADOS) {
+            break;
+        }
+    }
+    responder(200, ['fotos' => $fotos]);
+}
+
+// Endereço da internet pública: não deixa a busca apontar para a rede interna do servidor
+function ip_publico(string $host): ?string
+{
+    $ips = @gethostbynamel($host);
+    if (!$ips) {
+        return null;
+    }
+    foreach ($ips as $ip) {
+        $local = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false;
+        if (!$local || !empty(config()['teste_permitir_endereco_local'])) {
+            return $ip;
+        }
+    }
+    return null;
+}
+
+/** Traz a imagem escolhida para o navegador da pessoa poder tirar o fundo. Nada fica guardado aqui. */
+function foto_web(): void
+{
+    $usuario = exigir_login();
+    $url = (string) ($_GET['u'] ?? '');
+    $assinatura = (string) ($_GET['a'] ?? '');
+    if (!endereco_https($url) || !hash_equals(assinar_endereco($url), $assinatura)) {
+        falhar(404, 'Foto não encontrada.');
+    }
+    $limite = chave_limite('foto-web', (string) $usuario['id']);
+    exigir_limite($limite, 120, 3600);
+    contar_tentativa($limite);
+
+    $partes = parse_url($url);
+    $host = (string) ($partes['host'] ?? '');
+    $porta = (int) ($partes['port'] ?? (strtolower((string) ($partes['scheme'] ?? '')) === 'http' ? 80 : 443));
+    $ip = $host !== '' ? ip_publico($host) : null;
+    if ($ip === null) {
+        falhar(404, 'Foto não encontrada.');
+    }
+    $recebido = '';
+    $c = curl_init($url);
+    curl_setopt_array($c, [
+        CURLOPT_RETURNTRANSFER => false,
+        CURLOPT_TIMEOUT => 12,
+        CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_PROTOCOLS => !empty(config()['teste_permitir_endereco_local']) ? (CURLPROTO_HTTP | CURLPROTO_HTTPS) : CURLPROTO_HTTPS,
+        CURLOPT_HTTPHEADER => ['Accept: image/webp,image/jpeg,image/png,image/*;q=0.8', 'User-Agent: Mozilla/5.0 (compatible; RauberDigitalCloset/1.0)'],
+        CURLOPT_WRITEFUNCTION => function ($h, string $pedaco) use (&$recebido): int {
+            $recebido .= $pedaco;
+            return strlen($recebido) > GR_FOTO_WEB_BYTES ? 0 : strlen($pedaco);
+        },
+    ]);
+    if (empty(config()['teste_permitir_endereco_local'])) {
+        // O endereço conferido é o usado na conexão
+        curl_setopt($c, CURLOPT_RESOLVE, [$host . ':' . $porta . ':' . $ip]);
+    } else {
+        curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($c, CURLOPT_SSL_VERIFYHOST, 0);
+    }
+    curl_exec($c);
+    $codigo = (int) curl_getinfo($c, CURLINFO_RESPONSE_CODE);
+    curl_close($c);
+    $info = $codigo === 200 && $recebido !== '' && strlen($recebido) <= GR_FOTO_WEB_BYTES ? @getimagesizefromstring($recebido) : false;
+    $tipos = [IMAGETYPE_JPEG => 'image/jpeg', IMAGETYPE_PNG => 'image/png', IMAGETYPE_WEBP => 'image/webp', IMAGETYPE_GIF => 'image/gif'];
+    if ($info === false || !isset($tipos[$info[2]])) {
+        falhar(404, 'Não foi possível trazer esta foto. Escolha outra.');
+    }
+    header_remove('Cache-Control');
+    header('Cache-Control: private, max-age=600');
+    header('Content-Type: ' . $tipos[$info[2]]);
+    header("Content-Security-Policy: default-src 'none'");
+    header('X-Content-Type-Options: nosniff');
+    header('Content-Length: ' . strlen($recebido));
+    echo $recebido;
+    exit;
+}
+
+/* --- Comprimento das peças de cima (tabela à parte, criada no primeiro uso) ------------------- */
+
+function garantir_tabela_extras(): void
+{
+    static $feito = false;
+    if (!$feito) {
+        consultar('CREATE TABLE IF NOT EXISTS pecas_extras (peca_id INT UNSIGNED NOT NULL PRIMARY KEY, comprimento VARCHAR(12) NOT NULL DEFAULT \'\')');
+        $feito = true;
+    }
+}
+
+/** O comprimento guardado de cada peça da pessoa ('' quando não informado). */
+function comprimento_da_peca(int $pecaId, int $usuarioId, ?string $novo = null): string
+{
+    static $mapas = [];
+    if ($novo !== null) {
+        garantir_tabela_extras();
+        consultar('DELETE FROM pecas_extras WHERE peca_id = ?', [$pecaId]);
+        if ($novo !== '') {
+            consultar('INSERT INTO pecas_extras (peca_id, comprimento) VALUES (?, ?)', [$pecaId, $novo]);
+        }
+        if (isset($mapas[$usuarioId])) {
+            $mapas[$usuarioId][$pecaId] = $novo;
+        }
+        return $novo;
+    }
+    if (!isset($mapas[$usuarioId])) {
+        $mapas[$usuarioId] = [];
+        try {
+            foreach (consultar('SELECT e.peca_id, e.comprimento FROM pecas_extras e JOIN pecas p ON p.id = e.peca_id WHERE p.usuario_id = ?', [$usuarioId])->fetchAll() as $l) {
+                $mapas[$usuarioId][(int) $l['peca_id']] = (string) $l['comprimento'];
+            }
+        } catch (PDOException $erro) {
+            // Tabela ainda não criada: nenhuma peça tem comprimento
+        }
+    }
+    return $mapas[$usuarioId][$pecaId] ?? '';
 }
 
 function precos_da_pessoa(int $id): array
@@ -752,7 +979,6 @@ function listar(): void
 {
     $usuario = exigir_login();
     $id = (int) $usuario['id'];
-    entregar_sugeridas($id);
     $pecas = consultar(
         'SELECT * FROM pecas WHERE usuario_id = ? AND id NOT IN (SELECT peca_id FROM pecas_excluidas WHERE usuario_id = ?) ORDER BY id DESC',
         [$id, $id]
@@ -777,6 +1003,7 @@ function listar(): void
         'maximoPecas' => GR_MAXIMO_PECAS,
         'consentiu' => $usuario['consentiu_em'] !== null,
         'compradas' => pecas_compradas($id),
+        'buscaDeFotos' => chave_da_busca() !== '',
     ]);
 }
 
@@ -838,6 +1065,7 @@ function validar_descricao(array $d): array
         'formalidade' => $formalidade,
         'clima' => $clima,
         'apelido' => texto($d, 'apelido', 60),
+        'comprimento' => in_array($d['comprimento'] ?? '', GR_COMPRIMENTOS, true) ? (string) ($d['comprimento'] ?? '') : '',
     ];
 }
 
@@ -947,6 +1175,9 @@ function adicionar(): void
          $descricao['clima'], $descricao['apelido'], $arquivo, $fundoRemovido, $momento, $momento]
     );
     $novoId = (int) banco()->lastInsertId();
+    if ($descricao['comprimento'] !== '') {
+        comprimento_da_peca($novoId, $id, $descricao['comprimento']);
+    }
     registrar_evento($id, 'peca_adicionada', null, $descricao['tipo']);
     $preco = preco_valido($_POST['preco'] ?? null);
     if ($preco !== null && $preco > 0) {
@@ -998,6 +1229,9 @@ function editar(): void
         'UPDATE pecas SET tipo = ?, cor = ?, corte = ?, tecido = ?, formalidade = ?, clima = ?, apelido = ?, atualizado_em = ? WHERE id = ?',
         [$d['tipo'], $d['cor'], $d['corte'], $d['tecido'], $d['formalidade'], $d['clima'], $d['apelido'], agora(), $pecaId]
     );
+    if (array_key_exists('comprimento', $dados)) {
+        comprimento_da_peca($pecaId, $id, $d['comprimento']);
+    }
     if (array_key_exists('preco', $dados)) {
         $preco = preco_valido($dados['preco']);
         if ($preco === null) {

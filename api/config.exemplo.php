@@ -33,6 +33,10 @@ return [
     // Máximo de parcelas oferecidas. Com 0, valem as opções do próprio Mercado Pago.
     'mercadopago_parcelas' => 0,
 
+    // Digital Closet: busca da foto da peça na internet (Brave Search API, plano de imagens).
+    // Crie a chave em https://api-dashboard.search.brave.com. Vazio deixa a busca desligada.
+    'brave_busca' => '',
+
     // Publicar vídeos (painel do gestor). Cada rede tem um app de desenvolvedor criado por você;
     // o passo a passo está no README. Vazio deixa a rede desligada. Nunca compartilhe esses valores.
     // Endereço de retorno para cadastrar em todos os apps: https://andrerauber.com/api/conectar.php

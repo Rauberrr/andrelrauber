@@ -106,7 +106,7 @@
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && !$('gr-fab-menu').hidden) { definirMenu(false); $('gr-fab').focus(); }
   });
-  ['gr-adicionar', 'gr-adicionar-varias', 'gr-fab-uso'].forEach(function (id) {
+  ['gr-adicionar', 'gr-adicionar-web', 'gr-adicionar-varias', 'gr-fab-uso'].forEach(function (id) {
     $(id).addEventListener('click', function () { definirMenu(false); });
   });
 
@@ -203,6 +203,8 @@
     $('gr-adicionar-varias').disabled = proprias >= maximo;
     $('gr-limite').hidden = proprias < maximo;
     $('gr-sem-sugeridas').hidden = !temSugeridas;
+    $('gr-ajuda-sugeridas').hidden = !temSugeridas;
+    $('gr-dica-web').hidden = !buscaLigada || pecas.length === 0 || pecas.length >= 15;
     atualizarContagemExcluidas();
   }
 
@@ -319,19 +321,141 @@
     rascunho = null;
   }
 
-  function abrirNovo() {
+  function abrirNovo(comBusca) {
     limparRascunho();
     rascunho = { id: null };
     estadoFundo('', '', {});
     $('gr-foto-erro').textContent = '';
-    $('gr-foto-titulo').textContent = 'Fotografe a peça';
+    $('gr-foto-titulo').textContent = 'Adicionar uma peça';
     $('gr-foto-voltar').hidden = true;
+    prepararBusca();
     mostrarPasso('gr-passo-foto');
     $('gr-modal').showModal();
+    if (comBusca === true && buscaLigada) $('gr-web-q').focus();
   }
 
-  $('gr-adicionar').addEventListener('click', abrirNovo);
-  $('gr-primeira').addEventListener('click', abrirNovo);
+  $('gr-adicionar').addEventListener('click', function () { abrirNovo(false); });
+  $('gr-adicionar-web').addEventListener('click', function () { abrirNovo(true); });
+  $('gr-primeira').addEventListener('click', function () { abrirNovo(true); });
+  $('gr-vazio-foto').addEventListener('click', function () { abrirNovo(false); });
+  $('gr-vazio-catalogo').addEventListener('click', function () { $('gr-abrir-catalogo').click(); });
+  $('cat-falta').addEventListener('click', function () { $('cat-modal').close(); abrirNovo(true); });
+
+  /* --- Foto achada na internet --------------------------------------------------------------- */
+
+  var buscaLigada = false;
+
+  function prepararBusca() {
+    $('gr-web').hidden = !buscaLigada;
+    $('gr-foto-propria-titulo').textContent = buscaLigada ? 'Ou fotografe a sua peça' : 'Fotografe a sua peça';
+    $('gr-web-q').value = '';
+    $('gr-web-estado').textContent = '';
+    $('gr-web-fotos').textContent = '';
+    $('gr-web-nota').hidden = true;
+  }
+
+  function semAcento(t) {
+    return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[-_]/g, ' ');
+  }
+
+  // O que a pessoa escreveu já preenche o tipo, a cor e o corte (ela confere na descrição)
+  var PALAVRAS_DO_TIPO = [
+    ['calca jeans', 'jeans'], ['jeans', 'jeans'], ['calca de sarja', 'calca_sarja'], ['sarja', 'calca_sarja'], ['chino', 'calca_sarja'],
+    ['calca de moletom', 'calca_moletom'], ['jogger', 'calca_moletom'], ['moletom', 'moletom'], ['calca', 'calca'],
+    ['camiseta', 'camiseta'], ['t shirt', 'camiseta'], ['regata', 'regata'], ['polo', 'polo'], ['camisa de manga curta', 'camisa_curta'],
+    ['camisa', 'camisa'], ['sueter', 'malha'], ['tricot', 'malha'], ['trico', 'malha'], ['malha', 'malha'], ['blusa', 'blusa'],
+    ['blazer', 'blazer'], ['jaqueta', 'jaqueta'], ['sobretudo', 'sobretudo'], ['casaco', 'casaco'], ['cardiga', 'cardigan'], ['cardigan', 'cardigan'],
+    ['colete', 'colete'], ['terno', 'terno'], ['vestido', 'vestido'], ['saia', 'saia'], ['bermuda', 'bermuda'], ['short', 'short_esportivo'],
+    ['sapato', 'sapato'], ['mocassim', 'mocassim'], ['tenis', 'tenis'], ['bota', 'bota'], ['sandalia', 'sandalia'], ['chinelo', 'chinelo'],
+    ['cinto', 'cinto'], ['gravata', 'gravata'], ['bone', 'bone'], ['oculos', 'oculos'], ['relogio', 'relogio']
+  ];
+  var PALAVRAS_DO_CORTE = [['wide leg', 'wide_leg'], ['pantalona', 'wide_leg'], ['skinny', 'skinny'], ['flare', 'flare'], ['oversized', 'oversized'],
+    ['slim', 'slim'], ['justa', 'slim'], ['ajustada', 'slim'], ['reta', 'reto'], ['reto', 'reto'], ['larga', 'relaxed'], ['solta', 'relaxed'],
+    ['relaxed', 'relaxed'], ['regular', 'regular'], ['sob medida', 'sob_medida']];
+
+  function temPalavra(texto, palavra) {
+    return (' ' + texto + ' ').indexOf(' ' + palavra) !== -1;
+  }
+
+  function palpiteDaBusca(q) {
+    var t = semAcento(q);
+    var palpite = {};
+    PALAVRAS_DO_TIPO.some(function (p) { if (temPalavra(t, p[0])) { palpite.tipo = p[1]; return true; } return false; });
+    var cores = gr.CORES.slice().sort(function (a, b) { return b.nome.length - a.nome.length; });
+    cores.some(function (c) {
+      var achou = [c.nome, c.descricao, c.rotulo].some(function (n) { return n && temPalavra(t, semAcento(n)); });
+      if (achou) palpite.cor = c.id;
+      return achou;
+    });
+    PALAVRAS_DO_CORTE.some(function (p) { if (temPalavra(t, p[0])) { palpite.corte = p[1]; return true; } return false; });
+    return palpite;
+  }
+
+  $('gr-web-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var q = $('gr-web-q').value.trim();
+    var estado = $('gr-web-estado');
+    var lista = $('gr-web-fotos');
+    if (q.length < 3) { estado.textContent = 'Escreva a peça e a cor, como "suéter vermelho".'; return; }
+    estado.textContent = 'Buscando fotos...';
+    lista.textContent = '';
+    $('gr-web-nota').hidden = true;
+    $('gr-web-buscar').disabled = true;
+    api.get(ENDERECO + '?acao=buscar-foto&q=' + encodeURIComponent(q)).then(function (r) {
+      $('gr-web-buscar').disabled = false;
+      if (!r.ok) {
+        estado.textContent = r.erro || 'A busca não respondeu agora. Tente de novo.';
+        if (r.dados && r.dados.semBusca) { buscaLigada = false; $('gr-web').hidden = true; }
+        return;
+      }
+      var fotos = r.dados.fotos || [];
+      if (!fotos.length) { estado.textContent = 'Nenhuma foto encontrada. Tente outras palavras, como o tipo e a cor da peça.'; return; }
+      estado.textContent = 'Escolha a foto da sua peça:';
+      $('gr-web-nota').hidden = false;
+      fotos.forEach(function (f) {
+        var li = criar('li');
+        var b = criar('button', 'gr-web-foto');
+        b.type = 'button';
+        b.setAttribute('aria-label', 'Usar esta foto' + (f.titulo ? ': ' + f.titulo : ''));
+        var img = document.createElement('img');
+        img.src = f.miniatura;
+        img.alt = '';
+        img.loading = 'lazy';
+        img.referrerPolicy = 'no-referrer';
+        img.addEventListener('error', function () { li.remove(); });
+        b.appendChild(img);
+        b.addEventListener('click', function () { usarFotoDaWeb(f, q, b); });
+        li.appendChild(b);
+        lista.appendChild(li);
+      });
+    });
+  });
+
+  function trazerFoto(url, assinatura) {
+    return fetch(ENDERECO + '?acao=foto-web&u=' + encodeURIComponent(url) + '&a=' + encodeURIComponent(assinatura), { credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) throw new Error('foto'); return r.blob(); });
+  }
+
+  // A foto vem pelo site e passa pelo mesmo caminho da foto tirada: tirar o fundo e enquadrar
+  function usarFotoDaWeb(f, q, botao) {
+    var atual = rascunho;
+    if (!atual) return;
+    $('gr-web-fotos').querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+    botao.classList.add('gr-web-escolhida');
+    $('gr-web-estado').textContent = 'Trazendo a foto...';
+    var primeira = f.original ? trazerFoto(f.original, f.assinaturaOriginal).catch(function () { return trazerFoto(f.miniatura, f.assinaturaMiniatura); })
+      : trazerFoto(f.miniatura, f.assinaturaMiniatura);
+    primeira.then(foto.abrir).then(function (canvas) {
+      if (rascunho !== atual) return;
+      atual.original = canvas;
+      atual.palpite = palpiteDaBusca(q);
+      prepararFundo();
+    }).catch(function () {
+      $('gr-web-fotos').querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+      botao.classList.remove('gr-web-escolhida');
+      $('gr-web-estado').textContent = 'Não foi possível trazer esta foto. Escolha outra.';
+    });
+  }
 
   $('gr-fechar').addEventListener('click', function () { $('gr-modal').close(); });
   // O aviso de fechamento chega depois: não pode apagar uma peça que já foi reaberta
@@ -513,6 +637,7 @@
     rascunho.trocarFoto = true;
     rascunho.soFundo = false;
     $('gr-foto-titulo').textContent = 'Nova foto da peça';
+    prepararBusca();
     $('gr-foto-voltar').hidden = false;
     $('gr-foto-erro').textContent = '';
     mostrarPasso('gr-passo-foto');
@@ -651,6 +776,7 @@
       tipo: $('gr-tipo').value,
       cor: $('gr-cor').value,
       corte: gr.temCorte($('gr-tipo').value) ? $('gr-corte').value : '',
+      comprimento: temComprimento($('gr-tipo').value) ? $('gr-comprimento').value : '',
       tecido: $('gr-tecido').value,
       formalidade: $('gr-formalidade').value,
       clima: $('gr-clima').value,
@@ -658,9 +784,16 @@
     };
   }
 
+  // O comprimento só importa nas peças de cima, para as dicas de proporção
+  function temComprimento(tipo) {
+    var t = gr.porTipo[tipo];
+    return Boolean(t && t.grupo === 'cima' && tipo !== 'regata');
+  }
+
   function atualizarResumo() {
     var v = valoresDoForm();
     $('gr-campo-corte').hidden = !gr.temCorte(v.tipo);
+    $('gr-campo-comprimento').hidden = !temComprimento(v.tipo);
     $('gr-resumo').textContent = gr.descrever(v) || 'Escolha o tipo, a cor e o corte.';
   }
 
@@ -689,6 +822,7 @@
     $('gr-tipo').value = p.tipo || '';
     $('gr-cor').value = p.cor || '';
     $('gr-corte').value = p.corte || '';
+    $('gr-comprimento').value = p.comprimento || '';
     $('gr-tecido').value = p.tecido || '';
     $('gr-formalidade').value = p.formalidade || 'casual';
     $('gr-clima').value = p.clima || 'qualquer';
@@ -700,10 +834,16 @@
 
   function irParaDescricao() {
     var sugestao = foto.corPrincipal(rascunho.final, rascunho.transparente);
+    var palpite = rascunho.palpite || {};
     escolheuFormalidade = false;
     escolheuClima = false;
-    encherForm({ cor: sugestao });
-    $('gr-cor-dica').hidden = !sugestao;
+    var inicio = { cor: palpite.cor || sugestao, tipo: palpite.tipo, corte: palpite.corte };
+    if (palpite.tipo) {
+      inicio.formalidade = gr.formalidadePadrao(palpite.tipo);
+      inicio.clima = gr.climaPadrao(palpite.tipo, '');
+    }
+    encherForm(inicio);
+    $('gr-cor-dica').hidden = !sugestao || Boolean(palpite.cor);
     $('gr-descricao-titulo').textContent = 'Descreva a peça';
     mostrarPrevia(rascunho.final, rascunho.transparente);
     $('gr-edicao').hidden = true;
@@ -1063,6 +1203,14 @@
       var motivos = criar('ul', 'gr-look-motivos');
       look.motivos.forEach(function (m) { motivos.appendChild(criar('li', '', m)); });
       cartao.appendChild(motivos);
+    }
+
+    var dicas = motor.dicasDoLook ? motor.dicasDoLook(look.pecas, pecas) : [];
+    if (dicas.length) {
+      var caixaDicas = criar('div', 'gr-look-dicas');
+      caixaDicas.appendChild(criar('p', 'gr-look-dicas-titulo', 'Dica de proporção'));
+      dicas.forEach(function (d) { caixaDicas.appendChild(criar('p', '', d)); });
+      cartao.appendChild(caixaDicas);
     }
 
     var acoes = criar('div', 'gr-look-acoes');
@@ -1833,7 +1981,7 @@
   preencherSelect('gr-filtro-clima', gr.CLIMAS.filter(function (c) { return c.id !== 'qualquer'; }), 'Qualquer');
   preencherSelect('gr-tecido', gr.TECIDOS, 'Não sei ou prefiro não informar');
   preencherSelect('gr-cor', gr.CORES, 'Escolha');
-  preencherSelect('gr-corte', gr.CORTES, 'Escolha');
+  preencherSelect('gr-corte', gr.CORTES.map(function (c) { return { id: c.id, rotulo: c.explica ? c.rotulo + ' (' + c.explica + ')' : c.rotulo }; }), 'Escolha');
   preencherSelect('gr-formalidade', gr.FORMALIDADES);
   preencherSelect('gr-clima', gr.CLIMAS);
   $('gr-tempo-uf').appendChild(new Option('—', ''));
@@ -1889,6 +2037,7 @@
     usos = r.dados.usos || [];
     maximo = r.dados.maximoPecas;
     consentiu = r.dados.consentiu;
+    buscaLigada = Boolean(r.dados.buscaDeFotos);
     $('gr-maximo').textContent = String(maximo);
     r.dados.looks.slice().reverse().forEach(function (l) { decisoes[l.chave] = l.situacao; });
     r.dados.notas.forEach(function (n) { notas[n.chave] = { nome: n.nome, observacao: n.observacao }; });

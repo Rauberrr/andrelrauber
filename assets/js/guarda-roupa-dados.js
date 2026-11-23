@@ -77,15 +77,15 @@ window.AR_GR = (function () {
   ];
 
   var CORTES = [
-    { id: 'sob_medida', rotulo: 'Sob medida' },
-    { id: 'slim', rotulo: 'Slim' },
-    { id: 'regular', rotulo: 'Regular' },
-    { id: 'reto', rotulo: 'Reto' },
-    { id: 'relaxed', rotulo: 'Relaxed' },
-    { id: 'skinny', rotulo: 'Skinny' },
-    { id: 'wide_leg', rotulo: 'Wide leg' },
-    { id: 'flare', rotulo: 'Flare' },
-    { id: 'oversized', rotulo: 'Oversized' }
+    { id: 'sob_medida', rotulo: 'Sob medida', explica: 'feita nas suas medidas' },
+    { id: 'slim', rotulo: 'Slim', explica: 'mais justa ao corpo' },
+    { id: 'regular', rotulo: 'Regular', explica: 'nem justa nem larga' },
+    { id: 'reto', rotulo: 'Reto', explica: 'cai reto, sem afinar' },
+    { id: 'relaxed', rotulo: 'Relaxed', explica: 'mais solta e confortável' },
+    { id: 'skinny', rotulo: 'Skinny', explica: 'bem colada ao corpo' },
+    { id: 'wide_leg', rotulo: 'Wide leg', explica: 'perna bem larga' },
+    { id: 'flare', rotulo: 'Flare', explica: 'abre do joelho para baixo' },
+    { id: 'oversized', rotulo: 'Oversized', explica: 'bem larga, de propósito' }
   ];
 
   var TECIDOS = [

@@ -41,7 +41,7 @@
   }
 
   preencher('lote-cor', gr.CORES, 'Escolha');
-  preencher('lote-corte', gr.CORTES, 'Escolha');
+  preencher('lote-corte', gr.CORTES.map(function (c) { return { id: c.id, rotulo: c.explica ? c.rotulo + ' (' + c.explica + ')' : c.rotulo }; }), 'Escolha');
   preencher('lote-tecido', gr.TECIDOS, 'Não sei ou prefiro não informar');
   preencher('lote-formalidade', gr.FORMALIDADES);
   preencher('lote-clima', gr.CLIMAS);

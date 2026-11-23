@@ -18,8 +18,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261120a">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261120a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261123a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261123a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -68,8 +68,9 @@
             <div class="campo-entrada"><select id="gr-filtro-grupo"></select></div>
           </div>
         </div>
+        <p class="gr-dica-web" id="gr-dica-web" hidden>Não precisa fotografar: toque em <strong>+</strong> e busque a foto da sua peça na internet.</p>
         <p class="gr-suave" id="gr-limite" hidden>Você chegou ao limite de <span id="gr-maximo">60</span> peças suas. Exclua uma para adicionar outra.</p>
-        <p class="gr-ajuda-sugeridas">As peças com a marca <strong>Sugerida</strong> já vêm no seu guarda-roupa para ajudar a montar os looks. Fique com as que você tem e exclua as outras. <button class="texto-botao" id="gr-sem-sugeridas" type="button" hidden>Tirar todas as sugeridas</button></p>
+        <p class="gr-ajuda-sugeridas" id="gr-ajuda-sugeridas" hidden>As peças com a marca <strong>Sugerida</strong> já vêm no seu guarda-roupa para ajudar a montar os looks. Fique com as que você tem e exclua as outras. <button class="texto-botao" id="gr-sem-sugeridas" type="button" hidden>Tirar todas as sugeridas</button></p>
 
         <section class="gr-potencial" id="gr-potencial" aria-labelledby="gr-potencial-titulo" hidden>
           <div class="gr-potencial-numeros" aria-hidden="true">
@@ -92,9 +93,22 @@
           <svg data-icone="seguir" aria-hidden="true"></svg>
         </button>
         <div class="gr-vazio" id="gr-vazio" hidden>
-          <h2 class="titulo-m">Comece pela peça que você mais usa.</h2>
-          <p>Com uma peça de cima e uma de baixo, os primeiros looks já aparecem.</p>
-          <button class="botao botao-cheio" id="gr-primeira" type="button">Adicionar a primeira peça</button>
+          <h2 class="titulo-m">Seu closet está vazio. Vamos encher?</h2>
+          <p>Adicione as roupas que você tem no armário. Com uma peça de cima e uma de baixo, os primeiros looks já aparecem.</p>
+          <div class="gr-vazio-opcoes">
+            <button class="gr-vazio-opcao gr-vazio-opcao-destaque" id="gr-primeira" type="button">
+              <svg data-icone="lupa" aria-hidden="true"></svg>
+              <span><strong>Buscar a foto na internet</strong><small>Sem tirar foto: escreva a peça e a cor e escolha a imagem.</small></span>
+            </button>
+            <button class="gr-vazio-opcao" id="gr-vazio-foto" type="button">
+              <svg data-icone="camera" aria-hidden="true"></svg>
+              <span><strong>Fotografar minhas peças</strong><small>O fundo sai sozinho e a peça fica no padrão do closet.</small></span>
+            </button>
+            <button class="gr-vazio-opcao" id="gr-vazio-catalogo" type="button">
+              <svg data-icone="cabide" aria-hidden="true"></svg>
+              <span><strong>Escolher no catálogo</strong><small>Peças prontas em várias cores. Toque nas que você tem.</small></span>
+            </button>
+          </div>
         </div>
         <p class="gr-suave" id="gr-filtro-vazio" hidden>Nenhuma peça deste tipo.</p>
         <ul class="gr-grade" id="gr-pecas"></ul>
@@ -212,7 +226,8 @@
   <button class="app-fab" id="gr-fab" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="gr-fab-menu" aria-label="Adicionar peças" hidden><svg data-icone="mais"></svg></button>
   <div class="app-fab-menu" id="gr-fab-menu" hidden>
     <button id="gr-do-catalogo" type="button">Do catálogo <svg data-icone="cabide"></svg></button>
-    <button id="gr-adicionar" type="button">Uma peça <svg data-icone="camera"></svg></button>
+    <button id="gr-adicionar-web" type="button">Buscar foto na internet <svg data-icone="lupa"></svg></button>
+    <button id="gr-adicionar" type="button">Uma peça, com foto <svg data-icone="camera"></svg></button>
     <button id="gr-adicionar-varias" type="button">Várias de uma vez <svg data-icone="apps"></svg></button>
     <button id="gr-fab-uso" type="button">Registrar o que usei <svg data-icone="diario"></svg></button>
   </div>
@@ -224,7 +239,29 @@
 
     <div class="gr-modal-corpo">
       <section id="gr-passo-foto">
-        <h2 class="titulo-m" id="gr-foto-titulo">Fotografe a peça</h2>
+        <h2 class="titulo-m" id="gr-foto-titulo">Adicionar uma peça</h2>
+        <div class="gr-web" id="gr-web" hidden>
+          <p class="gr-web-selo">Mais rápido: sem tirar foto</p>
+          <h3 class="gr-web-titulo">Encontre a foto da sua peça na internet</h3>
+          <p class="gr-suave">Escreva a peça, a cor e, se souber, o caimento: mais justa ou mais solta. Ex.: <em>suéter vermelho gola V</em> ou <em>calça jeans escura reta</em>.</p>
+          <form class="gr-web-busca" id="gr-web-form" novalidate>
+            <label class="visualmente-oculto" for="gr-web-q">Descreva a sua peça</label>
+            <input id="gr-web-q" type="search" maxlength="80" placeholder="Ex.: camisa social branca slim" enterkeyhint="search" autocomplete="off">
+            <button class="botao botao-cheio" type="submit" id="gr-web-buscar">Buscar</button>
+          </form>
+          <p class="gr-web-estado" id="gr-web-estado" role="status"></p>
+          <ul class="gr-web-fotos" id="gr-web-fotos" aria-label="Fotos encontradas"></ul>
+          <p class="gr-suave gr-web-nota" id="gr-web-nota" hidden>Toque na foto mais parecida com a sua peça. O fundo sai na hora e ela fica no padrão do seu closet.</p>
+        </div>
+
+        <h3 class="gr-web-titulo gr-foto-propria-titulo" id="gr-foto-propria-titulo">Ou fotografe a sua peça</h3>
+        <div class="gr-botoes-empilhados gr-botoes-foto">
+          <button class="botao" id="gr-tirar" type="button">Tirar foto</button>
+          <button class="botao" id="gr-escolher" type="button">Escolher da galeria</button>
+          <button class="texto-botao" id="gr-foto-voltar" type="button" hidden>Voltar para a peça</button>
+        </div>
+        <details class="gr-dicas-caixa">
+          <summary>Como tirar uma boa foto</summary>
         <ol class="gr-dicas-foto">
           <li>
             <svg viewBox="0 0 64 48" aria-hidden="true"><rect x="4" y="4" width="56" height="40" rx="3"/><path d="M24 12l-7 4-4 8 5 2 3-4v14h22V22l3 4 5-2-4-8-7-4c-2 3-14 3-16 0z"/></svg>
@@ -243,11 +280,7 @@
             <span><strong>A peça inteira, com folga</strong>Deixe um espaço em volta, sem cortar mangas ou barras, e sem pessoas ou outros objetos na foto.</span>
           </li>
         </ol>
-        <div class="gr-botoes-empilhados">
-          <button class="botao botao-cheio" id="gr-tirar" type="button">Tirar foto</button>
-          <button class="botao" id="gr-escolher" type="button">Escolher da galeria</button>
-          <button class="texto-botao" id="gr-foto-voltar" type="button" hidden>Voltar para a peça</button>
-        </div>
+        </details>
         <input class="gr-arquivo" id="gr-camera" type="file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
         <input class="gr-arquivo" id="gr-galeria" type="file" accept="image/*" tabindex="-1" aria-hidden="true">
         <p class="erro" id="gr-foto-erro" role="alert"></p>
@@ -307,6 +340,16 @@
             <div class="campo-entrada"><select id="gr-corte"></select></div>
             <p class="erro" id="erro-corte" role="alert"></p>
           </div>
+          <div class="campo" id="gr-campo-comprimento" hidden>
+            <label for="gr-comprimento">Comprimento (opcional)</label>
+            <div class="campo-entrada"><select id="gr-comprimento">
+              <option value="">Não sei</option>
+              <option value="curta">Curta: termina acima do cinto</option>
+              <option value="certa">Na medida: até o meio do zíper</option>
+              <option value="longa">Comprida: cobre o bolso da calça</option>
+            </select></div>
+            <p class="gr-suave gr-dica">Ajuda nas dicas de proporção dos looks.</p>
+          </div>
           <div class="campo">
             <label for="gr-tecido">Tecido (opcional)</label>
             <div class="campo-entrada"><select id="gr-tecido"></select></div>
@@ -358,6 +401,10 @@
       <div class="cat-filtros" id="cat-filtros" role="group" aria-label="Tipo de peça"></div>
       <p class="app-suave" id="cat-estado" role="status" hidden></p>
       <ul class="cat-lista" id="cat-lista"></ul>
+      <div class="cat-falta">
+        <p><strong>Sentiu falta de alguma roupa?</strong> Busque a foto da sua peça na internet e adicione em segundos.</p>
+        <button class="botao botao-cheio" id="cat-falta" type="button">Buscar minha roupa na internet</button>
+      </div>
     </div>
   </dialog>
   <dialog class="modal-figura gr-modal" id="uso-modal" aria-labelledby="uso-titulo">
@@ -528,13 +575,13 @@
 
   <script src="assets/js/config.js?v=20261111a"></script>
   <script src="assets/js/conta-api.js?v=20261112a"></script>
-  <script src="assets/js/apps.js?v=20261120a"></script>
-  <script src="assets/js/guarda-roupa-dados.js?v=20261112c"></script>
+  <script src="assets/js/apps.js?v=20261123a"></script>
+  <script src="assets/js/guarda-roupa-dados.js?v=20261123a"></script>
   <script src="assets/js/guarda-roupa-foto.js?v=20261111a"></script>
-  <script src="assets/js/guarda-roupa-looks.js?v=20261112c"></script>
+  <script src="assets/js/guarda-roupa-looks.js?v=20261123a"></script>
   <script src="assets/js/guarda-roupa-sugestao.js?v=20261113a"></script>
-  <script src="assets/js/guarda-roupa.js?v=20261113b"></script>
-  <script src="assets/js/guarda-roupa-lote.js?v=20261111a"></script>
+  <script src="assets/js/guarda-roupa.js?v=20261123a"></script>
+  <script src="assets/js/guarda-roupa-lote.js?v=20261123a"></script>
   <script src="assets/js/guarda-roupa-catalogo.js?v=20261120a"></script>
 </body>
 </html>

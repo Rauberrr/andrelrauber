@@ -107,6 +107,7 @@
     if (!dados || !dados.pecas || !dados.pecas.length || !window.AR_LOOKS) return;
     var pecas = dados.pecas;
     var total = window.AR_LOOKS.totalDeLooks(pecas);
+    $('estilo-exemplo').hidden = true;
     $('estilo-pecas').textContent = String(pecas.length);
     $('estilo-looks').textContent = String(total);
     $('estilo-numeros').hidden = false;

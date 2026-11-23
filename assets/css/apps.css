@@ -1267,3 +1267,45 @@ a.inicio-pilar:active { transform: scale(.99); }
 .inicio-mais-lista .app-icone-fundo { width: 30px; height: 30px; border-radius: 50%; }
 .inicio-mais-lista .app-icone-fundo svg { width: 16px; height: 16px; }
 .app .cat-rauber { background: var(--preto); color: var(--off); }
+
+/* --- Digital Closet: foto achada na internet, closet vazio e dicas de proporção ---------------- */
+.gr-web { margin: .4rem 0 1.4rem; padding: 1rem; border-radius: 18px; background: var(--app-cartao); box-shadow: inset 0 0 0 1px var(--app-linha); }
+.gr-web-selo { margin: 0 0 .3rem; font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #3f6b2f; }
+.gr-web-titulo { margin: 0 0 .35rem; font-size: 1.05rem; font-weight: 600; }
+.gr-foto-propria-titulo { margin-top: .4rem; }
+.gr-web-busca { display: flex; gap: .5rem; margin-top: .8rem; }
+.gr-web-busca input { flex: 1; min-width: 0; height: 48px; padding: 0 .9rem; border: 0; border-radius: 12px; background: var(--off, #f8f6f1); box-shadow: inset 0 0 0 1px var(--app-linha); color: inherit; font: inherit; font-size: 1rem; -webkit-appearance: none; appearance: none; }
+.gr-web-busca input:focus { outline: 2px solid #7c8a45; outline-offset: 1px; }
+.gr-web-busca .botao { flex: none; min-height: 48px; }
+.gr-web-estado { margin: .7rem 0 0; font-size: .9rem; color: var(--app-texto-2); }
+.gr-web-estado:empty { display: none; }
+.gr-web-fotos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin: .7rem 0 0; padding: 0; list-style: none; }
+.gr-web-foto { display: block; width: 100%; aspect-ratio: 4 / 5; padding: 0; border: 0; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: inset 0 0 0 1px var(--app-linha); cursor: pointer; }
+.gr-web-foto img { width: 100%; height: 100%; object-fit: contain; }
+.gr-web-foto:hover { box-shadow: inset 0 0 0 2px #7c8a45; }
+.gr-web-foto:disabled { opacity: .45; cursor: default; }
+.gr-web-foto.gr-web-escolhida { opacity: 1; box-shadow: inset 0 0 0 3px #414c1d; }
+.gr-web-nota { margin: .6rem 0 0; font-size: .84rem; }
+.gr-botoes-foto { margin-top: .6rem; }
+.gr-dicas-caixa { margin-top: 1rem; }
+.gr-dicas-caixa summary { cursor: pointer; font-size: .9rem; color: var(--app-texto-2); }
+.gr-dicas-caixa .gr-dicas-foto { margin-top: .8rem; }
+.gr-vazio-opcoes { display: grid; gap: .6rem; margin-top: 1.1rem; }
+.gr-vazio-opcao { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .8rem; align-items: center; padding: .95rem 1rem; border: 0; border-radius: 16px; background: var(--app-cartao); box-shadow: inset 0 0 0 1px var(--app-linha); color: var(--preto); font: inherit; text-align: left; cursor: pointer; }
+.gr-vazio-opcao > svg { width: 26px; height: 26px; }
+.gr-vazio-opcao span { display: grid; gap: .15rem; }
+.gr-vazio-opcao small { color: var(--app-texto-2); font-size: .85rem; line-height: 1.4; }
+.gr-vazio-opcao-destaque { background: var(--preto); color: var(--off); box-shadow: none; }
+.gr-vazio-opcao-destaque small { color: #cfcabe; }
+.gr-dica-web { margin: .2rem 0 .9rem; padding: .7rem .9rem; border-radius: 12px; background: rgba(124, 138, 69, .1); font-size: .88rem; line-height: 1.45; }
+.cat-falta { margin-top: 1.4rem; padding: 1rem; border-radius: 16px; background: var(--app-cartao); box-shadow: inset 0 0 0 1px var(--app-linha); text-align: center; }
+.cat-falta p { margin: 0 0 .8rem; font-size: .92rem; line-height: 1.45; }
+.gr-look-dicas { margin-top: .8rem; padding: .75rem .9rem; border-radius: 12px; background: rgba(92, 19, 34, .06); box-shadow: inset 3px 0 0 #7b1e31; }
+.gr-look-dicas p { margin: 0; font-size: .88rem; line-height: 1.5; }
+.gr-look-dicas p + p { margin-top: .4rem; }
+.gr-look-dicas .gr-look-dicas-titulo { margin-bottom: .2rem; font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #7b1e31; }
+.inicio-exemplo { margin-top: 1rem; padding: .85rem; border-radius: 16px; background: rgba(255, 255, 255, .07); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
+.inicio-exemplo-selo { margin: 0 0 .6rem; font-size: .75rem; letter-spacing: .04em; color: #d9c7c3; }
+.inicio-exemplo-look { display: grid; grid-template-columns: repeat(3, 1fr); gap: .45rem; }
+.inicio-exemplo-look img { width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: contain; border-radius: 10px; background: #f4f1ea; }
+.inicio-exemplo-numeros { margin-top: .6rem; }

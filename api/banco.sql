@@ -489,6 +489,13 @@ CREATE TABLE IF NOT EXISTS assinaturas_mp (
   CONSTRAINT fk_assinatura_mp_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Guarda-roupa: o comprimento das peças de cima, para as dicas de proporção (o site também cria sozinho)
+CREATE TABLE IF NOT EXISTS pecas_extras (
+  peca_id INT UNSIGNED NOT NULL,
+  comprimento VARCHAR(12) NOT NULL DEFAULT '',
+  PRIMARY KEY (peca_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Guarda-roupa: para quem é cada peça cadastrada pelo gestor no catálogo (masculino, feminino ou unissex)
 CREATE TABLE IF NOT EXISTS catalogo_publico (
   catalogo_id INT UNSIGNED NOT NULL,

@@ -393,7 +393,78 @@ window.AR_LOOKS = (function () {
 
   function totalDeLooks(pecas) { return combinacoesDe(pecas, '').length; }
 
+  /* --- Dicas de proporção: o que deixa o look mais alto e mais elegante --------------------------- */
+
+  var FEMININOS = { camiseta: 1, regata: 1, polo: 1, camisa: 1, camisa_curta: 1, malha: 1, blusa: 1, jaqueta: 1, calca: 1, calca_sarja: 1,
+    jeans: 1, calca_moletom: 1, saia: 1, bermuda: 1, bota: 1, sandalia: 1, gravata: 1 };
+  var CAMADAS_QUE_ELEVAM = { jaqueta: 1, blazer: 1, cardigan: 1, casaco: 1 };
+  var CALCADOS_QUE_ELEVAM = { mocassim: 1, bota: 1, sapato: 1 };
+  var SOLTOS = { relaxed: 1, oversized: 1, wide_leg: 1 };
+
+  function grupoDe(p) { var t = gr.porTipo[p.tipo]; return t ? t.grupo : ''; }
+
+  function nomeCurto(p) {
+    if (p.apelido) return p.apelido;
+    var t = gr.porTipo[p.tipo];
+    var c = gr.porCor[p.cor];
+    var nome = t ? t.rotulo.toLowerCase() : 'peça';
+    return c ? nome + ' ' + (FEMININOS[p.tipo] ? c.descricao : c.nome) : nome;
+  }
+
+  // Quanto a cor é clara (0 a 1). Estampa e cor desconhecida: null.
+  function luz(cor) {
+    var c = gr.porCor[cor];
+    if (!c || !c.hex) return null;
+    var n = parseInt(c.hex.slice(1), 16);
+    return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  }
+
+  /**
+   * Até duas dicas para o look ficar mais alto e elegante. todas: as peças da pessoa, para sugerir
+   * uma troca com o que ela já tem.
+   */
+  function dicasDoLook(lista, todas) {
+    var cima = lista.filter(function (p) { return grupoDe(p) === 'cima'; })[0];
+    var baixo = lista.filter(function (p) { return grupoDe(p) === 'baixo'; })[0];
+    var camada = lista.filter(function (p) { return grupoDe(p) === 'camada'; })[0];
+    var calcado = lista.filter(function (p) { return grupoDe(p) === 'calcado'; })[0];
+    var dicas = [];
+    if (cima && baixo && cima.comprimento === 'longa' && !camada) {
+      dicas.push('Peça comprida em cima encurta as pernas. Coloque a frente para dentro da calça, ou prefira uma que termine no meio do zíper: o visual fica mais alto e elegante.');
+    }
+    if (cima && baixo && cima.comprimento === 'curta' && baixo.corte === 'skinny') {
+      dicas.push('Peça curta com calça bem justa marca a cintura. Uma calça reta ou regular equilibra as proporções.');
+    }
+    if (baixo && calcado) {
+      var lb = luz(baixo.cor);
+      var lc = luz(calcado.cor);
+      // Só quando a pessoa tem um calçado no tom da calça: aí a dica vira uma troca possível
+      var noTom = lb !== null && lc !== null && lb < 0.35 && lc > 0.75 ? (todas || []).filter(function (p) {
+        var l = luz(p.cor);
+        return grupoDe(p) === 'calcado' && p.id !== calcado.id && l !== null && Math.abs(l - lb) < 0.2 && harmonia(p, baixo).nota > -9;
+      })[0] : null;
+      if (noTom) {
+        dicas.push('Calça escura com calçado claro corta a perna ao meio. Para parecer mais alto, troque por: ' + nomeCurto(noTom) + '. No tom da calça, a perna fica mais longa.');
+      }
+    }
+    if (cima && baixo && SOLTOS[cima.corte] && SOLTOS[baixo.corte]) {
+      dicas.push('Duas peças largas escondem a silhueta. Equilibre: com uma peça mais solta, prefira a outra mais ajustada.');
+    }
+    // O básico de todo mundo (camiseta, jeans e tênis): o que já está no armário e eleva o look
+    var basico = cima && (cima.tipo === 'camiseta' || cima.tipo === 'regata') && baixo && baixo.tipo === 'jeans' && !camada && (!calcado || calcado.tipo === 'tenis');
+    if (basico && dicas.length < 2) {
+      var combina = function (p) { return harmonia(p, cima).nota > -9 && harmonia(p, baixo).nota > -9; };
+      var subir = (todas || []).filter(function (p) { return CAMADAS_QUE_ELEVAM[p.tipo] && combina(p); })[0];
+      var sapato = (todas || []).filter(function (p) { return CALCADOS_QUE_ELEVAM[p.tipo] && harmonia(p, baixo).nota > -9; })[0];
+      if (subir) dicas.push('Para sair do básico, coloque por cima: ' + nomeCurto(subir) + '. A camada dá estrutura aos ombros e deixa o look mais elegante.');
+      else if (sapato) dicas.push('Para sair do básico, troque o tênis por: ' + nomeCurto(sapato) + '. O mesmo look sobe de nível na hora.');
+      else dicas.push('Para sair do básico: uma jaqueta leve, uma sobrecamisa ou um mocassim deixariam este look mais elegante.');
+    }
+    return dicas.slice(0, 2);
+  }
+
   return {
+    dicasDoLook: dicasDoLook,
     POR_PAGINA: POR_PAGINA, sugerir: sugerir, oQueFalta: oQueFalta,
     temSobreposicao: temSobreposicao, chaveDe: chaveDe, rotuloDaOcasiao: rotuloDaOcasiao,
     looksCom: looksCom, totalDeLooks: totalDeLooks
