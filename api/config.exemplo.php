@@ -33,8 +33,10 @@ return [
     // Máximo de parcelas oferecidas. Com 0, valem as opções do próprio Mercado Pago.
     'mercadopago_parcelas' => 0,
 
-    // Digital Closet: busca da foto da peça na internet (Brave Search API, plano de imagens).
-    // Crie a chave em https://api-dashboard.search.brave.com. Vazio deixa a busca desligada.
+    // Digital Closet: busca da foto da peça na internet. Preencha uma das duas; com as duas vazias,
+    // a busca fica desligada. SerpApi (imagens do Google): chave em https://serpapi.com/manage-api-key
+    'serpapi_chave' => '',
+    // Brave Search API: chave em https://api-dashboard.search.brave.com
     'brave_busca' => '',
 
     // Publicar vídeos (painel do gestor). Cada rede tem um app de desenvolvedor criado por você;

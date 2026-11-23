@@ -24,7 +24,7 @@
  * POST ?acao=catalogo-salvar    (gestor) cadastra ou altera uma peça, com a foto (multipart)
  * POST ?acao=catalogo-ativar    (gestor) mostra ou esconde uma peça do catálogo  {id, ativa}
  *
- * Foto da peça achada na internet (Brave Search; a chave fica no config.php, em brave_busca):
+ * Foto da peça achada na internet (SerpApi ou Brave; a chave fica no config.php, em serpapi_chave ou brave_busca):
  * GET  ?acao=buscar-foto&q=     imagens para a descrição da pessoa, com fundo branco
  * GET  ?acao=foto-web&u=&a=     a imagem escolhida, trazida pelo site para passar pelo "tirar o fundo"
  *
@@ -742,9 +742,24 @@ function peca_publica(array $p, ?int $preco = null): array
 
 /* --- Foto achada na internet ------------------------------------------------------------------ */
 
+/**
+ * O serviço de busca ligado no config.php: a SerpApi (imagens do Google), se tiver a chave,
+ * senão a Brave. Sem nenhuma chave, a busca fica desligada e o botão some.
+ */
+function servico_da_busca(): ?array
+{
+    $serpapi = trim((string) (config()['serpapi_chave'] ?? ''));
+    if ($serpapi !== '') {
+        return ['nome' => 'serpapi', 'chave' => $serpapi];
+    }
+    $brave = trim((string) (config()['brave_busca'] ?? ''));
+    return $brave !== '' ? ['nome' => 'brave', 'chave' => $brave] : null;
+}
+
 function chave_da_busca(): string
 {
-    return trim((string) (config()['brave_busca'] ?? ''));
+    $servico = servico_da_busca();
+    return $servico ? $servico['chave'] : '';
 }
 
 // As imagens que o site aceita trazer são só as que a busca devolveu: cada uma leva uma assinatura
@@ -789,40 +804,59 @@ function buscar_foto(): void
     exigir_limite($limite, 40, 3600);
     contar_tentativa($limite);
 
-    $base = rtrim((string) (config()['brave_endereco'] ?? 'https://api.search.brave.com'), '/');
-    $url = $base . '/res/v1/images/search?' . http_build_query([
-        'q' => $termo . ' roupa fundo branco foto produto',
-        'count' => GR_BUSCA_RESULTADOS,
-        'safesearch' => 'strict',
-        'country' => 'BR',
-    ]);
+    $servico = servico_da_busca();
+    // O fundo branco vai na pesquisa sem aparecer para a pessoa
+    $pesquisa = $termo . ' roupa fundo branco foto produto';
+    if ($servico['nome'] === 'serpapi') {
+        $base = rtrim((string) (config()['serpapi_endereco'] ?? 'https://serpapi.com'), '/');
+        $url = $base . '/search.json?' . http_build_query([
+            'engine' => 'google_images', 'q' => $pesquisa, 'hl' => 'pt-br', 'gl' => 'br', 'safe' => 'active', 'api_key' => $servico['chave'],
+        ]);
+        $cabecalhos = ['Accept: application/json'];
+    } else {
+        $base = rtrim((string) (config()['brave_endereco'] ?? 'https://api.search.brave.com'), '/');
+        $url = $base . '/res/v1/images/search?' . http_build_query([
+            'q' => $pesquisa, 'count' => GR_BUSCA_RESULTADOS, 'safesearch' => 'strict', 'country' => 'BR',
+        ]);
+        $cabecalhos = ['Accept: application/json', 'X-Subscription-Token: ' . $servico['chave']];
+    }
     $c = curl_init($url);
     curl_setopt_array($c, [
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 12,
+        CURLOPT_TIMEOUT => 15,
         CURLOPT_FOLLOWLOCATION => false,
-        CURLOPT_HTTPHEADER => ['Accept: application/json', 'X-Subscription-Token: ' . $chave],
+        CURLOPT_HTTPHEADER => $cabecalhos,
     ]);
     $corpo = curl_exec($c);
     $codigo = (int) curl_getinfo($c, CURLINFO_RESPONSE_CODE);
     curl_close($c);
-    if ($codigo !== 200 || !is_string($corpo)) {
-        error_log('Busca de fotos: a Brave respondeu ' . $codigo);
-        falhar(502, $codigo === 429 ? 'Muitas buscas agora. Tente de novo em instantes.' : 'A busca de fotos não respondeu agora. Tente de novo em instantes.');
+    $dados = is_string($corpo) ? json_decode($corpo, true) : null;
+    if ($codigo !== 200 || !is_array($dados)) {
+        // A SerpApi explica o problema no campo "error" (chave errada, buscas do mês acabaram)
+        error_log('Busca de fotos (' . $servico['nome'] . '): resposta ' . $codigo . (is_array($dados) && isset($dados['error']) ? ' - ' . mb_substr((string) $dados['error'], 0, 160) : ''));
+        falhar(502, $codigo === 429 ? 'Muitas buscas agora. Tente de novo mais tarde.' : 'A busca de fotos não respondeu agora. Tente de novo em instantes.');
     }
-    $dados = json_decode($corpo, true);
+    // Cada serviço devolve as imagens num formato: aqui viram miniatura, original, título e origem
+    $resultados = [];
+    if ($servico['nome'] === 'serpapi') {
+        foreach ((is_array($dados['images_results'] ?? null) ? $dados['images_results'] : []) as $r) {
+            $resultados[] = [(string) ($r['thumbnail'] ?? ''), (string) ($r['original'] ?? ''), (string) ($r['title'] ?? ''), (string) ($r['source'] ?? '')];
+        }
+    } else {
+        foreach ((is_array($dados['results'] ?? null) ? $dados['results'] : []) as $r) {
+            $resultados[] = [(string) ($r['thumbnail']['src'] ?? ''), (string) ($r['properties']['url'] ?? ''), (string) ($r['title'] ?? ''), (string) ($r['source'] ?? ($r['meta_url']['hostname'] ?? ''))];
+        }
+    }
     $fotos = [];
-    foreach ((is_array($dados['results'] ?? null) ? $dados['results'] : []) as $r) {
-        $miniatura = (string) ($r['thumbnail']['src'] ?? '');
-        $original = (string) ($r['properties']['url'] ?? '');
+    foreach ($resultados as [$miniatura, $original, $titulo, $origem]) {
         if (!endereco_https($miniatura)) {
             continue;
         }
         $foto = [
             'miniatura' => $miniatura,
             'assinaturaMiniatura' => assinar_endereco($miniatura),
-            'titulo' => mb_substr(trim((string) ($r['title'] ?? '')), 0, 90),
-            'origem' => mb_substr((string) ($r['source'] ?? ($r['meta_url']['hostname'] ?? '')), 0, 60),
+            'titulo' => mb_substr(trim($titulo), 0, 90),
+            'origem' => mb_substr($origem, 0, 60),
         ];
         if (endereco_https($original)) {
             $foto['original'] = $original;
