@@ -8,7 +8,7 @@
   <meta name="description" content="Cadastre suas roupas com uma foto e receba sugestões de looks com o que você já tem.">
   <link rel="canonical" href="https://andrerauber.com/apps/guarda-roupa/">
   <meta name="theme-color" content="#f4f1ea">
-  <link rel="manifest" href="assets/apps.webmanifest?v=20261120a">
+  <link rel="manifest" href="assets/apps.webmanifest?v=20261126a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Rauber">
@@ -18,8 +18,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261123a">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261123a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261126a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261126a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app">
@@ -68,9 +68,9 @@
             <div class="campo-entrada"><select id="gr-filtro-grupo"></select></div>
           </div>
         </div>
-        <p class="gr-dica-web" id="gr-dica-web" hidden>Não precisa fotografar: toque em <strong>+</strong> e busque a foto da sua peça na internet.</p>
+        <p class="gr-dica-web" id="gr-dica-web" hidden>Não precisa fotografar: toque em <strong>+</strong> e traga a foto da sua peça do Pinterest.</p>
         <p class="gr-suave" id="gr-limite" hidden>Você chegou ao limite de <span id="gr-maximo">60</span> peças suas. Exclua uma para adicionar outra.</p>
-        <p class="gr-ajuda-sugeridas" id="gr-ajuda-sugeridas" hidden>As peças com a marca <strong>Sugerida</strong> já vêm no seu guarda-roupa para ajudar a montar os looks. Fique com as que você tem e exclua as outras. <button class="texto-botao" id="gr-sem-sugeridas" type="button" hidden>Tirar todas as sugeridas</button></p>
+        <p class="gr-ajuda-sugeridas" id="gr-ajuda-sugeridas" hidden>Seu closet começou com várias peças prontas. Fique com as que você tem no armário e exclua as outras. <button class="texto-botao" id="gr-sem-sugeridas" type="button" hidden>Tirar todas as peças prontas</button></p>
 
         <section class="gr-potencial" id="gr-potencial" aria-labelledby="gr-potencial-titulo" hidden>
           <div class="gr-potencial-numeros" aria-hidden="true">
@@ -89,7 +89,7 @@
             <img src="assets/img/sugeridas/moletom-verde-oliva.webp" alt="" width="1000" height="1250" loading="lazy">
             <img src="assets/img/sugeridas/camisa-rosa.webp" alt="" width="1000" height="1250" loading="lazy">
           </span>
-          <span class="cat-chamada-texto"><strong>Catálogo de peças</strong><small>Camisetas, camisas e moletons em várias cores. Toque nas que você tem.</small></span>
+          <span class="cat-chamada-texto"><strong>Atalho: marque o que você já tem</strong><small>Sem foto: camisetas, jeans, suéteres, tênis, relógios e óculos. Toque nas peças iguais às do seu armário.</small></span>
           <svg data-icone="seguir" aria-hidden="true"></svg>
         </button>
         <div class="gr-vazio" id="gr-vazio" hidden>
@@ -98,7 +98,7 @@
           <div class="gr-vazio-opcoes">
             <button class="gr-vazio-opcao gr-vazio-opcao-destaque" id="gr-primeira" type="button">
               <svg data-icone="lupa" aria-hidden="true"></svg>
-              <span><strong>Buscar a foto na internet</strong><small>Sem tirar foto: escreva a peça e a cor e escolha a imagem.</small></span>
+              <span><strong>Achar a foto no Pinterest</strong><small>Sem tirar foto: procure a sua peça, copie o link do pin e cole.</small></span>
             </button>
             <button class="gr-vazio-opcao" id="gr-vazio-foto" type="button">
               <svg data-icone="camera" aria-hidden="true"></svg>
@@ -138,7 +138,8 @@
           <button class="botao" id="gr-montar" type="button">Montar um look</button>
         </div>
 
-        <div class="gr-filtros" id="gr-looks-filtros">
+        <div class="gr-pilulas" id="gr-pilulas" aria-label="Filtrar looks"></div>
+        <div class="gr-filtros gr-filtros-escondidos" id="gr-looks-filtros">
           <div class="campo">
             <label for="gr-filtro-mostrar">Mostrar</label>
             <div class="campo-entrada">
@@ -162,7 +163,7 @@
             </div>
           </div>
         </div>
-        <label class="campo-marcar" id="gr-filtro-recentes-campo" style="margin:-.5rem 0 1.25rem"><input id="gr-filtro-recentes" type="checkbox"> <span>Esconder looks que usei nos últimos 14 dias</span></label>
+        <label class="campo-marcar gr-filtros-escondidos" id="gr-filtro-recentes-campo" style="margin:-.5rem 0 1.25rem"><input id="gr-filtro-recentes" type="checkbox"> <span>Esconder looks que usei nos últimos 14 dias</span></label>
 
         <div class="gr-sugestao-recomecar" id="gr-sugestao-recomecar" hidden>
           <p><strong>Você descartou todas as sugestões de peças.</strong> Quando quiser, a gente procura de novo a peça que mais combinaria com o seu guarda-roupa.</p>
@@ -226,7 +227,7 @@
   <button class="app-fab" id="gr-fab" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="gr-fab-menu" aria-label="Adicionar peças" hidden><svg data-icone="mais"></svg></button>
   <div class="app-fab-menu" id="gr-fab-menu" hidden>
     <button id="gr-do-catalogo" type="button">Do catálogo <svg data-icone="cabide"></svg></button>
-    <button id="gr-adicionar-web" type="button">Buscar foto na internet <svg data-icone="lupa"></svg></button>
+    <button id="gr-adicionar-web" type="button">Achar no Pinterest <svg data-icone="lupa"></svg></button>
     <button id="gr-adicionar" type="button">Uma peça, com foto <svg data-icone="camera"></svg></button>
     <button id="gr-adicionar-varias" type="button">Várias de uma vez <svg data-icone="apps"></svg></button>
     <button id="gr-fab-uso" type="button">Registrar o que usei <svg data-icone="diario"></svg></button>
@@ -240,9 +241,43 @@
     <div class="gr-modal-corpo">
       <section id="gr-passo-foto">
         <h2 class="titulo-m" id="gr-foto-titulo">Adicionar uma peça</h2>
-        <div class="gr-web" id="gr-web" hidden>
+        <div class="gr-web gr-pin" id="gr-pin">
           <p class="gr-web-selo">Mais rápido: sem tirar foto</p>
-          <h3 class="gr-web-titulo">Encontre a foto da sua peça na internet</h3>
+          <h3 class="gr-web-titulo"><svg class="gr-pin-logo" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M12.4 5.5c-3.7 0-5.6 2.6-5.6 4.8 0 1.3.5 2.5 1.6 2.9.2.1.3 0 .4-.2l.1-.6c.1-.2 0-.3-.1-.5-.3-.4-.5-.9-.5-1.6 0-2.1 1.6-4 4.1-4 2.2 0 3.5 1.4 3.5 3.2 0 2.4-1.1 4.5-2.7 4.5-.9 0-1.5-.7-1.3-1.6.2-1.1.7-2.2.7-3 0-.7-.4-1.2-1.1-1.2-.9 0-1.6.9-1.6 2.2 0 .8.3 1.3.3 1.3l-1.1 4.6c-.3 1.4 0 3.1 0 3.3 0 .1.1.1.2.1.1-.1 1.2-1.5 1.6-2.9l.6-2.4c.3.6 1.2 1.1 2.2 1.1 2.9 0 4.8-2.6 4.8-6.1 0-2.7-2.2-5.2-5.6-5.2Z"/></svg>Ache a sua peça no Pinterest</h3>
+          <ol class="gr-pin-passos">
+            <li>
+              <span class="gr-pin-numero" aria-hidden="true">1</span>
+              <div>
+                <strong>Diga qual é a peça</strong>
+                <form class="gr-web-busca" id="gr-pin-form" novalidate>
+                  <label class="visualmente-oculto" for="gr-pin-q">Qual é a peça</label>
+                  <input id="gr-pin-q" type="search" maxlength="80" placeholder="Ex.: suéter vermelho gola V" enterkeyhint="go" autocomplete="off">
+                  <button class="botao botao-cheio gr-pin-abrir" type="submit">Abrir no Pinterest</button>
+                </form>
+              </div>
+            </li>
+            <li>
+              <span class="gr-pin-numero" aria-hidden="true">2</span>
+              <div><strong>Escolha o pin mais parecido</strong><small>No pin, toque em <b>Compartilhar</b> e depois em <b>Copiar link</b>.</small></div>
+            </li>
+            <li>
+              <span class="gr-pin-numero" aria-hidden="true">3</span>
+              <div>
+                <strong>Volte aqui e cole o link</strong>
+                <form class="gr-web-busca" id="gr-pin-link-form" novalidate>
+                  <label class="visualmente-oculto" for="gr-pin-link">Link do pin</label>
+                  <input id="gr-pin-link" type="url" inputmode="url" placeholder="https://pin.it/..." autocomplete="off">
+                  <button class="botao" type="submit" id="gr-pin-colar">Colar</button>
+                </form>
+              </div>
+            </li>
+          </ol>
+          <p class="gr-web-estado" id="gr-pin-estado" role="status"></p>
+          <p class="gr-suave gr-web-nota" id="gr-pin-android" hidden>Dica: com o Digital Closet na tela inicial do Android, no pin é só tocar em <b>Compartilhar</b> e escolher <b>Closet</b>.</p>
+        </div>
+
+        <div class="gr-web" id="gr-web" hidden>
+          <h3 class="gr-web-titulo">Busca rápida de fotos</h3>
           <p class="gr-suave">Escreva a peça, a cor e, se souber, o caimento: mais justa ou mais solta. Ex.: <em>suéter vermelho gola V</em> ou <em>calça jeans escura reta</em>.</p>
           <form class="gr-web-busca" id="gr-web-form" novalidate>
             <label class="visualmente-oculto" for="gr-web-q">Descreva a sua peça</label>
@@ -394,16 +429,17 @@
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 2L18 18M18 2L2 18"/></svg>
     </button>
     <div class="gr-modal-corpo">
-      <h2 class="titulo-m" id="cat-titulo">Catálogo de peças</h2>
-      <p class="app-suave">Toque nas peças que você tem. Elas entram no seu guarda-roupa e já aparecem nos looks.</p>
+      <h2 class="titulo-m" id="cat-titulo">Quer pegar um atalho?</h2>
+      <p class="app-suave">Aqui estão as roupas mais comuns. Marque as que você tem no seu armário: elas entram no seu closet sem precisar de foto e já aparecem nos looks.</p>
       <p class="cat-resumo" id="cat-resumo"></p>
       <div class="cat-publico" id="cat-publico" role="group" aria-label="Para quem"></div>
       <div class="cat-filtros" id="cat-filtros" role="group" aria-label="Tipo de peça"></div>
+      <div class="cat-filtros cat-marcas" id="cat-marcas" role="group" aria-label="Marca" hidden></div>
       <p class="app-suave" id="cat-estado" role="status" hidden></p>
       <ul class="cat-lista" id="cat-lista"></ul>
       <div class="cat-falta">
-        <p><strong>Sentiu falta de alguma roupa?</strong> Busque a foto da sua peça na internet e adicione em segundos.</p>
-        <button class="botao botao-cheio" id="cat-falta" type="button">Buscar minha roupa na internet</button>
+        <p><strong>Sentiu falta de alguma roupa?</strong> Ache a sua peça no Pinterest e adicione em segundos.</p>
+        <button class="botao botao-cheio" id="cat-falta" type="button">Achar minha roupa no Pinterest</button>
       </div>
     </div>
   </dialog>
@@ -575,13 +611,13 @@
 
   <script src="assets/js/config.js?v=20261111a"></script>
   <script src="assets/js/conta-api.js?v=20261112a"></script>
-  <script src="assets/js/apps.js?v=20261123a"></script>
-  <script src="assets/js/guarda-roupa-dados.js?v=20261123a"></script>
+  <script src="assets/js/apps.js?v=20261126a"></script>
+  <script src="assets/js/guarda-roupa-dados.js?v=20261126a"></script>
   <script src="assets/js/guarda-roupa-foto.js?v=20261111a"></script>
-  <script src="assets/js/guarda-roupa-looks.js?v=20261123a"></script>
+  <script src="assets/js/guarda-roupa-looks.js?v=20261126a"></script>
   <script src="assets/js/guarda-roupa-sugestao.js?v=20261113a"></script>
-  <script src="assets/js/guarda-roupa.js?v=20261123a"></script>
+  <script src="assets/js/guarda-roupa.js?v=20261126a"></script>
   <script src="assets/js/guarda-roupa-lote.js?v=20261123a"></script>
-  <script src="assets/js/guarda-roupa-catalogo.js?v=20261120a"></script>
+  <script src="assets/js/guarda-roupa-catalogo.js?v=20261126a"></script>
 </body>
 </html>

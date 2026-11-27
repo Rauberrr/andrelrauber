@@ -5,6 +5,11 @@
   "lang": "pt-BR",
   "start_url": "/apps/",
   "scope": "/",
+  "share_target": {
+    "action": "/apps/guarda-roupa/",
+    "method": "GET",
+    "params": { "title": "titulo", "text": "texto", "url": "link" }
+  },
   "display": "standalone",
   "background_color": "#f4f1ea",
   "theme_color": "#f4f1ea",

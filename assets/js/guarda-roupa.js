@@ -165,8 +165,6 @@
     var grupo = $('gr-filtro-grupo').value;
     var uso = usoDasPecas();
     var lista = pecas.filter(function (p) {
-      if (grupo === 'sugeridas') return p.sugerida;
-      if (grupo === 'minhas') return !p.sugerida;
       return !grupo || (gr.porTipo[p.tipo] && gr.porTipo[p.tipo].grupo === grupo);
     });
 
@@ -178,8 +176,6 @@
       abrir.appendChild(figuraDaPeca(p));
       abrir.addEventListener('click', function () { abrirEdicao(p.id); });
       item.appendChild(abrir);
-      if (p.sugerida) item.appendChild(criar('span', 'etiqueta gr-selo', 'Sugerida'));
-
       var icones = criar('div', 'gr-peca-icones');
       icones.appendChild(botaoIcone('lapis', 'Editar: ' + gr.descrever(p), function () { abrirEdicao(p.id); }));
       icones.appendChild(botaoIcone('camera', 'Trocar a foto: ' + gr.descrever(p), function () { abrirEdicao(p.id, 'foto'); }));
@@ -194,7 +190,7 @@
     });
 
     var proprias = pecasProprias();
-    var temSugeridas = pecas.length > proprias;
+    var temSugeridas = pecas.length - proprias >= 15;
     $('gr-contagem').textContent = pecas.length === 1 ? '1 peça' : pecas.length + ' peças';
     $('gr-vazio').hidden = pecas.length > 0;
     $('gr-pecas-filtro').hidden = pecas.length === 0;
@@ -204,7 +200,7 @@
     $('gr-limite').hidden = proprias < maximo;
     $('gr-sem-sugeridas').hidden = !temSugeridas;
     $('gr-ajuda-sugeridas').hidden = !temSugeridas;
-    $('gr-dica-web').hidden = !buscaLigada || pecas.length === 0 || pecas.length >= 15;
+    $('gr-dica-web').hidden = pecas.length === 0 || pecas.length >= 15;
     atualizarContagemExcluidas();
   }
 
@@ -270,14 +266,14 @@
 
   $('gr-sem-sugeridas').addEventListener('click', function () {
     var quantas = pecas.length - pecasProprias();
-    if (!window.confirm('Tirar as ' + quantas + ' peças sugeridas? Elas ficam na aba Excluídas, caso queira alguma de volta.')) return;
+    if (!window.confirm('Tirar as ' + quantas + ' peças prontas (as que não têm foto sua)? Elas ficam na aba Excluídas, caso queira alguma de volta.')) return;
     api.post(ENDERECO + '?acao=excluir-sugeridas').then(function (r) {
       if (!r.ok) { falhaAoSalvar(r); return; }
       excluidas = pecas.filter(function (p) { return p.sugerida; }).concat(excluidas);
       pecas = pecas.filter(function (p) { return !p.sugerida; });
       paginaLooks = 1;
       desenharPecas();
-      avisar('Peças sugeridas retiradas. Elas ficam na aba Excluídas.');
+      avisar('Peças prontas retiradas. Elas ficam na aba Excluídas.');
     });
   });
 
@@ -287,7 +283,6 @@
     excluidas.forEach(function (p) {
       var item = criar('li', 'gr-peca');
       item.appendChild(figuraDaPeca(p));
-      if (p.sugerida) item.appendChild(criar('span', 'etiqueta gr-selo', 'Sugerida'));
       var icones = criar('div', 'gr-peca-icones');
       icones.appendChild(botaoIcone('restaurar', 'Adicionar de novo: ' + gr.descrever(p), function () { restaurarPeca(p.id); }));
       if (!p.sugerida) icones.appendChild(botaoIcone('lixeira', 'Apagar de vez: ' + gr.descrever(p), function () { apagarDeVez(p.id); }, 'perigo'));
@@ -331,7 +326,7 @@
     prepararBusca();
     mostrarPasso('gr-passo-foto');
     $('gr-modal').showModal();
-    if (comBusca === true && buscaLigada) $('gr-web-q').focus();
+    if (comBusca === true) $('gr-pin-q').focus();
   }
 
   $('gr-adicionar').addEventListener('click', function () { abrirNovo(false); });
@@ -347,7 +342,11 @@
 
   function prepararBusca() {
     $('gr-web').hidden = !buscaLigada;
-    $('gr-foto-propria-titulo').textContent = buscaLigada ? 'Ou fotografe a sua peça' : 'Fotografe a sua peça';
+    $('gr-foto-propria-titulo').textContent = 'Ou fotografe a sua peça';
+    $('gr-pin-estado').textContent = '';
+    $('gr-pin-link').value = '';
+    $('gr-pin-colar').disabled = false;
+    $('gr-pin-android').hidden = !/Android/i.test(navigator.userAgent);
     $('gr-web-q').value = '';
     $('gr-web-estado').textContent = '';
     $('gr-web-fotos').textContent = '';
@@ -431,18 +430,86 @@
     });
   });
 
+  /* --- Foto de um pin do Pinterest ------------------------------------------------------------- */
+
+  var LEMBRAR_PIN = 'ar-closet-pin-peca';
+
+  // Abre o Pinterest já pesquisando a peça, com fundo branco para as fotos saírem no padrão do closet
+  $('gr-pin-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var q = $('gr-pin-q').value.trim();
+    if (q.length < 3) { $('gr-pin-estado').textContent = 'Escreva a peça e a cor, como "suéter vermelho".'; $('gr-pin-q').focus(); return; }
+    try { sessionStorage.setItem(LEMBRAR_PIN, q); } catch (erro) { /* segue sem lembrar */ }
+    window.open('https://br.pinterest.com/search/pins/?q=' + encodeURIComponent(q + ' fundo branco'), '_blank', 'noopener');
+    $('gr-pin-estado').textContent = 'Achou o pin? Copie o link e cole no passo 3.';
+  });
+
+  // Ao voltar do Pinterest, o passo 3 fica pronto para colar
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && $('gr-modal').open && !$('gr-passo-foto').hidden && $('gr-pin-estado').textContent.indexOf('Achou o pin') === 0) {
+      $('gr-pin-link').focus();
+    }
+  });
+
+  function trazerPin(link) {
+    var botao = $('gr-pin-colar');
+    var q = '';
+    try { q = sessionStorage.getItem(LEMBRAR_PIN) || ''; } catch (erro) { q = ''; }
+    q = $('gr-pin-q').value.trim() || q;
+    $('gr-pin-estado').textContent = 'Lendo o pin...';
+    botao.disabled = true;
+    api.get(ENDERECO + '?acao=foto-pin&u=' + encodeURIComponent(link)).then(function (r) {
+      botao.disabled = false;
+      if (!r.ok) { $('gr-pin-estado').textContent = r.erro || 'Não foi possível ler este pin. Tente outro.'; return; }
+      $('gr-pin-estado').textContent = '';
+      usarFotoDaWeb(r.dados.foto, (q + ' ' + (r.dados.foto.titulo || '')).trim(), botao, $('gr-pin-estado'));
+    });
+  }
+
+  $('gr-pin-link-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var link = $('gr-pin-link').value.trim();
+    if (link) { trazerPin(link); return; }
+    // Campo vazio: o botão cola o que a pessoa copiou no Pinterest
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then(function (texto) {
+        texto = String(texto || '').trim();
+        if (!/pin\.it|pinterest\./i.test(texto)) { $('gr-pin-estado').textContent = 'Copie o link do pin no Pinterest (Compartilhar e Copiar link) e toque em Colar.'; return; }
+        $('gr-pin-link').value = texto;
+        trazerPin(texto);
+      }).catch(function () { $('gr-pin-estado').textContent = 'Segure o campo e escolha Colar.'; $('gr-pin-link').focus(); });
+    } else {
+      $('gr-pin-link').focus();
+    }
+  });
+  $('gr-pin-link').addEventListener('paste', function () {
+    window.setTimeout(function () { var v = $('gr-pin-link').value.trim(); if (v) trazerPin(v); }, 0);
+  });
+
+  // Compartilhado direto do app do Pinterest (Android, com o closet instalado)
+  function pinCompartilhado() {
+    var p = new URLSearchParams(location.search);
+    var texto = [p.get('link'), p.get('texto'), p.get('titulo')].filter(Boolean).join(' ');
+    if (!/pin\.it|pinterest\./i.test(texto)) return;
+    history.replaceState(null, '', location.pathname + location.hash);
+    abrirNovo(false);
+    $('gr-pin-link').value = texto;
+    trazerPin(texto);
+  }
+
   function trazerFoto(url, assinatura) {
     return fetch(ENDERECO + '?acao=foto-web&u=' + encodeURIComponent(url) + '&a=' + encodeURIComponent(assinatura), { credentials: 'same-origin' })
       .then(function (r) { if (!r.ok) throw new Error('foto'); return r.blob(); });
   }
 
   // A foto vem pelo site e passa pelo mesmo caminho da foto tirada: tirar o fundo e enquadrar
-  function usarFotoDaWeb(f, q, botao) {
+  function usarFotoDaWeb(f, q, botao, caixaEstado) {
     var atual = rascunho;
     if (!atual) return;
+    var estado = caixaEstado || $('gr-web-estado');
     $('gr-web-fotos').querySelectorAll('button').forEach(function (b) { b.disabled = true; });
     botao.classList.add('gr-web-escolhida');
-    $('gr-web-estado').textContent = 'Trazendo a foto...';
+    estado.textContent = 'Trazendo a foto...';
     var primeira = f.original ? trazerFoto(f.original, f.assinaturaOriginal).catch(function () { return trazerFoto(f.miniatura, f.assinaturaMiniatura); })
       : trazerFoto(f.miniatura, f.assinaturaMiniatura);
     primeira.then(foto.abrir).then(function (canvas) {
@@ -453,7 +520,8 @@
     }).catch(function () {
       $('gr-web-fotos').querySelectorAll('button').forEach(function (b) { b.disabled = false; });
       botao.classList.remove('gr-web-escolhida');
-      $('gr-web-estado').textContent = 'Não foi possível trazer esta foto. Escolha outra.';
+      botao.disabled = false;
+      estado.textContent = 'Não foi possível trazer esta foto. Escolha outra.';
     });
   }
 
@@ -631,7 +699,7 @@
     var p = pecaDoRascunho();
     if (!p) return;
     if (p.sugerida && pecasProprias() >= maximo) {
-      avisar('Você chegou ao limite de peças suas. Exclua uma para trocar a foto de uma sugerida.');
+      avisar('Você chegou ao limite de fotos suas. Exclua uma peça com foto para usar uma foto sua nesta.');
       return;
     }
     rascunho.trocarFoto = true;
@@ -1460,6 +1528,8 @@
     $('gr-filtro-nivel').closest('.campo').hidden = !soSugestoes;
     $('gr-filtro-clima').closest('.campo').hidden = !soSugestoes;
     $('gr-filtro-recentes-campo').hidden = !soSugestoes || falta.length > 0 || !usos.length;
+    $('gr-pilulas').hidden = falta.length > 0;
+    sincronizarPilulas();
 
     if (falta.length) {
       lista = [];
@@ -1972,13 +2042,63 @@
       : 'Informe quanto pagou ao editar uma peça (no ícone de lápis). Com o diário, você vê quanto cada uma custa por uso.';
   }
 
+  /* --- Filtros dos looks em pílulas (as listas continuam por trás, guardando a escolha) ------------ */
+
+  var ROTULOS_DO_MOSTRAR = { sugeridos: 'Para você', salvos: 'Salvos', rejeitados: 'Descartados' };
+  function montarPilulas() {
+    var caixa = $('gr-pilulas');
+    caixa.textContent = '';
+    [['gr-filtro-mostrar', ''], ['gr-filtro-nivel', 'Para onde'], ['gr-filtro-clima', 'Clima']].forEach(function (par) {
+      var select = $(par[0]);
+      var linha = criar('div', 'gr-pilulas-linha');
+      linha.dataset.para = par[0];
+      if (par[1]) linha.appendChild(criar('span', 'gr-pilulas-rotulo', par[1]));
+      var trilho = criar('div', 'gr-pilulas-trilho');
+      Array.prototype.forEach.call(select.options, function (o) {
+        var b = criar('button', 'gr-pilula', ROTULOS_DO_MOSTRAR[o.value] || o.text);
+        b.type = 'button';
+        b.dataset.valor = o.value;
+        b.addEventListener('click', function () {
+          if (select.value === o.value) return;
+          select.value = o.value;
+          select.dispatchEvent(new Event('change'));
+          sincronizarPilulas();
+        });
+        trilho.appendChild(b);
+      });
+      linha.appendChild(trilho);
+      caixa.appendChild(linha);
+    });
+    var recentes = criar('button', 'gr-pilula gr-pilula-recentes', 'Esconder os que usei há pouco');
+    recentes.type = 'button';
+    recentes.addEventListener('click', function () {
+      $('gr-filtro-recentes').checked = !$('gr-filtro-recentes').checked;
+      $('gr-filtro-recentes').dispatchEvent(new Event('change'));
+      sincronizarPilulas();
+    });
+    caixa.appendChild(recentes);
+    sincronizarPilulas();
+  }
+
+  function sincronizarPilulas() {
+    document.querySelectorAll('#gr-pilulas .gr-pilulas-linha').forEach(function (linha) {
+      var select = $(linha.dataset.para);
+      linha.hidden = Boolean(select.closest('.campo') && select.closest('.campo').hidden);
+      linha.querySelectorAll('.gr-pilula').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.valor === select.value)); });
+    });
+    var recentes = document.querySelector('#gr-pilulas .gr-pilula-recentes');
+    if (recentes) {
+      recentes.setAttribute('aria-pressed', String($('gr-filtro-recentes').checked));
+      recentes.hidden = $('gr-filtro-recentes-campo').hidden;
+    }
+  }
+
   /* --- Início --------------------------------------------------------------------------------- */
 
-  preencherSelect('gr-filtro-grupo', [
-    { id: 'minhas', rotulo: 'Só as minhas' }, { id: 'sugeridas', rotulo: 'Só as sugeridas' }
-  ].concat(gr.GRUPOS), 'Todas as peças');
-  preencherSelect('gr-filtro-nivel', gr.FORMALIDADES, 'Todas');
-  preencherSelect('gr-filtro-clima', gr.CLIMAS.filter(function (c) { return c.id !== 'qualquer'; }), 'Qualquer');
+  preencherSelect('gr-filtro-grupo', gr.GRUPOS, 'Todas as peças');
+  preencherSelect('gr-filtro-nivel', gr.FORMALIDADES, 'Qualquer ocasião');
+  preencherSelect('gr-filtro-clima', gr.CLIMAS.filter(function (c) { return c.id !== 'qualquer'; }), 'Qualquer clima');
+  montarPilulas();
   preencherSelect('gr-tecido', gr.TECIDOS, 'Não sei ou prefiro não informar');
   preencherSelect('gr-cor', gr.CORES, 'Escolha');
   preencherSelect('gr-corte', gr.CORTES.map(function (c) { return { id: c.id, rotulo: c.explica ? c.rotulo + ' (' + c.explica + ')' : c.rotulo }; }), 'Escolha');
@@ -2038,6 +2158,7 @@
     maximo = r.dados.maximoPecas;
     consentiu = r.dados.consentiu;
     buscaLigada = Boolean(r.dados.buscaDeFotos);
+    window.setTimeout(pinCompartilhado, 0);
     $('gr-maximo').textContent = String(maximo);
     r.dados.looks.slice().reverse().forEach(function (l) { decisoes[l.chave] = l.situacao; });
     r.dados.notas.forEach(function (n) { notas[n.chave] = { nome: n.nome, observacao: n.observacao }; });

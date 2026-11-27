@@ -108,11 +108,12 @@
     var pecas = dados.pecas;
     var total = window.AR_LOOKS.totalDeLooks(pecas);
     $('estilo-exemplo').hidden = true;
+    $('estilo-nota').hidden = true;
+    $('estilo-botao').firstChild.textContent = 'Ver meus looks';
     $('estilo-pecas').textContent = String(pecas.length);
     $('estilo-looks').textContent = String(total);
     $('estilo-numeros').hidden = false;
     $('estilo-texto').textContent = 'Suas peças já rendem ' + total + ' looks. Veja as combinações para hoje e descubra o que falta para render ainda mais.';
-    $('estilo-botao').textContent = 'Ver meus looks';
     $('estilo-botao').href = 'apps/guarda-roupa/#looks';
     var s = window.AR_SUGESTAO ? window.AR_SUGESTAO.melhor(pecas, produtos, dados.compradas || [], []) : null;
     if (!s) return;

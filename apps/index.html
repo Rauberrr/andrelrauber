@@ -8,7 +8,7 @@
   <meta name="description" content="Digital Closet: seu armário no celular, com o look do dia pronto e as ocasiões planejadas.">
   <link rel="canonical" href="https://andrerauber.com/apps/">
   <meta name="theme-color" content="#f4f1ea">
-  <link rel="manifest" href="assets/apps.webmanifest?v=20261120a">
+  <link rel="manifest" href="assets/apps.webmanifest?v=20261126a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Rauber">
@@ -19,8 +19,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261123a">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261123a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261126a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261126a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app app-inicio">
@@ -45,19 +45,26 @@
     <section class="inicio-estilo" aria-labelledby="estilo-titulo">
       <p class="inicio-estilo-selo"><svg data-icone="cabide"></svg>Meu closet</p>
       <h2 class="inicio-estilo-titulo" id="estilo-titulo">Pare de procurar o que vestir</h2>
-      <p class="inicio-estilo-texto" id="estilo-texto">Adicione as roupas do seu armário sem esforço: busque a foto da peça na internet, fotografe ou escolha no catálogo. O closet monta os looks do dia e mostra qual peça faria mais diferença.</p>
-      <div class="inicio-exemplo" id="estilo-exemplo">
-        <p class="inicio-exemplo-selo">Exemplo: assim fica quando você adicionar as suas peças</p>
-        <div class="inicio-exemplo-look" aria-hidden="true">
-          <img src="assets/img/sugeridas/camisa-azul-clara.webp" alt="" width="1000" height="1250" loading="lazy">
-          <img src="assets/img/sugeridas/calca-jeans-lavagem-escura.webp" alt="" width="1000" height="1250" loading="lazy">
-          <img src="assets/img/sugeridas/sapato-social.webp" alt="" width="1000" height="1250" loading="lazy">
+      <p class="inicio-estilo-texto" id="estilo-texto">Seu guarda-roupa inteiro no celular. Você coloca as roupas que tem e o closet monta os looks, para o dia e para cada ocasião.</p>
+      <div class="inicio-vitrine" id="estilo-exemplo">
+        <div class="inicio-vitrine-palco" aria-hidden="true">
+          <span class="iv-etiqueta iv-etiqueta-a">Trabalho</span>
+          <img class="iv iv-blazer" src="assets/img/sugeridas/blazer-azul-marinho.webp" alt="" width="1000" height="1250">
+          <img class="iv iv-camisa" src="assets/img/sugeridas/camisa-azul-clara.webp" alt="" width="1000" height="1250">
+          <img class="iv iv-calca" src="assets/img/sugeridas/calca-alfaiataria-bege.webp" alt="" width="1000" height="1250">
+          <img class="iv iv-derby" src="assets/img/sugeridas/sapato-derby-marrom.webp" alt="" width="1000" height="1250">
+          <img class="iv iv-relogio" src="assets/img/sugeridas/relogio-couro-marrom.webp" alt="" width="1000" height="1250">
+          <span class="iv-etiqueta iv-etiqueta-b">Fim de semana</span>
+          <img class="iv iv-camiseta" src="assets/img/sugeridas/camiseta-branca.webp" alt="" width="1000" height="1250">
+          <img class="iv iv-jeans" src="assets/img/sugeridas/calca-jeans-lavagem-escura.webp" alt="" width="1000" height="1250">
+          <img class="iv iv-tenis" src="assets/img/sugeridas/tenis-nike.webp" alt="" width="1000" height="1250">
+          <img class="iv iv-oculos" src="assets/img/sugeridas/oculos-sol-aviador-dourado.webp" alt="" width="1000" height="1250">
         </div>
-        <div class="inicio-estilo-numeros inicio-exemplo-numeros">
-          <div><strong>18</strong><span>peças</span></div>
-          <div><strong>96</strong><span>looks possíveis</span></div>
-          <div class="inicio-estilo-mais"><strong>+14</strong><span>com uma peça</span></div>
-        </div>
+        <ul class="inicio-vitrine-ganhos">
+          <li><strong>O look do dia em segundos</strong><span>Combinações prontas com as suas roupas, para o clima de hoje.</span></li>
+          <li><strong>O traje certo para cada ocasião</strong><span>Trabalho, encontro, casamento ou viagem, sem dúvida.</span></li>
+          <li><strong>Mais looks com o que você já tem</strong><span>E a peça que faria mais diferença no seu armário.</span></li>
+        </ul>
       </div>
       <div class="inicio-estilo-numeros" id="estilo-numeros" hidden>
         <div><strong id="estilo-pecas">0</strong><span>peças</span></div>
@@ -72,7 +79,8 @@
       <ul class="inicio-estilo-lista">
         <li>Look do dia pronto</li><li>Combinações com fotos</li><li>A peça que falta</li><li>Peças paradas e custo por uso</li>
       </ul>
-      <a class="botao inicio-estilo-botao" id="estilo-botao" href="apps/guarda-roupa/">Adicionar minhas peças</a>
+      <a class="inicio-estilo-botao inicio-cta" id="estilo-botao" href="apps/guarda-roupa/"><span>Montar meu closet</span><svg data-icone="seguir" aria-hidden="true"></svg></a>
+      <p class="inicio-cta-nota" id="estilo-nota">Sem tirar foto: marque as suas roupas no atalho ou traga do Pinterest.</p>
     </section>
 
     <!-- Ocasiões: em destaque, logo depois do closet -->
@@ -153,10 +161,10 @@
 
   <script src="assets/js/config.js?v=20261111a"></script>
   <script src="assets/js/conta-api.js?v=20261112a"></script>
-  <script src="assets/js/apps.js?v=20261123a"></script>
-  <script src="assets/js/guarda-roupa-dados.js?v=20261123a"></script>
-  <script src="assets/js/guarda-roupa-looks.js?v=20261123a"></script>
+  <script src="assets/js/apps.js?v=20261126a"></script>
+  <script src="assets/js/guarda-roupa-dados.js?v=20261126a"></script>
+  <script src="assets/js/guarda-roupa-looks.js?v=20261126a"></script>
   <script src="assets/js/guarda-roupa-sugestao.js?v=20261113a"></script>
-  <script src="assets/js/apps-inicio.js?v=20261123a"></script>
+  <script src="assets/js/apps-inicio.js?v=20261126a"></script>
 </body>
 </html>
