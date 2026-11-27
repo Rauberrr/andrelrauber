@@ -46,8 +46,12 @@ window.AR_GR = (function () {
     { id: 'cinto', rotulo: 'Cinto', grupo: 'acessorio', nivel: 2, clima: 'qualquer' },
     { id: 'gravata', rotulo: 'Gravata', grupo: 'acessorio', nivel: 3, clima: 'qualquer' },
     { id: 'bone', rotulo: 'Boné', grupo: 'acessorio', nivel: 1, clima: 'qualquer' },
-    { id: 'oculos', rotulo: 'Óculos', grupo: 'acessorio', nivel: 1, clima: 'qualquer' },
+    { id: 'oculos', rotulo: 'Óculos de sol', grupo: 'acessorio', nivel: 1, clima: 'calor' },
+    { id: 'oculos_grau', rotulo: 'Óculos de grau', grupo: 'acessorio', nivel: 2, clima: 'qualquer' },
     { id: 'relogio', rotulo: 'Relógio', grupo: 'acessorio', nivel: 2, clima: 'qualquer' },
+    { id: 'pulseira', rotulo: 'Pulseira', grupo: 'acessorio', nivel: 1, clima: 'qualquer' },
+    { id: 'colar', rotulo: 'Colar', grupo: 'acessorio', nivel: 1, clima: 'qualquer' },
+    { id: 'anel', rotulo: 'Anel', grupo: 'acessorio', nivel: 2, clima: 'qualquer' },
     { id: 'acessorio', rotulo: 'Outro acessório', grupo: 'acessorio', nivel: 1, clima: 'qualquer' }
   ];
 

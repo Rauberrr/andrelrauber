@@ -8,7 +8,7 @@
   <meta name="description" content="Digital Closet: seu armário no celular, com o look do dia pronto e as ocasiões planejadas.">
   <link rel="canonical" href="https://andrerauber.com/apps/">
   <meta name="theme-color" content="#f4f1ea">
-  <link rel="manifest" href="assets/apps.webmanifest?v=20261120a">
+  <link rel="manifest" href="assets/apps.webmanifest?v=20261126a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Rauber">
@@ -19,8 +19,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500&display=swap">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261123a">
-  <link rel="stylesheet" href="assets/css/apps.css?v=20261123a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261126a">
+  <link rel="stylesheet" href="assets/css/apps.css?v=20261128b">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="app app-inicio">
@@ -42,37 +42,65 @@
     </div>
 
     <!-- Estilo e imagem: o guarda-roupa em destaque -->
-    <section class="inicio-estilo" aria-labelledby="estilo-titulo">
-      <p class="inicio-estilo-selo"><svg data-icone="cabide"></svg>Meu closet</p>
-      <h2 class="inicio-estilo-titulo" id="estilo-titulo">Pare de procurar o que vestir</h2>
-      <p class="inicio-estilo-texto" id="estilo-texto">Adicione as roupas do seu armário sem esforço: busque a foto da peça na internet, fotografe ou escolha no catálogo. O closet monta os looks do dia e mostra qual peça faria mais diferença.</p>
-      <div class="inicio-exemplo" id="estilo-exemplo">
-        <p class="inicio-exemplo-selo">Exemplo: assim fica quando você adicionar as suas peças</p>
-        <div class="inicio-exemplo-look" aria-hidden="true">
-          <img src="assets/img/sugeridas/camisa-azul-clara.webp" alt="" width="1000" height="1250" loading="lazy">
-          <img src="assets/img/sugeridas/calca-jeans-lavagem-escura.webp" alt="" width="1000" height="1250" loading="lazy">
-          <img src="assets/img/sugeridas/sapato-social.webp" alt="" width="1000" height="1250" loading="lazy">
-        </div>
-        <div class="inicio-estilo-numeros inicio-exemplo-numeros">
-          <div><strong>18</strong><span>peças</span></div>
-          <div><strong>96</strong><span>looks possíveis</span></div>
-          <div class="inicio-estilo-mais"><strong>+14</strong><span>com uma peça</span></div>
-        </div>
+    <!-- Digital Closet: carrossel do topo. Vitrine e sorteador para todos; os números para quem já tem peças -->
+    <section class="dc-hero" id="dc-hero" aria-roledescription="carrossel" aria-label="Seu Digital Closet">
+      <div class="dc-trilho" id="dc-trilho">
+        <article class="dc-slide dc-slide-numeros" id="dc-slide-numeros" aria-roledescription="slide" aria-label="Seu closet em números" hidden>
+          <div class="dc-fundo" aria-hidden="true">
+            <div class="dc-manchas"><i></i><i></i><i></i></div>
+            <div class="dc-espalhadas" data-espalhadas></div>
+          </div>
+          <div class="dc-frente">
+            <p class="dc-selo">Meu closet</p>
+            <h2 class="dc-titulo">Seu closet rende<br><em><span id="estilo-looks-titulo">0</span> looks.</em></h2>
+            <p class="dc-texto" id="estilo-texto"></p>
+            <div class="dc-numeros" id="estilo-numeros" hidden>
+              <div><strong id="estilo-pecas">0</strong><span>peças</span></div>
+              <div><strong id="estilo-looks">0</strong><span>looks possíveis</span></div>
+              <div class="dc-numeros-mais" id="estilo-mais-caixa" hidden><strong id="estilo-mais">+0</strong><span>com uma peça</span></div>
+            </div>
+            <a class="inicio-estilo-sugestao dc-sugestao" id="estilo-sugestao" href="apps/guarda-roupa/#looks" hidden>
+              <span class="inicio-estilo-sugestao-foto" id="estilo-sugestao-foto" aria-hidden="true"></span>
+              <span class="inicio-estilo-sugestao-texto"><small id="estilo-sugestao-selo">Da coleção Rauber</small><strong id="estilo-sugestao-titulo"></strong></span>
+              <svg data-icone="seguir" aria-hidden="true"></svg>
+            </a>
+            <a class="dc-cta" href="apps/guarda-roupa/#looks"><span>Ver meus looks</span><svg data-icone="seguir" aria-hidden="true"></svg></a>
+          </div>
+        </article>
+
+        <article class="dc-slide dc-slide-vitrine" id="dc-slide-vitrine" aria-roledescription="slide" aria-label="O que é o Digital Closet">
+          <div class="dc-fundo" aria-hidden="true">
+            <div class="dc-manchas"><i></i><i></i><i></i></div>
+            <div class="dc-faixas" data-faixas>
+            <div class="dc-faixa "><div class="dc-faixa-trilho"><img src="assets/img/sugeridas/mini/moletom-bordo.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/oculos-sol-aviador-dourado.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/camisa-azul-clara.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/tenis-new-balance.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/sueter-verde-oliva.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/relogio-aco-prateado.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/calca-jeans-lavagem-clara.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/blazer-azul-marinho.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/bone-preto.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/camiseta-off-white.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/moletom-bordo.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/oculos-sol-aviador-dourado.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/camisa-azul-clara.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/tenis-new-balance.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/sueter-verde-oliva.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/relogio-aco-prateado.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/calca-jeans-lavagem-clara.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/blazer-azul-marinho.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/bone-preto.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/camiseta-off-white.webp" alt="" width="240" height="300" decoding="async"></div></div>
+            <div class="dc-faixa dc-faixa-volta"><div class="dc-faixa-trilho"><img src="assets/img/sugeridas/mini/sapato-derby-marrom.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/calca-alfaiataria-bege.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/moletom-off-white.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/oculos-grau-redondo-tartaruga.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/camisa-rosa.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/tenis-nike-preto.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/sueter-bordo.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/relogio-couro-marrom.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/calca-jeans-preta.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/camiseta-azul-claro.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/sapato-derby-marrom.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/calca-alfaiataria-bege.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/moletom-off-white.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/oculos-grau-redondo-tartaruga.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/camisa-rosa.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/tenis-nike-preto.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/sueter-bordo.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/relogio-couro-marrom.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/calca-jeans-preta.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/camiseta-azul-claro.webp" alt="" width="240" height="300" decoding="async"></div></div>
+            <div class="dc-faixa dc-faixa-lenta"><div class="dc-faixa-trilho"><img src="assets/img/sugeridas/mini/blazer-bege.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/tenis-nike.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/moletom-verde-oliva.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/oculos-sol-quadrado-preto.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/calca-alfaiataria-azul-marinho.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/camiseta-bordo.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/relogio-dourado-couro-preto.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/sueter-azul-marinho.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/calca-jeans-lavagem-escura.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/moletom-azul-marinho.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/blazer-bege.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/tenis-nike.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/moletom-verde-oliva.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/oculos-sol-quadrado-preto.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/calca-alfaiataria-azul-marinho.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/camiseta-bordo.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/relogio-dourado-couro-preto.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/sueter-azul-marinho.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/calca-jeans-lavagem-escura.webp" alt="" width="240" height="300" decoding="async"><img src="assets/img/sugeridas/mini/moletom-azul-marinho.webp" alt="" width="240" height="300" decoding="async"></div></div>
+            </div>
+            <span class="dc-adesivo dc-adesivo-a"><i></i>24° hoje · look leve</span>
+            <span class="dc-adesivo dc-adesivo-b"><b>+38</b> looks</span>
+            <span class="dc-adesivo dc-adesivo-c">Combina ✓</span>
+          </div>
+          <div class="dc-frente">
+            <p class="dc-selo">Digital Closet</p>
+            <h2 class="dc-titulo" id="estilo-titulo">Abra o armário.<br><em>A gente monta o look.</em></h2>
+            <p class="dc-girando">Pronto para <span class="dc-palavras" aria-hidden="true"><b>o trabalho</b><b>o date</b><b>o casamento</b><b>a viagem</b><b>o fim de semana</b></span><span class="visualmente-oculto">qualquer ocasião</span></p>
+            <a class="dc-cta" id="estilo-botao" href="apps/guarda-roupa/"><span>Montar meu closet</span><svg data-icone="seguir" aria-hidden="true"></svg></a>
+            <p class="dc-nota" id="estilo-nota">Sem foto: marque as suas roupas no atalho ou traga do Pinterest.</p>
+          </div>
+        </article>
+
+        <article class="dc-slide dc-slide-sorteio" id="dc-slide-sorteio" aria-roledescription="slide" aria-label="Sorteie um look">
+          <p class="dc-selo dc-selo-escuro">Experimente</p>
+          <h2 class="dc-titulo-s" id="dc-sorteio-titulo">Toque e ganhe um look</h2>
+          <div class="dc-sorteio" id="dc-sorteio" aria-live="polite">
+            <span class="dc-sorteio-ocasiao" id="dc-sorteio-ocasiao">Trabalho</span>
+            <div class="dc-sorteio-pecas" id="dc-sorteio-pecas"></div>
+          </div>
+          <button class="dc-cta dc-cta-escuro" type="button" id="dc-sortear"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8.5" cy="8.5" r="1.3"/><circle cx="15.5" cy="15.5" r="1.3"/><circle cx="15.5" cy="8.5" r="1.3"/><circle cx="8.5" cy="15.5" r="1.3"/><circle cx="12" cy="12" r="1.3"/></svg><span>Sortear outro look</span></button>
+          <p class="dc-nota dc-nota-escura" id="dc-sorteio-nota">Com as suas roupas, quem sorteia é o closet: para o clima de hoje e para onde você vai.</p>
+        </article>
       </div>
-      <div class="inicio-estilo-numeros" id="estilo-numeros" hidden>
-        <div><strong id="estilo-pecas">0</strong><span>peças</span></div>
-        <div><strong id="estilo-looks">0</strong><span>looks possíveis</span></div>
-        <div class="inicio-estilo-mais" id="estilo-mais-caixa" hidden><strong id="estilo-mais">+0</strong><span>com uma peça</span></div>
-      </div>
-      <a class="inicio-estilo-sugestao" id="estilo-sugestao" href="apps/guarda-roupa/#looks" hidden>
-        <span class="inicio-estilo-sugestao-foto" id="estilo-sugestao-foto" aria-hidden="true"></span>
-        <span class="inicio-estilo-sugestao-texto"><small id="estilo-sugestao-selo">Da coleção Rauber</small><strong id="estilo-sugestao-titulo"></strong></span>
-        <svg data-icone="seguir" aria-hidden="true"></svg>
-      </a>
-      <ul class="inicio-estilo-lista">
-        <li>Look do dia pronto</li><li>Combinações com fotos</li><li>A peça que falta</li><li>Peças paradas e custo por uso</li>
-      </ul>
-      <a class="botao inicio-estilo-botao" id="estilo-botao" href="apps/guarda-roupa/">Adicionar minhas peças</a>
+      <div class="dc-bolinhas" id="dc-bolinhas" role="tablist" aria-label="Escolher tela"></div>
     </section>
 
     <!-- Ocasiões: em destaque, logo depois do closet -->
@@ -153,10 +181,11 @@
 
   <script src="assets/js/config.js?v=20261111a"></script>
   <script src="assets/js/conta-api.js?v=20261112a"></script>
-  <script src="assets/js/apps.js?v=20261123a"></script>
-  <script src="assets/js/guarda-roupa-dados.js?v=20261123a"></script>
-  <script src="assets/js/guarda-roupa-looks.js?v=20261123a"></script>
+  <script src="assets/js/apps.js?v=20261126a"></script>
+  <script src="assets/js/guarda-roupa-dados.js?v=20261126a"></script>
+  <script src="assets/js/guarda-roupa-looks.js?v=20261126a"></script>
   <script src="assets/js/guarda-roupa-sugestao.js?v=20261113a"></script>
-  <script src="assets/js/apps-inicio.js?v=20261123a"></script>
+  <script src="assets/js/closet-carrossel.js?v=20261128b"></script>
+  <script src="assets/js/apps-inicio.js?v=20261128a"></script>
 </body>
 </html>

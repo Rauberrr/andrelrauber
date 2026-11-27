@@ -345,6 +345,7 @@
     else estado.trocas[item.chave] = id;
     salvar();
     depois();
+    guardarSessao();
     app.avisar('Trocado por ' + minusculo(T.porExercicio[id].nome) + ' no treino ' + treino.letra + '.', function () {
       if (antes) estado.trocas[item.chave] = antes; else delete estado.trocas[item.chave];
       salvar();
@@ -377,10 +378,69 @@
         trocar(item, treino, item.sugerido, depois);
       }));
     }
+    caixa.appendChild(buscaDeTroca(item, treino, depois));
     acoes.appendChild(botao('Cancelar', 'texto-botao', function () { caixa.remove(); }));
     caixa.appendChild(acoes);
     depoisDe.parentNode.insertBefore(caixa, depoisDe.nextSibling);
     caixa.querySelector('button').focus();
+  }
+
+  // Busca de qualquer exercício para trocar. Os do mesmo grupo muscular vêm primeiro, como recomendados;
+  // os de outro grupo aparecem à parte e pedem confirmação, para o treino não ficar desequilibrado.
+  function buscaDeTroca(item, treino, depois) {
+    var perfil = estado.perfil;
+    var grupo = item.exercicio.grupo;
+    var rotuloGrupo = T.porGrupo[grupo].rotulo;
+    var noTreino = treino.exercicios.map(function (x) { return x.exercicio.id; });
+    var caixa = criar('div', 'tr-trocas-busca');
+    caixa.appendChild(criar('p', 'tr-trocas-titulo', 'Não é nenhum desses? Procure o exercício'));
+    var campo = document.createElement('input');
+    campo.type = 'search';
+    campo.placeholder = 'Ex.: crucifixo, remada baixa, cadeira extensora';
+    campo.setAttribute('aria-label', 'Procurar exercício');
+    campo.autocomplete = 'off';
+    caixa.appendChild(campo);
+    var res = criar('div', 'tr-trocas-resultados');
+    caixa.appendChild(res);
+
+    function opcao(ex, outroGrupo) {
+      var b = criar('button', 'tr-troca-opcao' + (outroGrupo ? ' tr-troca-outro' : ''));
+      b.type = 'button';
+      b.appendChild(criar('strong', '', ex.nome));
+      b.appendChild(criar('span', '', outroGrupo ? 'Trabalha ' + minusculo(T.porGrupo[ex.grupo].rotulo) + ', não ' + minusculo(rotuloGrupo) : (ex.dica || '')));
+      b.addEventListener('click', function () {
+        if (outroGrupo && !window.confirm(ex.nome + ' trabalha ' + minusculo(T.porGrupo[ex.grupo].rotulo) + ', não ' + minusculo(rotuloGrupo) + '. O treino pode ficar desequilibrado. Trocar mesmo assim?')) return;
+        trocar(item, treino, ex.id, depois);
+      });
+      return b;
+    }
+
+    function listar() {
+      res.textContent = '';
+      var termo = T.normalizar(campo.value || '');
+      var palavras = termo.split(/\s+/).filter(Boolean);
+      var serve = T.EXERCICIOS.filter(function (ex) {
+        if (ex.id === item.exercicio.id || noTreino.indexOf(ex.id) !== -1 || !permitido(ex, perfil)) return false;
+        var nome = T.normalizar(ex.nome);
+        return palavras.every(function (p) { return nome.indexOf(p) !== -1; });
+      });
+      var mesmo = serve.filter(function (ex) { return ex.grupo === grupo; });
+      var outros = palavras.length ? serve.filter(function (ex) { return ex.grupo !== grupo; }) : [];
+      if (mesmo.length) {
+        res.appendChild(criar('p', 'tr-trocas-secao', 'Mesmo grupo: ' + rotuloGrupo + ' (recomendado)'));
+        mesmo.slice(0, palavras.length ? 8 : 20).forEach(function (ex) { res.appendChild(opcao(ex, false)); });
+      }
+      if (outros.length) {
+        res.appendChild(criar('p', 'tr-trocas-secao', 'Outros grupos musculares'));
+        outros.slice(0, 6).forEach(function (ex) { res.appendChild(opcao(ex, true)); });
+      }
+      if (!mesmo.length && !outros.length) {
+        res.appendChild(criar('p', 'app-suave', palavras.length ? 'Nenhum exercício com esse nome para o seu local e os seus cuidados. Você pode criar um em Exercícios, mais abaixo.' : 'Não há outros exercícios deste grupo para o seu local e os seus cuidados.'));
+      }
+    }
+    campo.addEventListener('input', listar);
+    campo.addEventListener('focus', function () { if (!res.childNodes.length) listar(); });
+    return caixa;
   }
 
   function botaoTrocar(item, treino, onde, depois) {
@@ -1150,12 +1210,58 @@
 
   /* --- Treino do dia ---------------------------------------------------------------------------- */
 
+  // O treino em andamento fica guardado no aparelho: dá para sair, navegar e voltar sem perder nada
+  var CHAVE_SESSAO = 'ar-treino-sessao-v1';
+  var VALIDADE_SESSAO = 14 * 3600 * 1000;
+  var fimDoDescanso = 0;
+
+  function guardarSessao() {
+    if (!sessao) return;
+    app.gravarLocal(CHAVE_SESSAO, { sessao: sessao, salvoEm: Date.now(), descansoFim: fimDoDescanso });
+  }
+
+  function esquecerSessao() {
+    fimDoDescanso = 0;
+    try { localStorage.removeItem(CHAVE_SESSAO); } catch (e) { /* nada guardado */ }
+  }
+
+  function retomarSessao() {
+    var g = app.lerLocal(CHAVE_SESSAO);
+    if (!g || !g.sessao || !estado.perfil || !(Date.now() - (g.salvoEm || 0) < VALIDADE_SESSAO)) { esquecerSessao(); return false; }
+    if (!g.sessao.marcas || !g.sessao.series) { esquecerSessao(); return false; }
+    sessao = g.sessao;
+    desenharSessao();
+    mostrar('sessao');
+    var resta = Math.round(((g.descansoFim || 0) - Date.now()) / 1000);
+    if (resta > 0) iniciarDescanso(resta);
+    app.avisar('Seu treino em andamento voltou de onde você parou.');
+    return true;
+  }
+
   function comecar(letra) {
     var t = treinoDe(letra);
-    sessao = { letra: t.letra, variacao: t.variacao, marcas: {}, series: {}, esforco: 'ok' };
+    sessao = { letra: t.letra, variacao: t.variacao, marcas: {}, series: {}, esforco: 'ok', inicio: Date.now() };
+    guardarSessao();
     desenharSessao();
     mostrar('sessao');
     $('tr-sessao-titulo').focus();
+  }
+
+  // Descanso de cada exercício: os grandes do começo descansam mais; os pequenos, menos
+  var GRUPOS_GRANDES = { quadriceps: 1, posterior: 1, costas: 1, peito: 1 };
+  var GRUPOS_PEQUENOS = { biceps: 1, triceps: 1, panturrilha: 1, abdomen: 1 };
+  function descansoDe(item, treino) {
+    var base = esquema(estado.perfil).descanso;
+    var grupo = item.exercicio.grupo;
+    var primeiroDoGrupo = treino.exercicios.filter(function (x) { return x.exercicio.grupo === grupo; })[0] === item;
+    var s = base;
+    if (GRUPOS_GRANDES[grupo] && primeiroDoGrupo) s = base * 1.25;
+    else if (GRUPOS_PEQUENOS[grupo]) s = base * 0.75;
+    return Math.max(30, Math.round(s / 15) * 15);
+  }
+
+  function textoDoDescanso(s) {
+    return s >= 60 && s % 60 === 0 ? s / 60 + ' min' : (s > 60 ? Math.floor(s / 60) + ' min ' + (s % 60) + ' s' : s + ' s');
   }
 
   function desenharSessao() {
@@ -1177,8 +1283,10 @@
       cab.appendChild(titulo);
       cab.appendChild(criar('span', 'tr-series', n + ' × ' + repeticoes(ex, p)));
       c.appendChild(cab);
+      var descanso = descansoDe(x, t);
+      c.appendChild(criar('p', 'tr-descanso-do-ex', 'Descanso entre as séries: ' + textoDoDescanso(descanso)));
       c.appendChild(criar('p', 'app-suave', ex.dica));
-      c.appendChild(linhasDeSeries(ex, n, p));
+      c.appendChild(linhasDeSeries(ex, n, p, descanso));
       var acoes = criar('div', 'tr-sessao-acoes');
       var trocarBotao = botao('Trocar exercício', 'texto-botao', null, 'girar');
       trocarBotao.addEventListener('click', function () { abrirTrocas(x, t, acoes, desenharSessao); });
@@ -1192,6 +1300,7 @@
       var b = botao(e.rotulo, '', function () {
         sessao.esforco = e.id;
         esforcos.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        guardarSessao();
       });
       b.setAttribute('aria-pressed', String(e.id === sessao.esforco));
       esforcos.appendChild(b);
@@ -1201,7 +1310,7 @@
 
   // Uma linha por série: marcar, carga em kg e repetições (ou segundos).
   // A última vez aparece como sugestão e vale se a pessoa marcar sem preencher.
-  function linhasDeSeries(ex, n, p) {
+  function linhasDeSeries(ex, n, p, descanso) {
     var caixa = criar('div', 'tr-series-lista');
     var marcas = sessao.marcas[ex.id] || (sessao.marcas[ex.id] = []);
     var feitas = sessao.series[ex.id] || (sessao.series[ex.id] = []);
@@ -1252,6 +1361,12 @@
               return;
             }
             atual[indice] = v;
+            // Anotou as repetições: a série conta como feita e o descanso começa
+            if (indice === 1 && v !== null && !marca.checked) {
+              marca.checked = true;
+              marca.dispatchEvent(new Event('change'));
+            }
+            guardarSessao();
           });
           return entrada;
         }
@@ -1265,8 +1380,9 @@
             // Marcou sem preencher: vale a sugestão da última vez
             if (atual[0] === null && sug.kg !== null) { atual[0] = sug.kg; kg.value = kgTexto(sug.kg); }
             if (atual[1] === null && sug.reps !== null) { atual[1] = sug.reps; reps.value = String(sug.reps); }
-            if (i < n - 1) iniciarDescanso(esquema(p).descanso);
+            iniciarDescanso(descanso || esquema(p).descanso);
           }
+          guardarSessao();
         });
         caixa.appendChild(linha);
       })(i);
@@ -1303,7 +1419,11 @@
     var t = treinoDe(sessao.letra, sessao.variacao);
     var feitos = t.exercicios.filter(function (x) {
       var m = sessao.marcas[x.exercicio.id] || [];
-      return m.filter(Boolean).length >= seriesDe(x, estado.perfil);
+      var s = sessao.series[x.exercicio.id] || [];
+      var n = seriesDe(x, estado.perfil);
+      var feitas = 0;
+      for (var i = 0; i < n; i += 1) if (m[i] || (s[i] && s[i][1] !== null)) feitas += 1;
+      return feitas >= n;
     }).length;
     var guardar = seriesParaGuardar();
     var algum = Object.keys(sessao.marcas).some(function (k) { return sessao.marcas[k].some(Boolean); }) || Object.keys(guardar.series).length > 0;
@@ -1313,6 +1433,7 @@
     var mudou = '';
     pararDescanso();
     sessao = null;
+    esquecerSessao();
     salvar();
     desenharPainel();
     mostrar('painel');
@@ -1322,9 +1443,10 @@
   $('tr-sair').addEventListener('click', function () {
     var algum = sessao && (Object.keys(sessao.marcas).some(function (k) { return sessao.marcas[k].some(Boolean); }) ||
       Object.keys(seriesParaGuardar().series).length > 0);
-    if (algum && !window.confirm('Sair sem salvar este treino?')) return;
+    if (algum && !window.confirm('Sair sem salvar este treino? O que você anotou nele será descartado.')) return;
     pararDescanso();
     sessao = null;
+    esquecerSessao();
     mostrar('painel');
   });
 
@@ -1333,6 +1455,8 @@
   function iniciarDescanso(segundos) {
     pararDescanso();
     var fim = Date.now() + segundos * 1000;
+    fimDoDescanso = fim;
+    guardarSessao();
     $('tr-cronometro').hidden = false;
     function passo() {
       var resta = Math.max(0, Math.round((fim - Date.now()) / 1000));
@@ -1350,6 +1474,7 @@
   function pararDescanso() {
     window.clearInterval(cronometro);
     cronometro = null;
+    if (fimDoDescanso) { fimDoDescanso = 0; guardarSessao(); }
     $('tr-cronometro').hidden = true;
   }
 
@@ -1417,6 +1542,9 @@
     if (estado.perfil) { desenharPainel(); mostrar('painel'); } else abrirConfiguracao();
   }
 
+  // Voltou para a aba do Treino com um treino aberto: nada some
+  window.addEventListener('pageshow', function (e) { if (e.persisted && !sessao) retomarSessao(); });
+
   // Medidas novas vindas da Alimentação valem também aqui
   function trazerMedidasDaAlimentacao() {
     var c = app.comum();
@@ -1431,6 +1559,7 @@
 
   if (trazerMedidasDaAlimentacao()) salvar();
   inicio();
+  retomarSessao();
 
   app.sessao.then(function (usuario) {
     conta.logado = Boolean(usuario);

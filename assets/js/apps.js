@@ -240,7 +240,7 @@ window.AR_APP = (function () {
       texto: 'Fotografe suas roupas uma vez e receba looks prontos com o que você já tem. Crie sua conta grátis em menos de um minuto.',
       itens: [
         ['varinha', 'O look do dia, pronto', 'Combinações com as suas roupas, para o clima de hoje e para onde você vai.', 'app-icone-guarda-roupa'],
-        ['lupa', 'Sem precisar fotografar', 'Escreva a peça e a cor e escolha a foto dela na internet. Ou fotografe a sua: o fundo sai sozinho.', 'app-icone-guarda-roupa'],
+        ['lupa', 'Sem precisar fotografar', 'Marque as suas roupas no atalho ou traga a foto da peça do Pinterest. Ou fotografe: o fundo sai sozinho.', 'app-icone-guarda-roupa'],
         ['tesoura', 'Compre a peça certa', 'Veja quantos looks o seu armário rende e qual peça faria mais diferença.', 'app-icone-guarda-roupa'],
         ['calendario', 'Ocasiões', 'Casamento, entrevista ou viagem: o traje e a mala montados com as suas peças.', 'app-icone-ocasioes']
       ]

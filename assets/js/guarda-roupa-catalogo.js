@@ -10,6 +10,7 @@
   var ENDERECO = 'api/guarda-roupa.php?acao=';
   var itens = null;
   var grupo = '';
+  var marca = '';
   var LEMBRAR = 'ar-catalogo-publico';
   var publico = (function () { try { return localStorage.getItem(LEMBRAR) || ''; } catch (e) { return ''; } })();
 
@@ -70,6 +71,33 @@
       b.setAttribute('aria-pressed', String(g.id === grupo));
       b.addEventListener('click', function () {
         grupo = g.id;
+        marca = '';
+        caixa.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        montarMarcas();
+        desenhar();
+      });
+      caixa.appendChild(b);
+    });
+    montarMarcas();
+  }
+
+  // As marcas aparecem quando há peças com marca no que está na tela (tênis, por exemplo)
+  function montarMarcas() {
+    var caixa = $('cat-marcas');
+    caixa.textContent = '';
+    var marcas = [];
+    itens.forEach(function (i) {
+      if (i.marca && doPublico(i) && (!grupo || tipoDe(i.tipo).grupo === grupo) && marcas.indexOf(i.marca) === -1) marcas.push(i.marca);
+    });
+    marcas.sort();
+    caixa.hidden = marcas.length === 0;
+    if (!marcas.length) return;
+    [''].concat(marcas).forEach(function (m) {
+      var b = criar('button', 'cat-filtro cat-marca', m || 'Todas as marcas');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(m === marca));
+      b.addEventListener('click', function () {
+        marca = m;
         caixa.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
         desenhar();
       });
@@ -81,7 +109,7 @@
     var lista = $('cat-lista');
     lista.textContent = '';
     if (grupo && !itens.some(function (i) { return doPublico(i) && tipoDe(i.tipo).grupo === grupo; })) grupo = '';
-    var mostrar = itens.filter(function (i) { return doPublico(i) && (!grupo || tipoDe(i.tipo).grupo === grupo); });
+    var mostrar = itens.filter(function (i) { return doPublico(i) && (!grupo || tipoDe(i.tipo).grupo === grupo) && (!marca || i.marca === marca); });
     // As que a pessoa ainda não tem primeiro; as novidades do gestor no topo
     mostrar.sort(function (a, b) {
       var pa = (a.situacao === 'tem' ? 4 : 0) - (a.colecao ? 2 : 0) - (a.novo ? 1 : 0);
@@ -90,7 +118,7 @@
     });
     mostrar.forEach(function (i, n) { lista.appendChild(cartao(i, n < 9)); });
     var tem = itens.filter(function (i) { return i.situacao === 'tem'; }).length;
-    $('cat-resumo').textContent = itens.length + ' peças no catálogo · ' + tem + ' no seu guarda-roupa';
+    $('cat-resumo').textContent = itens.length + ' peças no catálogo · ' + tem + ' no seu closet';
   }
 
   function cartao(i, logo) {
@@ -116,9 +144,9 @@
     nome.appendChild(bolinha);
     nome.appendChild(document.createTextNode(i.nome));
     b.appendChild(nome);
-    var estado = criar('span', 'cat-estado-peca', i.situacao === 'tem' ? '✓ No seu guarda-roupa' : (i.situacao === 'excluida' ? 'Trazer de volta' : 'Tenho esta'));
+    var estado = criar('span', 'cat-estado-peca', i.situacao === 'tem' ? '✓ No seu closet' : (i.situacao === 'excluida' ? 'Trazer de volta' : 'Tenho esta'));
     b.appendChild(estado);
-    b.setAttribute('aria-label', i.nome + ': ' + (i.situacao === 'tem' ? 'já está no seu guarda-roupa' : 'adicionar ao meu guarda-roupa'));
+    b.setAttribute('aria-label', i.nome + ': ' + (i.situacao === 'tem' ? 'já está no seu closet' : 'tenho esta peça'));
     if (i.situacao === 'tem') b.setAttribute('aria-disabled', 'true');
     b.addEventListener('click', function () { if (i.situacao !== 'tem') adicionar(i, b); });
     li.appendChild(b);
@@ -134,7 +162,7 @@
       i.situacao = 'tem';
       tela.aoTrazerDoCatalogo(r.dados.peca);
       desenhar();
-      tela.avisar(i.nome + ' entrou no seu guarda-roupa.');
+      tela.avisar(i.nome + ' entrou no seu closet.');
     });
   }
 

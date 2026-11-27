@@ -27,6 +27,7 @@
  * Foto da peça achada na internet (SerpApi ou Brave; a chave fica no config.php, em serpapi_chave ou brave_busca):
  * GET  ?acao=buscar-foto&q=     imagens para a descrição da pessoa, com fundo branco
  * GET  ?acao=foto-web&u=&a=     a imagem escolhida, trazida pelo site para passar pelo "tirar o fundo"
+ * GET  ?acao=foto-pin&u=        a foto de um pin do Pinterest, a partir do link que a pessoa colou
  *
  * O guarda-roupa de cada pessoa começa vazio: ela adiciona as peças pelo catálogo, pela foto ou pela busca.
  */
@@ -44,9 +45,9 @@ const GR_TIPOS = [
     'blazer', 'jaqueta', 'casaco', 'sobretudo', 'cardigan', 'colete', 'terno', 'vestido',
     'calca', 'calca_sarja', 'jeans', 'calca_moletom', 'saia', 'bermuda', 'short_esportivo',
     'sapato', 'mocassim', 'tenis', 'bota', 'sandalia', 'chinelo',
-    'cinto', 'gravata', 'bone', 'oculos', 'relogio', 'acessorio',
+    'cinto', 'gravata', 'bone', 'oculos', 'oculos_grau', 'relogio', 'pulseira', 'colar', 'anel', 'acessorio',
 ];
-const GR_SEM_CORTE = ['sapato', 'mocassim', 'tenis', 'bota', 'sandalia', 'chinelo', 'cinto', 'gravata', 'bone', 'oculos', 'relogio', 'acessorio'];
+const GR_SEM_CORTE = ['sapato', 'mocassim', 'tenis', 'bota', 'sandalia', 'chinelo', 'cinto', 'gravata', 'bone', 'oculos', 'oculos_grau', 'relogio', 'pulseira', 'colar', 'anel', 'acessorio'];
 const GR_CORES = [
     'preto', 'branco', 'off_white', 'cinza', 'grafite', 'azul_marinho', 'azul', 'azul_claro',
     'bege', 'caqui', 'marrom', 'caramelo', 'verde_oliva', 'verde', 'bordo', 'vermelho',
@@ -72,9 +73,9 @@ const GR_SUGERIDAS = [
     'calca-jeans-lavagem-escura' => ['jeans', 'azul_marinho', 'reto', 'jeans', 'casual', 'qualquer', 'Jeans lavagem escura'],
     'calca-moletom-cinza' => ['calca_moletom', 'cinza', 'relaxed', 'moletom', 'casual', 'frio', 'Calça de moletom cinza'],
     'calca-moletom-preto' => ['calca_moletom', 'preto', 'relaxed', 'moletom', 'casual', 'frio', 'Calça de moletom preta'],
-    'sapato-social' => ['sapato', 'preto', '', 'couro', 'social', 'qualquer', 'Sapato social preto'],
-    'tenis-new-balance' => ['tenis', 'branco', '', 'sintetico', 'casual', 'qualquer', 'Tênis New Balance'],
-    'tenis-nike' => ['tenis', 'branco', '', 'couro', 'casual', 'qualquer', 'Tênis Nike branco'],
+    'sapato-social' => ['sapato', 'preto', '', 'couro', 'social', 'qualquer', 'Sapato derby preto'],
+    'tenis-new-balance' => ['tenis', 'branco', '', 'sintetico', 'casual', 'qualquer', 'New Balance 530 branco'],
+    'tenis-nike' => ['tenis', 'branco', '', 'couro', 'casual', 'qualquer', 'Nike Air Force 1 branco'],
     'gravata' => ['gravata', 'preto', '', 'seda', 'social', 'qualquer', 'Gravata listrada'],
     'bone-preto' => ['bone', 'preto', '', 'algodao', 'casual', 'qualquer', 'Boné preto'],
 ];
@@ -105,6 +106,36 @@ const GR_CATALOGO = [
     'calca-moletom-azul-marinho' => ['calca_moletom', 'azul_marinho', 'relaxed', 'moletom', 'casual', 'frio', 'Calça de moletom azul-marinho'],
     'calca-moletom-bege' => ['calca_moletom', 'bege', 'relaxed', 'moletom', 'casual', 'frio', 'Calça de moletom bege'],
     'calca-moletom-verde-oliva' => ['calca_moletom', 'verde_oliva', 'relaxed', 'moletom', 'casual', 'frio', 'Calça de moletom verde-oliva'],
+    // Suéteres, alfaiataria, jeans e blazers nas cores clássicas
+    'sueter-cinza' => ['malha', 'cinza', 'relaxed', 'tricot', 'misto', 'frio', 'Suéter cinza'],
+    'sueter-azul-marinho' => ['malha', 'azul_marinho', 'relaxed', 'tricot', 'misto', 'frio', 'Suéter azul-marinho'],
+    'sueter-bege' => ['malha', 'bege', 'relaxed', 'tricot', 'misto', 'frio', 'Suéter bege'],
+    'sueter-off-white' => ['malha', 'off_white', 'relaxed', 'tricot', 'misto', 'frio', 'Suéter off-white'],
+    'sueter-verde-oliva' => ['malha', 'verde_oliva', 'relaxed', 'tricot', 'misto', 'frio', 'Suéter verde-oliva'],
+    'sueter-bordo' => ['malha', 'bordo', 'relaxed', 'tricot', 'misto', 'frio', 'Suéter bordô'],
+    'calca-alfaiataria-cinza' => ['calca', 'cinza', 'relaxed', 'alfaiataria', 'misto', 'qualquer', 'Calça de alfaiataria cinza'],
+    'calca-alfaiataria-azul-marinho' => ['calca', 'azul_marinho', 'relaxed', 'alfaiataria', 'misto', 'qualquer', 'Calça de alfaiataria azul-marinho'],
+    'calca-alfaiataria-bege' => ['calca', 'bege', 'relaxed', 'alfaiataria', 'misto', 'qualquer', 'Calça de alfaiataria bege'],
+    'calca-alfaiataria-off-white' => ['calca', 'off_white', 'relaxed', 'alfaiataria', 'misto', 'calor', 'Calça de alfaiataria off-white'],
+    'calca-jeans-preta' => ['jeans', 'preto', 'reto', 'jeans', 'casual', 'qualquer', 'Jeans preto'],
+    'calca-jeans-cinza' => ['jeans', 'grafite', 'reto', 'jeans', 'casual', 'qualquer', 'Jeans cinza'],
+    'blazer-azul-marinho' => ['blazer', 'azul_marinho', 'regular', 'alfaiataria', 'trabalho', 'qualquer', 'Blazer azul-marinho'],
+    'blazer-cinza' => ['blazer', 'cinza', 'regular', 'alfaiataria', 'trabalho', 'qualquer', 'Blazer cinza'],
+    'blazer-bege' => ['blazer', 'bege', 'regular', 'linho', 'misto', 'calor', 'Blazer bege'],
+    // Calçados
+    'sapato-derby-marrom' => ['sapato', 'marrom', '', 'couro', 'social', 'qualquer', 'Sapato derby marrom'],
+    'tenis-nike-preto' => ['tenis', 'preto', '', 'couro', 'casual', 'qualquer', 'Nike Air Force 1 preto'],
+    'tenis-new-balance-cinza' => ['tenis', 'cinza', '', 'sintetico', 'casual', 'qualquer', 'New Balance 530 cinza'],
+    'tenis-new-balance-bege' => ['tenis', 'bege', '', 'sintetico', 'casual', 'qualquer', 'New Balance 530 bege'],
+    // Acessórios: relógios e óculos
+    'relogio-couro-marrom' => ['relogio', 'marrom', '', 'couro', 'trabalho', 'qualquer', 'Relógio com pulseira de couro marrom'],
+    'relogio-aco-prateado' => ['relogio', 'cinza', '', 'outro', 'trabalho', 'qualquer', 'Relógio de aço prateado'],
+    'relogio-preto-esportivo' => ['relogio', 'preto', '', 'sintetico', 'casual', 'qualquer', 'Relógio esportivo preto'],
+    'relogio-dourado-couro-preto' => ['relogio', 'preto', '', 'couro', 'festa', 'qualquer', 'Relógio dourado, pulseira preta'],
+    'oculos-grau-redondo-tartaruga' => ['oculos_grau', 'marrom', '', 'sintetico', 'casual', 'qualquer', 'Óculos de grau redondo tartaruga'],
+    'oculos-grau-quadrado-preto' => ['oculos_grau', 'preto', '', 'sintetico', 'casual', 'qualquer', 'Óculos de grau quadrado preto'],
+    'oculos-sol-aviador-dourado' => ['oculos', 'caqui', '', 'outro', 'casual', 'calor', 'Óculos de sol aviador dourado'],
+    'oculos-sol-quadrado-preto' => ['oculos', 'preto', '', 'sintetico', 'casual', 'calor', 'Óculos de sol quadrado preto'],
     // Femininas
     'camiseta-feminina-branca' => ['camiseta', 'branco', 'slim', 'algodao', 'casual', 'qualquer', 'Camiseta feminina branca'],
     'camiseta-feminina-preta' => ['camiseta', 'preto', 'slim', 'algodao', 'casual', 'qualquer', 'Camiseta feminina preta'],
@@ -126,11 +157,31 @@ const GR_CATALOGO = [
     'vestido-chemise-azul-claro' => ['vestido', 'azul_claro', 'regular', 'algodao', 'misto', 'qualquer', 'Vestido chemise azul-claro'],
     'vestido-chemise-bege' => ['vestido', 'bege', 'regular', 'linho', 'misto', 'calor', 'Vestido chemise bege'],
 ];
+// A marca das peças do catálogo, para escolher por marca. Nas peças do painel, vem do nome.
+const GR_MARCAS = [
+    'tenis-nike' => 'Nike', 'tenis-nike-preto' => 'Nike',
+    'tenis-new-balance' => 'New Balance', 'tenis-new-balance-cinza' => 'New Balance', 'tenis-new-balance-bege' => 'New Balance',
+];
+const GR_MARCAS_CONHECIDAS = ['Nike', 'New Balance', 'Adidas', 'Puma', 'Vans', 'Converse', 'Asics', 'Mizuno', 'Olympikus', 'Fila', 'Reebok', 'Veja', 'Ray-Ban', 'Oakley', 'Casio', 'Seiko', 'Tissot', 'Lacoste', 'Levi\'s', 'Timberland', 'Dr. Martens', 'Ferracini'];
+
+function marca_da_peca(string $codigo, string $nome): string
+{
+    if (isset(GR_MARCAS[$codigo])) {
+        return GR_MARCAS[$codigo];
+    }
+    foreach (GR_MARCAS_CONHECIDAS as $marca) {
+        if (stripos($nome, $marca) !== false) {
+            return $marca;
+        }
+    }
+    return '';
+}
+
 // Para quem é cada peça da marca no catálogo: masculino, feminino ou para todos
 const GR_PUBLICOS = ['masculino', 'feminino', 'unissex'];
 const GR_PREFIXOS_FEMININOS = ['camiseta-feminina', 'jeans-skinny', 'jeans-flare', 'jeans-wide-leg', 'sueter-gola-v', 'blazer-feminino', 'vestido-'];
 const GR_TIPOS_FEMININOS = ['vestido', 'saia', 'blusa'];
-const GR_TIPOS_UNISSEX = ['moletom', 'calca_moletom', 'bone', 'tenis', 'oculos', 'relogio'];
+const GR_TIPOS_UNISSEX = ['moletom', 'calca_moletom', 'bone', 'tenis', 'oculos', 'oculos_grau', 'relogio', 'pulseira', 'colar', 'anel'];
 // Peças cadastradas pelo gestor: o código é loja-ID e a foto fica em api/fotos-catalogo
 const GR_PREFIXO_LOJA = 'loja-';
 // Peças da coleção Rauber à venda: entram sozinhas no catálogo, uma por cor. O código é rauber-ID-cor.
@@ -184,6 +235,9 @@ if ($metodo === 'GET') {
             break;
         case 'foto-web':
             foto_web();
+            break;
+        case 'foto-pin':
+            foto_pin();
             break;
     }
     listar();
@@ -494,6 +548,7 @@ function catalogo(): void
             'foto' => $c['foto'],
             'novo' => $c['novo'],
             'colecao' => $c['colecao'] ?? null,
+            'marca' => marca_da_peca((string) $codigo, (string) $p[6]),
             'publico' => $c['publico'],
             'situacao' => $minhas[(string) $codigo] ?? 'livre',
         ];
@@ -868,6 +923,111 @@ function buscar_foto(): void
         }
     }
     responder(200, ['fotos' => $fotos]);
+}
+
+/* --- Foto de um pin do Pinterest --------------------------------------------------------------- */
+
+// Links que o site aceita: pin.it (o encurtador do app) e as páginas de pin do Pinterest
+function host_do_pinterest(string $host): bool
+{
+    $host = strtolower($host);
+    if ($host === 'pin.it') {
+        return true;
+    }
+    return preg_match('/^([a-z]{2,3}\.)?pinterest\.(com|com\.br|pt|ca|co\.uk|fr|de|es|it|com\.mx|at|ch|jp|ie|nz|cl|ph|dk|se|ru)$/', $host) === 1
+        || preg_match('/^www\.pinterest\.(com|com\.br|pt)$/', $host) === 1;
+}
+
+/** Baixa uma página (até 2 MB), seguindo só redirecionamentos para o próprio Pinterest. */
+function pagina_do_pinterest(string $url): ?string
+{
+    for ($salto = 0; $salto < 5; $salto++) {
+        $partes = parse_url($url);
+        $host = (string) ($partes['host'] ?? '');
+        $esquema = strtolower((string) ($partes['scheme'] ?? ''));
+        $teste = !empty(config()['teste_permitir_endereco_local']);
+        if (!$teste && ($esquema !== 'https' || !host_do_pinterest($host))) {
+            return null;
+        }
+        if ($teste && !in_array($esquema, ['http', 'https'], true)) {
+            return null;
+        }
+        $ip = $host !== '' ? ip_publico($host) : null;
+        if ($ip === null) {
+            return null;
+        }
+        $corpo = '';
+        $c = curl_init($url);
+        curl_setopt_array($c, [
+            CURLOPT_RETURNTRANSFER => false,
+            CURLOPT_HEADER => false,
+            CURLOPT_TIMEOUT => 12,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_HTTPHEADER => ['Accept: text/html', 'Accept-Language: pt-BR,pt;q=0.9', 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'],
+            CURLOPT_WRITEFUNCTION => function ($h, string $pedaco) use (&$corpo): int {
+                $corpo .= $pedaco;
+                return strlen($corpo) > 2000000 ? 0 : strlen($pedaco);
+            },
+        ]);
+        if (!$teste) {
+            $porta = (int) ($partes['port'] ?? 443);
+            curl_setopt($c, CURLOPT_RESOLVE, [$host . ':' . $porta . ':' . $ip]);
+        }
+        curl_exec($c);
+        $codigo = (int) curl_getinfo($c, CURLINFO_RESPONSE_CODE);
+        $destino = (string) curl_getinfo($c, CURLINFO_REDIRECT_URL);
+        curl_close($c);
+        if ($codigo >= 300 && $codigo < 400 && $destino !== '') {
+            $url = $destino;
+            continue;
+        }
+        return $codigo === 200 ? $corpo : null;
+    }
+    return null;
+}
+
+/** A pessoa cola o link do pin; o site lê a foto do pin e devolve para passar pelo "tirar o fundo". */
+function foto_pin(): void
+{
+    $usuario = exigir_login();
+    $link = trim((string) ($_GET['u'] ?? ''));
+    // O app do Pinterest às vezes compartilha um texto com o link no meio
+    if (preg_match('~https?://[^\s"<>]+~i', $link, $m) === 1) {
+        $link = rtrim($m[0], '.,;)');
+    }
+    $partes = parse_url($link);
+    $teste = !empty(config()['teste_permitir_endereco_local']);
+    if (!is_array($partes) || !isset($partes['host']) || (!$teste && !host_do_pinterest((string) $partes['host']))) {
+        falhar(422, 'Cole o link de um pin do Pinterest. No pin, toque em Compartilhar e depois em Copiar link.');
+    }
+    $limite = chave_limite('foto-pin', (string) $usuario['id']);
+    exigir_limite($limite, 60, 3600);
+    contar_tentativa($limite);
+
+    $html = pagina_do_pinterest($link);
+    $imagem = '';
+    $titulo = '';
+    if ($html !== null) {
+        if (preg_match('~<meta[^>]+(?:property|name)="og:image"[^>]+content="([^"]+)"~i', $html, $m) === 1
+            || preg_match('~<meta[^>]+content="([^"]+)"[^>]+(?:property|name)="og:image"~i', $html, $m) === 1) {
+            $imagem = html_entity_decode($m[1], ENT_QUOTES);
+        }
+        if (preg_match('~<meta[^>]+content="([^"]*)"[^>]+(?:property|name)="og:title"~i', $html, $t) === 1
+            || preg_match('~<meta[^>]+(?:property|name)="og:title"[^>]+content="([^"]*)"~i', $html, $t) === 1) {
+            $titulo = mb_substr(trim(html_entity_decode($t[1], ENT_QUOTES)), 0, 120);
+        }
+    }
+    if (!endereco_https($imagem)) {
+        falhar(404, 'Não encontramos a foto deste pin. Confira o link ou escolha outro pin.');
+    }
+    $foto = ['miniatura' => $imagem, 'assinaturaMiniatura' => assinar_endereco($imagem), 'titulo' => $titulo, 'origem' => 'Pinterest'];
+    // A versão maior do pin, quando existir; se não abrir, fica a de 736 pixels
+    $maior = preg_replace('~/(236x|474x|564x)/~', '/736x/', $imagem);
+    if (is_string($maior) && $maior !== $imagem && endereco_https($maior)) {
+        $foto['original'] = $maior;
+        $foto['assinaturaOriginal'] = assinar_endereco($maior);
+    }
+    responder(200, ['foto' => $foto]);
 }
 
 // Endereço da internet pública: não deixa a busca apontar para a rede interna do servidor

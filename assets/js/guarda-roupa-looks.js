@@ -228,6 +228,16 @@ window.AR_LOOKS = (function () {
       var bone = melhorCom(grupos.bone, roupa, clima, function () { return true; }, semente);
       if (bone) conjunto.push(bone.peca);
     }
+    // Relógio e óculos de grau entram sempre que a pessoa tem; óculos de sol, em parte dos looks casuais
+    var acessorio = function (lista) { return lista.length ? melhorCom(lista, roupa, clima, function () { return true; }, semente) : null; };
+    var relogio = acessorio(grupos.relogio);
+    if (relogio) conjunto.push(relogio.peca);
+    var grau = acessorio(grupos.oculos_grau);
+    if (grau) conjunto.push(grau.peca);
+    else if (nivel <= 1.5 && semente % 2 === 1) {
+      var sol = acessorio(grupos.oculos);
+      if (sol) conjunto.push(sol.peca);
+    }
 
     if (nota < NOTA_MINIMA) return null;
     return {
@@ -271,7 +281,7 @@ window.AR_LOOKS = (function () {
   }
 
   function separar(pecas) {
-    var g = { cima: [], baixo: [], camada: [], conjunto: [], vestido: [], calcado: [], cinto: [], gravata: [], bone: [] };
+    var g = { cima: [], baixo: [], camada: [], conjunto: [], vestido: [], calcado: [], cinto: [], gravata: [], bone: [], relogio: [], oculos: [], oculos_grau: [] };
     pecas.forEach(function (p) {
       var nome = grupo(p);
       if (nome === 'acessorio') {
