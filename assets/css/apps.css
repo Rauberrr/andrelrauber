@@ -1387,8 +1387,6 @@ a.inicio-pilar:active { transform: scale(.99); }
 .dc-trilho { display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; border-radius: 28px; box-shadow: 0 26px 50px -28px rgba(11, 11, 10, .8); -webkit-overflow-scrolling: touch; }
 .dc-trilho::-webkit-scrollbar { display: none; }
 .dc-slide { position: relative; flex: 0 0 100%; min-height: 560px; overflow: hidden; scroll-snap-align: start; scroll-snap-stop: always; }
-.app .dc-slide.inicio-estilo { margin: 0; border-radius: 0; box-shadow: none; display: flex; flex-direction: column; }
-.dc-slide-numeros .dc-cta { margin-top: auto; }
 
 /* Vitrine: as peças passam ao fundo, desfocadas, e a mensagem fica por cima */
 .dc-slide-vitrine { background: #12100e; color: #f7f2ea; }
@@ -1475,7 +1473,21 @@ a.inicio-pilar:active { transform: scale(.99); }
 @media (prefers-reduced-motion: reduce) {
   .dc-faixa-trilho, .dc-manchas i, .dc-adesivo, .dc-palavras b { animation: none; }
 }
-.app .dc-slide-numeros .dc-cta { margin-top: auto; }
-.app .dc-slide-numeros .inicio-estilo-sugestao + .dc-cta, .app .dc-slide-numeros .inicio-estilo-numeros + .dc-cta { margin-top: auto; }
-.dc-slide-numeros .inicio-estilo-sugestao { margin-bottom: 1.1rem; }
 .dc-faixa img { padding: 8px; }
+
+/* Tela dos números: o mesmo fundo vivo, com as roupas da pessoa, e os números em vidro */
+.dc-slide-numeros { background: #12100e; color: #f7f2ea; }
+.dc-slide-numeros .dc-manchas i:nth-child(1) { background: #c9a2f0; }
+.dc-slide-numeros .dc-manchas i:nth-child(2) { background: #e88aa4; }
+.dc-slide-numeros .dc-manchas i:nth-child(3) { background: #e2bd36; }
+.dc-slide-numeros .dc-fundo::after { background: linear-gradient(180deg, rgba(12, 10, 9, .05) 0%, rgba(12, 10, 9, .3) 22%, rgba(12, 10, 9, .9) 48%, rgba(12, 10, 9, .97) 100%); }
+.dc-slide-numeros .dc-faixas { top: -10%; }
+.dc-texto { margin: .6rem 0 0; font-size: .92rem; line-height: 1.45; color: rgba(247, 242, 234, .78); }
+.dc-numeros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .45rem; margin-top: .9rem; }
+.dc-numeros div { display: grid; gap: .1rem; padding: .65rem .7rem; border-radius: 16px; background: rgba(255, 255, 255, .1); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
+.dc-numeros strong { font-family: var(--serifa); font-size: 1.7rem; font-weight: 400; line-height: 1; font-variant-numeric: tabular-nums; }
+.dc-numeros span { font-size: .72rem; line-height: 1.25; color: rgba(247, 242, 234, .68); }
+.dc-numeros .dc-numeros-mais { background: rgba(232, 138, 164, .22); box-shadow: inset 0 0 0 1px rgba(243, 185, 199, .45); }
+.dc-numeros-mais strong { color: #f3b9c7; }
+.app .dc-sugestao { margin-top: .7rem; }
+.dc-slide-numeros .dc-cta { margin-top: .9rem; }
