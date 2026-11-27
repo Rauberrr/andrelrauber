@@ -107,14 +107,15 @@
     if (!dados || !dados.pecas || !dados.pecas.length || !window.AR_LOOKS) return;
     var pecas = dados.pecas;
     var total = window.AR_LOOKS.totalDeLooks(pecas);
-    $('estilo-exemplo').hidden = true;
+    // Com peças, a primeira tela do carrossel são os números; a vitrine continua, para adicionar mais
+    $('dc-slide-numeros').hidden = false;
     $('estilo-nota').hidden = true;
-    $('estilo-botao').firstChild.textContent = 'Ver meus looks';
+    $('estilo-botao').firstChild.textContent = 'Adicionar mais peças';
+    if (window.AR_CARROSSEL_CLOSET) window.AR_CARROSSEL_CLOSET.atualizar();
     $('estilo-pecas').textContent = String(pecas.length);
     $('estilo-looks').textContent = String(total);
     $('estilo-numeros').hidden = false;
     $('estilo-texto').textContent = 'Suas peças já rendem ' + total + ' looks. Veja as combinações para hoje e descubra o que falta para render ainda mais.';
-    $('estilo-botao').href = 'apps/guarda-roupa/#looks';
     var s = window.AR_SUGESTAO ? window.AR_SUGESTAO.melhor(pecas, produtos, dados.compradas || [], []) : null;
     if (!s) return;
     var nome = window.AR_SUGESTAO.nomeComCor(s);
