@@ -1476,12 +1476,7 @@ a.inicio-pilar:active { transform: scale(.99); }
 .dc-faixa img { padding: 8px; }
 
 /* Tela dos números: o mesmo fundo vivo, com as roupas da pessoa, e os números em vidro */
-.dc-slide-numeros { background: #12100e; color: #f7f2ea; }
-.dc-slide-numeros .dc-manchas i:nth-child(1) { background: #c9a2f0; }
-.dc-slide-numeros .dc-manchas i:nth-child(2) { background: #e88aa4; }
-.dc-slide-numeros .dc-manchas i:nth-child(3) { background: #e2bd36; }
 .dc-slide-numeros .dc-fundo::after { background: linear-gradient(180deg, rgba(12, 10, 9, .05) 0%, rgba(12, 10, 9, .3) 22%, rgba(12, 10, 9, .9) 48%, rgba(12, 10, 9, .97) 100%); }
-.dc-slide-numeros .dc-faixas { top: -10%; }
 .dc-texto { margin: .6rem 0 0; font-size: .92rem; line-height: 1.45; color: rgba(247, 242, 234, .78); }
 .dc-numeros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .45rem; margin-top: .9rem; }
 .dc-numeros div { display: grid; gap: .1rem; padding: .65rem .7rem; border-radius: 16px; background: rgba(255, 255, 255, .1); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
@@ -1491,3 +1486,17 @@ a.inicio-pilar:active { transform: scale(.99); }
 .dc-numeros-mais strong { color: #f3b9c7; }
 .app .dc-sugestao { margin-top: .7rem; }
 .dc-slide-numeros .dc-cta { margin-top: .9rem; }
+
+/* Tela dos números: tons quentes e as peças soltas, espalhadas, flutuando de leve */
+.dc-slide-numeros { color: #f7f2ea; background: radial-gradient(80% 60% at 10% 0%, #7a3a22, transparent 70%), radial-gradient(80% 60% at 100% 45%, #4a2c4f, transparent 70%), linear-gradient(180deg, #2b1b15, #140e0c 70%); }
+.dc-slide-numeros .dc-manchas i { opacity: .45; }
+.dc-slide-numeros .dc-manchas i:nth-child(1) { background: #f0a868; }
+.dc-slide-numeros .dc-manchas i:nth-child(2) { background: #d9727a; }
+.dc-slide-numeros .dc-manchas i:nth-child(3) { background: #e8cfa0; }
+.dc-fundo { z-index: 0; }
+.dc-fundo::after { z-index: 20; }
+.dc-espalhadas { position: absolute; inset: 0 0 44% 0; }
+.dc-solta { position: absolute; display: block; aspect-ratio: 4 / 5; filter: blur(var(--desfoque, 0)) drop-shadow(0 16px 18px rgba(0, 0, 0, .45)); transform: rotate(var(--giro, 0)); animation: dc-deriva 8s ease-in-out infinite alternate; }
+.dc-solta img { width: 100%; height: 100%; object-fit: contain; }
+@keyframes dc-deriva { from { transform: rotate(var(--giro, 0)) translate(0, 0); } to { transform: rotate(calc(var(--giro, 0) + 4deg)) translate(6px, -10px); } }
+@media (prefers-reduced-motion: reduce) { .dc-solta { animation: none; } }

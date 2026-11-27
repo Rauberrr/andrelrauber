@@ -160,6 +160,40 @@
     });
   }
 
+  // Tela dos números: as peças soltas, espalhadas como num flat lay, com profundidade
+  // l, t, w: posição e largura em % da tela; r: giro; d: desfoque (as de trás mais desfocadas)
+  var LUGARES = [
+    { l: -3, t: 2, w: 24, r: -14, d: 2.4 }, { l: 24, t: -2, w: 20, r: 9, d: 1.4 }, { l: 46, t: 6, w: 23, r: -7, d: .4 },
+    { l: 72, t: 0, w: 25, r: 12, d: 2 }, { l: 6, t: 34, w: 21, r: 15, d: .8 }, { l: 31, t: 30, w: 19, r: -11, d: 0 },
+    { l: 54, t: 38, w: 20, r: 8, d: 1.2 }, { l: 77, t: 33, w: 22, r: -10, d: .6 }, { l: -6, t: 64, w: 20, r: -5, d: 3 },
+    { l: 86, t: 66, w: 19, r: 17, d: 3.2 }
+  ];
+  function preencherEspalhadas(caixa, fotos) {
+    caixa.textContent = '';
+    LUGARES.forEach(function (lugar, n) {
+      // A moldura tem o tamanho; a foto se encaixa nela sem esticar
+      var peca = document.createElement('span');
+      peca.className = 'dc-solta';
+      peca.style.left = lugar.l + '%';
+      peca.style.top = lugar.t + '%';
+      peca.style.width = lugar.w + '%';
+      peca.style.setProperty('--giro', lugar.r + 'deg');
+      peca.style.setProperty('--desfoque', lugar.d + 'px');
+      peca.style.zIndex = String(10 - Math.round(lugar.d * 2));
+      peca.style.animationDelay = (-n * 1.3) + 's';
+      peca.style.animationDuration = (7 + (n % 4)) + 's';
+      var img = document.createElement('img');
+      img.src = fotos[n % fotos.length];
+      img.alt = '';
+      img.width = 240;
+      img.height = 300;
+      img.decoding = 'async';
+      img.addEventListener('error', function () { peca.remove(); });
+      peca.appendChild(img);
+      caixa.appendChild(peca);
+    });
+  }
+
   // Números que sobem do zero quando a tela aparece
   function contar(el, valor, prefixo) {
     if (!el) return;
@@ -267,6 +301,7 @@
     personalizar: function (pecas) {
       var fundo = fotosDoFundo(pecas);
       document.querySelectorAll('#dc-hero [data-faixas]').forEach(function (c) { preencherFaixas(c, fundo.fotos); });
+      document.querySelectorAll('#dc-hero [data-espalhadas]').forEach(function (c) { preencherEspalhadas(c, fundo.fotos); });
       var dela = looksDaPessoa(pecas);
       if (dela.length >= 2) {
         LOOKS = dela;
@@ -281,6 +316,7 @@
   };
 
   document.querySelectorAll('#dc-hero [data-faixas]').forEach(function (c) { if (!c.children.length) preencherFaixas(c, embaralhar(PADRAO, 5)); });
+  document.querySelectorAll('#dc-hero [data-espalhadas]').forEach(function (c) { if (!c.children.length) preencherEspalhadas(c, embaralhar(PADRAO, 9)); });
   montarBolinhas();
   andar();
 })();
